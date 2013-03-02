@@ -6,15 +6,15 @@ public final class StringUtility {
 		if(s==null)return null;
 		int len=s.length();
 		char c=0;
-		boolean uppercase=false;
+		boolean hasUpperCase=false;
 		for(int i=0;i<len;i++){
 			c=s.charAt(i);
 			if(c>='A' && c<='Z'){
-				uppercase=true;
+				hasUpperCase=true;
 				break;
 			}
 		}
-		if(!uppercase)
+		if(!hasUpperCase)
 			return s;
 		StringBuilder b=new StringBuilder();
 		for(int i=0;i<len;i++){
@@ -33,15 +33,15 @@ public final class StringUtility {
 		if(s==null)return null;
 		int len=s.length();
 		char c=0;
-		boolean uppercase=false;
+		boolean hasLowerCase=false;
 		for(int i=0;i<len;i++){
 			c=s.charAt(i);
 			if(c>='a' && c<='z'){
-				uppercase=true;
+				hasLowerCase=true;
 				break;
 			}
 		}
-		if(!uppercase)
+		if(!hasLowerCase)
 			return s;
 		StringBuilder b=new StringBuilder();
 		for(int i=0;i<len;i++){
