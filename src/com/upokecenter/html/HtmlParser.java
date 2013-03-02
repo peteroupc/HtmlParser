@@ -732,8 +732,7 @@ final class HtmlParser {
 								return (Text)childNodes.get(j-1);
 							else {
 								Text textNode=new Text();
-								textNode.setOwnerDocument(parent.getOwnerDocument());
-								childNodes.add(j,textNode);
+								parent.insertBefore(textNode, e);
 								return textNode;
 							}
 						}
@@ -746,8 +745,7 @@ final class HtmlParser {
 		Node lastChild=(childNodes.size()==0) ? null : childNodes.get(childNodes.size()-1);
 		if(lastChild==null || lastChild.getNodeType()!=NodeType.TEXT_NODE){
 			Text textNode=new Text();
-			textNode.setOwnerDocument(fosterParent.getOwnerDocument());
-			childNodes.add(0,textNode);
+			fosterParent.appendChild(textNode);
 			return textNode;
 		} else
 			return ((Text)lastChild);
@@ -767,8 +765,7 @@ final class HtmlParser {
 		Node lastChild=(childNodes.size()==0) ? null : childNodes.get(childNodes.size()-1);
 		if(lastChild==null || lastChild.getNodeType()!=NodeType.TEXT_NODE){
 			Text textNode=new Text();
-			textNode.setOwnerDocument(node.getOwnerDocument());
-			childNodes.add(textNode);
+			node.appendChild(textNode);
 			return textNode;
 		} else
 			return ((Text)lastChild);

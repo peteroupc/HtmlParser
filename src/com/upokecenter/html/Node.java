@@ -36,6 +36,8 @@ class Node implements INode {
 		int childNodesSize=childNodes.size();
 		for(int j=0;j<childNodesSize;j++){
 			if(childNodes.get(j).equals(sibling)){
+				child.parentNode=this;
+				child.ownerDocument=ownerDocument;
 				childNodes.add(j,child);
 				return;
 			}
