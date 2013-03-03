@@ -4,12 +4,21 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.MalformedInputException;
 import java.nio.charset.UnmappableCharacterException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-
 import com.upokecenter.util.StringUtility;
 
 public final class TextEncoding {
+	/**
+	 * 
+	 * An encoding error handler that throws exceptions
+	 * on decoder and encoder errors.
+	 * 
+	 */
 	public static final IEncodingError ENCODING_ERROR_THROW = new IEncodingError(){
 		@Override
 		public int emitDecoderError(int[] buffer, int offset, int length) throws IOException {
@@ -21,6 +30,13 @@ public final class TextEncoding {
 		}
 	};
 
+	/**
+	 * 
+	 * An encoding error handler that replaces ill-formed
+	 * bytes with 0xFFFD replacement characters, and replaces
+	 * ill-formed Unicode characters with the byte 0x3F.
+	 * 
+	 */
 	public static final IEncodingError ENCODING_ERROR_REPLACE = new IEncodingError(){
 		@Override
 		public int emitDecoderError(int[] buffer, int offset, int length) throws IOException {
@@ -257,6 +273,13 @@ public final class TextEncoding {
 
 	static Object syncRoot=new Object();
 
+	/**
+	 * Converts a name to a supported character encoding
+	 * 
+	 * @param encoding the name of an encoding
+	 * @return a character encoding, or null if the name
+	 * does not resolve to a supported encoding
+	 */
 	public static String resolveEncoding(String encoding){
 		if(encoding==null)return null;
 		int index=0;
@@ -318,6 +341,16 @@ public final class TextEncoding {
 		return null;
 	}
 
+	/**
+	 * Returns a list of all character encodings supported
+	 * by this implementation.
+	 */
+	public static String[] getSupportedEncodings(){
+		List<String> values=new ArrayList<String>(new HashSet<String>(encodingMap.values()));
+		Collections.sort(values);
+		return values.toArray(new String[]{});
+	}
+	
 	private static ITextEncoder setIndexEncoding(String name, ITextEncoder enc){
 		synchronized(syncRoot){
 			indexEncodingMap.put(name,enc);
@@ -325,6 +358,14 @@ public final class TextEncoding {
 		return enc;
 	}
 
+	/**
+	 * Gets a character encoder for a given character
+	 * encoding.
+	 * @param name a name of a character encoding
+	 * @return a character encoder, or null if the name
+	 * does not resolve to a supported encoding, or if
+	 * no encoder is supported for that encoding.
+	 */
 	public static ITextEncoder getEncoder(String name){
 		name=resolveEncoding(name);
 		if(name==null)
@@ -358,6 +399,15 @@ public final class TextEncoding {
 		return null;
 	}
 
+
+	/**
+	 * Gets whether an encoding is ASCII compatible
+	 * within the meaning of the WHATWG's HTML specification.
+	 * 
+	 * @param name a name of a character encoding
+	 * @return true or false.  Will return false if the name
+	 * does not resolve to a supported encoding.
+	 */
 	public static boolean isAsciiCompatible(String name){
 		name=resolveEncoding(name);
 		if(name==null)return false;
@@ -368,6 +418,14 @@ public final class TextEncoding {
 				!name.equals("utf-16be");
 	}
 
+	/**
+	 * Gets a character decoder for a given character
+	 * encoding.
+	 * @param name a name of a character encoding
+	 * @return a character encoder, or null if the name
+	 * does not resolve to a supported encoding, or if
+	 * no decoder is supported for that encoding.
+	 */
 	public static ITextDecoder getDecoder(String name){
 		name=resolveEncoding(name);
 		if(name==null)
