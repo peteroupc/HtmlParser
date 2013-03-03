@@ -3,7 +3,6 @@ package com.upokecenter.encoding;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.UnmappableCharacterException;
 
 final class Utf8Encoding implements ITextEncoder, ITextDecoder {
 
@@ -16,13 +15,25 @@ final class Utf8Encoding implements ITextEncoder, ITextDecoder {
 
 	@Override
 	public int decode(InputStream stream) throws IOException {
+		return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public int decode(InputStream stream, IEncodingError error) throws IOException {
 		if(stream==null)
 			throw new IllegalArgumentException();
 		while(true){
 			int b=stream.read();
 			if(b<0 && bytesNeeded!=0){
 				bytesNeeded=0;
-				return 0xFFFD;
+				if(error.equals(TextEncoding.ENCODING_ERROR_REPLACE))
+					return 0xFFFD;
+				else {
+					int[] data=new int[1];
+					int o=error.emitDecoderError(data,0,1);
+					if(o>0)return data[0];
+					continue;
+				}
 			} else if(b<0)
 				return -1;
 			if(bytesNeeded==0){
@@ -44,8 +55,16 @@ final class Utf8Encoding implements ITextEncoder, ITextDecoder {
 					upper=(b==0xf4) ? 0x8f : 0xbf;
 					bytesNeeded=2;
 					cp=b-0xe0;
-				} else
-					return 0xFFFD;
+				} else {
+					if(error.equals(TextEncoding.ENCODING_ERROR_REPLACE))
+						return 0xFFFD;
+					else {
+						int[] data=new int[1];
+						int o=error.emitDecoderError(data,0,1);
+						if(o>0)return data[0];
+						continue;
+					}
+				}
 				cp<<=(6*bytesNeeded);
 				continue;
 			}
@@ -54,7 +73,14 @@ final class Utf8Encoding implements ITextEncoder, ITextDecoder {
 				lower=0x80;
 				upper=0xbf;
 				stream.reset(); // 'Decrease the byte pointer by one.'
-				return 0xFFFD;
+				if(error.equals(TextEncoding.ENCODING_ERROR_REPLACE))
+					return 0xFFFD;
+				else {
+					int[] data=new int[1];
+					int o=error.emitDecoderError(data,0,1);
+					if(o>0)return data[0];
+					continue;
+				}
 			}
 			lower=0x80;
 			upper=0xbf;
@@ -75,6 +101,12 @@ final class Utf8Encoding implements ITextEncoder, ITextDecoder {
 	@Override
 	public int decode(InputStream stream, int[] buffer, int offset, int length)
 			throws IOException {
+		return decode(stream, buffer, offset, length, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public int decode(InputStream stream, int[] buffer, int offset, int length, IEncodingError error)
+			throws IOException {
 		if(stream==null || buffer==null || offset<0 || length<0 ||
 				offset+length>buffer.length)
 			throw new IllegalArgumentException();
@@ -83,9 +115,11 @@ final class Utf8Encoding implements ITextEncoder, ITextDecoder {
 			int b=stream.read();
 			if(b<0 && bytesNeeded!=0){
 				bytesNeeded=0;
-				buffer[offset++]=(0xFFFD);
-				count++;
-				length--;
+				int o=error.emitDecoderError(buffer,offset,length);
+				offset+=o;
+				count+=o;
+				length-=o;
+				break;
 			} else if(b<0){
 				break;
 			}
@@ -112,9 +146,10 @@ final class Utf8Encoding implements ITextEncoder, ITextDecoder {
 					bytesNeeded=2;
 					cp=b-0xe0;
 				} else {
-					buffer[offset++]=(0xFFFD);
-					count++;
-					length--;
+					int o=error.emitDecoderError(buffer,offset,length);
+					offset+=o;
+					count+=o;
+					length-=o;
 					continue;
 				}
 				cp<<=(6*bytesNeeded);
@@ -125,9 +160,10 @@ final class Utf8Encoding implements ITextEncoder, ITextDecoder {
 				lower=0x80;
 				upper=0xbf;
 				stream.reset(); // 'Decrease the byte pointer by one.'
-				buffer[offset++]=(0xFFFD);
-				count++;
-				length--;
+				int o=error.emitDecoderError(buffer,offset,length);
+				offset+=o;
+				count+=o;
+				length-=o;
 			}
 			lower=0x80;
 			upper=0xbf;
@@ -150,13 +186,21 @@ final class Utf8Encoding implements ITextEncoder, ITextDecoder {
 	@Override
 	public void encode(OutputStream stream, int[] array, int offset, int length)
 			throws IOException {
+		encode(stream, array, offset, length, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public void encode(OutputStream stream, int[] array, int offset, int length, IEncodingError error)
+			throws IOException {
 		if(stream==null || array==null)throw new IllegalArgumentException();
 		if(offset<0 || length<0 || offset+length>array.length)
 			throw new IndexOutOfBoundsException();
 		for(int i=0;i<array.length;i++){
 			int cp=array[offset+i];
-			if(cp<0 || cp>=0x10000 || (cp>=0xd800 && cp<=0xdfff))
-				throw new UnmappableCharacterException(1);
+			if(cp<0 || cp>=0x10000 || (cp>=0xd800 && cp<=0xdfff)){
+				error.emitEncoderError(stream);
+				continue;
+			}
 			if(cp<=0x7F){
 				stream.write(cp);
 			} else if(cp<=0x7FF){

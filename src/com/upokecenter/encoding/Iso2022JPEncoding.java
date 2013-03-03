@@ -3,14 +3,18 @@ package com.upokecenter.encoding;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.UnmappableCharacterException;
 
 final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 
 	@Override
 	public int decode(InputStream stream) throws IOException {
+		return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public int decode(InputStream stream, IEncodingError error) throws IOException {
 		int[] value=new int[1];
-		int c=decode(stream,value,0,1);
+		int c=decode(stream,value,0,1, error);
 		if(c<=0)return -1;
 		return value[0];
 	}
@@ -19,6 +23,12 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 	int state=0;
 	@Override
 	public int decode(InputStream stream, int[] buffer, int offset, int length)
+			throws IOException {
+		return decode(stream, buffer, offset, length, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public int decode(InputStream stream, int[] buffer, int offset, int length, IEncodingError error)
 			throws IOException {
 		if(stream==null || buffer==null || offset<0 || length<0 ||
 				offset+length>buffer.length)
@@ -38,9 +48,11 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 					length--;
 					count++;
 				} else {
-					buffer[offset++]=(0xFFFD);
-					length--;
-					count++;		
+					int o=error.emitDecoderError(buffer, offset, length);
+					offset+=o;
+					count+=o;
+					length-=o;
+
 				}
 			} else if(state==2){ // escape start state
 				if(b==0x24 || b==0x28){
@@ -50,9 +62,11 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 				} else {
 					stream.reset(); // 'decrease by one'
 					state=0;// ASCII state
-					buffer[offset++]=(0xFFFD);
-					length--;
-					count++;
+					int o=error.emitDecoderError(buffer, offset, length);
+					offset+=o;
+					count+=o;
+					length-=o;
+
 				}
 			} else if(state==3){ // escape middle state
 				if(lead==0x24 && (b==0x40 || b==0x42)){
@@ -70,9 +84,11 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 				} else {
 					stream.reset();
 					state=0;// ASCII state
-					buffer[offset++]=(0xFFFD);
-					length--;
-					count++;
+					int o=error.emitDecoderError(buffer, offset, length);
+					offset+=o;
+					count+=o;
+					length-=o;
+
 				}
 			} else if(state==4){ // final state
 				if(b==0x44){
@@ -82,9 +98,11 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 				} else {
 					stream.reset();
 					state=0;// ASCII state
-					buffer[offset++]=(0xFFFD);
-					length--;
-					count++;
+					int o=error.emitDecoderError(buffer, offset, length);
+					offset+=o;
+					count+=o;
+					length-=o;
+
 				}
 			} else if(state==5){ // lead state
 				if(b==0x0A){
@@ -105,9 +123,11 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 			} else if(state==6){ // trail state
 				state=5; // lead state
 				if(b<0){
-					buffer[offset++]=(0xFFFD);
-					length--;
-					count++;					
+					int o=error.emitDecoderError(buffer, offset, length);
+					offset+=o;
+					count+=o;
+					length-=o;
+
 				} else {
 					int cp=-1;
 					int index=(lead-0x21)*94+b-0x21;
@@ -120,9 +140,11 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 						}
 					}
 					if(cp<=0){
-						buffer[offset++]=(0xFFFD);
-						length--;
-						count++;											
+						int o=error.emitDecoderError(buffer, offset, length);
+						offset+=o;
+						count+=o;
+						length-=o;
+
 					} else {
 						buffer[offset++]=(cp);
 						length--;
@@ -140,9 +162,11 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 				} else if(b<0){
 					break;
 				} else {
-					buffer[offset++]=(0xFFFD);
-					length--;
-					count++;					
+					int o=error.emitDecoderError(buffer, offset, length);
+					offset+=o;
+					count+=o;
+					length-=o;
+
 				}
 			}
 			break;
@@ -153,13 +177,21 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 	@Override
 	public void encode(OutputStream stream, int[] array, int offset, int length)
 			throws IOException {
+		encode(stream, array, offset, length, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public void encode(OutputStream stream, int[] array, int offset, int length, IEncodingError error)
+			throws IOException {
 		if(stream==null || array==null)throw new IllegalArgumentException();
 		if(offset<0 || length<0 || offset+length>array.length)
 			throw new IndexOutOfBoundsException();
 		for(int i=0;i<array.length;i++){
 			int cp=array[offset+i];
-			if(cp<0 || cp>=0x110000)
-				throw new UnmappableCharacterException(1);
+			if(cp<0 || cp>=0x110000){
+				error.emitEncoderError(stream);
+				continue;
+			}
 			if((cp<=0x7F || cp==0xa5 || cp==0x203e) && state!=0){
 				// ASCII state
 				state=0;
@@ -189,8 +221,10 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 				continue;
 			}
 			int pointer=JIS0208.codePointToIndex(cp);
-			if(pointer<0)
-				throw new UnmappableCharacterException(1);
+			if(pointer<0){
+				error.emitEncoderError(stream);
+				continue;
+			}
 			if(state!=5){ // lead state
 				state=5;
 				stream.write(0x1b);
@@ -203,5 +237,4 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 			stream.write(trail);
 		}
 	}
-
 }

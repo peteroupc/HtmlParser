@@ -2,7 +2,10 @@ package com.upokecenter.html;
 
 import java.io.IOException;
 import java.io.InputStream;
+
+import com.upokecenter.encoding.IEncodingError;
 import com.upokecenter.encoding.ITextDecoder;
+import com.upokecenter.encoding.TextEncoding;
 
 class Html5Decoder implements ITextDecoder {
 
@@ -22,13 +25,19 @@ class Html5Decoder implements ITextDecoder {
 	@Override
 	public int decode(InputStream stream, int[] buffer, int offset, int length)
 			throws IOException {
+		return decode(stream, buffer, offset, length, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public int decode(InputStream stream, int[] buffer, int offset, int length, IEncodingError error)
+			throws IOException {
 		if(stream==null || buffer==null || offset<0 || length<0 ||
 				offset+length>buffer.length)
 			throw new IllegalArgumentException();
 		if(length==0)return 0;
 		int count=0;
 		while(length>0){
-			int c=decoder.decode(stream);
+			int c=decoder.decode(stream, error);
 			if(!havebom && !havecr && c>=0x20 && c<=0x7E){
 				buffer[offset]=c;
 				offset++;
@@ -71,8 +80,13 @@ class Html5Decoder implements ITextDecoder {
 
 	@Override
 	public int decode(InputStream stream) throws IOException {
+		return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public int decode(InputStream stream, IEncodingError error) throws IOException {
 		int[] value=new int[1];
-		int c=decode(stream,value,0,1);
+		int c=decode(stream,value,0,1, error);
 		if(c<=0)return -1;
 		return value[0];
 	}

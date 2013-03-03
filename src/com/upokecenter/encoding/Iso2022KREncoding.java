@@ -3,15 +3,19 @@ package com.upokecenter.encoding;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.UnmappableCharacterException;
 
 final class Iso2022KREncoding implements ITextEncoder, ITextDecoder {
 
 
 	@Override
 	public int decode(InputStream stream) throws IOException {
+		return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public int decode(InputStream stream, IEncodingError error) throws IOException {
 		int[] value=new int[1];
-		int c=decode(stream,value,0,1);
+		int c=decode(stream,value,0,1, error);
 		if(c<=0)return -1;
 		return value[0];
 	}
@@ -22,6 +26,12 @@ final class Iso2022KREncoding implements ITextEncoder, ITextDecoder {
 
 	@Override
 	public int decode(InputStream stream, int[] buffer, int offset, int length)
+			throws IOException {
+		return decode(stream, buffer, offset, length, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public int decode(InputStream stream, int[] buffer, int offset, int length, IEncodingError error)
 			throws IOException {
 		if(stream==null || buffer==null || offset<0 || length<0 ||
 				offset+length>buffer.length)
@@ -46,9 +56,11 @@ final class Iso2022KREncoding implements ITextEncoder, ITextDecoder {
 					length--;
 					count++;
 				} else {
-					buffer[offset++]=(0xFFFD);
-					length--;
-					count++;		
+					int o=error.emitDecoderError(buffer, offset, length);
+					offset+=o;
+					count+=o;
+					length-=o;
+
 				}
 			} else if(state==2){ // escape start state
 				if(b==0x24){
@@ -57,9 +69,11 @@ final class Iso2022KREncoding implements ITextEncoder, ITextDecoder {
 				} else {
 					stream.reset(); // 'decrease by one'
 					state=0;// ASCII state
-					buffer[offset++]=(0xFFFD);
-					length--;
-					count++;
+					int o=error.emitDecoderError(buffer, offset, length);
+					offset+=o;
+					count+=o;
+					length-=o;
+
 				}
 			} else if(state==3){ // escape middle state
 				if(b==0x29){
@@ -68,9 +82,11 @@ final class Iso2022KREncoding implements ITextEncoder, ITextDecoder {
 				} else {
 					stream.reset();
 					state=0;// ASCII state
-					buffer[offset++]=(0xFFFD);
-					length--;
-					count++;
+					int o=error.emitDecoderError(buffer, offset, length);
+					offset+=o;
+					count+=o;
+					length-=o;
+
 				}
 			} else if(state==4){ // final state
 				if(b==0x43){
@@ -79,9 +95,11 @@ final class Iso2022KREncoding implements ITextEncoder, ITextDecoder {
 				} else {
 					stream.reset();
 					state=0;// ASCII state
-					buffer[offset++]=(0xFFFD);
-					length--;
-					count++;
+					int o=error.emitDecoderError(buffer, offset, length);
+					offset+=o;
+					count+=o;
+					length-=o;
+
 				}
 			} else if(state==5){ // lead state
 				if(b==0x0A){
@@ -104,9 +122,11 @@ final class Iso2022KREncoding implements ITextEncoder, ITextDecoder {
 			} else if(state==6){ // trail state
 				state=5; // lead state
 				if(b<0){
-					buffer[offset++]=(0xFFFD);
-					length--;
-					count++;					
+					int o=error.emitDecoderError(buffer, offset, length);
+					offset+=o;
+					count+=o;
+					length-=o;
+
 				} else {
 					int cp=-1;
 					if((lead>=0x21 && lead<=0x46) &&
@@ -117,9 +137,11 @@ final class Iso2022KREncoding implements ITextEncoder, ITextDecoder {
 						cp=Korean.indexToCodePoint((26+26+126)*(0xc7-0x81)+(lead-0x47)*94+(b-0x21));
 					}
 					if(cp<=0){
-						buffer[offset++]=(0xFFFD);
-						length--;
-						count++;											
+						int o=error.emitDecoderError(buffer, offset, length);
+						offset+=o;
+						count+=o;
+						length-=o;
+
 					} else {
 						buffer[offset++]=(cp);
 						length--;
@@ -134,13 +156,21 @@ final class Iso2022KREncoding implements ITextEncoder, ITextDecoder {
 	@Override
 	public void encode(OutputStream stream, int[] array, int offset, int length)
 			throws IOException {
+		encode(stream, array, offset, length, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public void encode(OutputStream stream, int[] array, int offset, int length, IEncodingError error)
+			throws IOException {
 		if(stream==null || array==null)throw new IllegalArgumentException();
 		if(offset<0 || length<0 || offset+length>array.length)
 			throw new IndexOutOfBoundsException();
 		for(int i=0;i<array.length;i++){
 			int cp=array[offset+i];
-			if(cp<0 || cp>=0x110000)
-				throw new UnmappableCharacterException(1);
+			if(cp<0 || cp>=0x110000){
+				error.emitEncoderError(stream);
+				continue;
+			}
 			if(!initialization){
 				initialization=true;
 				stream.write(0x1b);
@@ -157,8 +187,10 @@ final class Iso2022KREncoding implements ITextEncoder, ITextDecoder {
 				continue;
 			}
 			int pointer=Korean.codePointToIndex(cp);
-			if(pointer<0)
-				throw new UnmappableCharacterException(1);
+			if(pointer<0){
+				error.emitEncoderError(stream);
+				continue;
+			}
 			if(state!=5){
 				state=5;
 				stream.write(0x0e);
@@ -166,8 +198,10 @@ final class Iso2022KREncoding implements ITextEncoder, ITextDecoder {
 			if(pointer<(26+26+126)*(0xc7-0x81)){
 				int lead=pointer/(26+26+126)+1;
 				int trail=pointer%(26+26+126)-26-26+1;
-				if(lead<0x21 || trail<0x21)
-					throw new UnmappableCharacterException(1);
+				if(lead<0x21 || trail<0x21){
+					error.emitEncoderError(stream);
+					continue;
+				}
 				stream.write(lead);
 				stream.write(trail);
 			} else {

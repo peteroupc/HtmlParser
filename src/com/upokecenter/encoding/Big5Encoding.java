@@ -3,7 +3,6 @@ package com.upokecenter.encoding;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.UnmappableCharacterException;
 
 final class Big5Encoding implements ITextEncoder, ITextDecoder {
 
@@ -12,6 +11,12 @@ final class Big5Encoding implements ITextEncoder, ITextDecoder {
 
 	@Override
 	public int decode(InputStream stream, int[] buffer, int offset, int length)
+			throws IOException {
+		return decode(stream, buffer, offset, length, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public int decode(InputStream stream, int[] buffer, int offset, int length, IEncodingError error)
 			throws IOException {
 		if(stream==null || buffer==null || offset<0 || length<0 ||
 				offset+length>buffer.length)
@@ -30,9 +35,10 @@ final class Big5Encoding implements ITextEncoder, ITextDecoder {
 				break;
 			} else if(b<0){
 				lead=0;
-				buffer[offset++]=(0xFFFD);
-				count++;
-				length--;
+				int o=error.emitDecoderError(buffer, offset, length);
+				offset+=o;
+				count+=o;
+				length-=o;
 				continue;
 			}
 			if(lead!=0){
@@ -75,9 +81,10 @@ final class Big5Encoding implements ITextEncoder, ITextDecoder {
 					stream.reset();
 				}
 				if(cp<=0){
-					buffer[offset++]=(0xFFFD);
-					count++;
-					length--;
+					int o=error.emitDecoderError(buffer, offset, length);
+					offset+=o;
+					count+=o;
+					length-=o;
 				} else {
 					buffer[offset++]=(cp);
 					count++;
@@ -93,37 +100,44 @@ final class Big5Encoding implements ITextEncoder, ITextDecoder {
 				lead=b;
 				continue;
 			} else {
-				buffer[offset++]=(0xFFFD);
-				count++;
-				length--;
+				int o=error.emitDecoderError(buffer, offset, length);
+				offset+=o;
+				count+=o;
+				length-=o;
 			}
 		}
 		return count>0 ? count : -1;
 	}
 
 	@Override
-	public void encode(OutputStream stream, int[] buffer, int offset, int length)
-			throws IOException {
+	public void encode(OutputStream stream, int[] buffer, int offset, int length, 
+			IEncodingError error)
+					throws IOException {
 		if(stream==null || buffer==null)throw new IllegalArgumentException();
 		if(offset<0 || length<0 || offset+length>buffer.length)
 			throw new IndexOutOfBoundsException();
 		for(int i=0;i<buffer.length;i++){
 			int cp=buffer[offset+i];
-			if(cp<0 || cp>=0x110000)
-				throw new UnmappableCharacterException(1);
+			if(cp<0 || cp>=0x110000){
+				error.emitEncoderError(stream);
+				continue;
+			}
 			if(cp<=0x7F){
 				stream.write(cp);
 				break;
 			}
 			int pointer=Big5.codePointToIndex(cp);
-			if(pointer<0)
-				throw new UnmappableCharacterException(1);
+			if(pointer<0){
+				error.emitEncoderError(stream);
+				continue;
+			}
 			int lead=pointer/157+0x81;
-			if(lead<0xa1)
+			if(lead<0xa1){
 				// NOTE: Encoding specification says to
 				// "[a]void emitting Hong Kong Supplementary 
 				// Character Set extensions literally."
-				throw new UnmappableCharacterException(1);
+				error.emitEncoderError(stream);
+			}
 			int trail=pointer%157;
 			if(trail<0x3f) {
 				trail+=0x40;
@@ -137,9 +151,20 @@ final class Big5Encoding implements ITextEncoder, ITextDecoder {
 
 	@Override
 	public int decode(InputStream stream) throws IOException {
+		return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public int decode(InputStream stream, IEncodingError error) throws IOException {
 		int[] value=new int[1];
-		int c=decode(stream,value,0,1);
+		int c=decode(stream,value,0,1, error);
 		if(c<=0)return -1;
 		return value[0];
+	}
+
+	@Override
+	public void encode(OutputStream stream, int[] buffer, int offset, int length)
+			throws IOException {
+		encode(stream,buffer,offset,length,TextEncoding.ENCODING_ERROR_THROW);
 	}
 }

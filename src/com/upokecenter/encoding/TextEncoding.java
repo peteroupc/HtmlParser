@@ -1,9 +1,37 @@
 package com.upokecenter.encoding;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.MalformedInputException;
+import java.nio.charset.UnmappableCharacterException;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.upokecenter.util.StringUtility;
+
 public final class TextEncoding {
+	public static final IEncodingError ENCODING_ERROR_THROW = new IEncodingError(){
+		@Override
+		public int emitDecoderError(int[] buffer, int offset, int length) throws IOException {
+			throw new MalformedInputException(1);
+		}
+		@Override
+		public void emitEncoderError(OutputStream stream) throws IOException {
+			throw new UnmappableCharacterException(1);
+		}
+	};
+
+	public static final IEncodingError ENCODING_ERROR_REPLACE = new IEncodingError(){
+		@Override
+		public int emitDecoderError(int[] buffer, int offset, int length) throws IOException {
+			buffer[offset]=0xFFFD;
+			return 1;
+		}
+		@Override
+		public void emitEncoderError(OutputStream stream) throws IOException {
+			stream.write(0x3F);
+		}
+	};
 	private TextEncoding(){};
 
 	static Map<String,String> encodingMap=new HashMap<String,String>();
@@ -248,7 +276,7 @@ public final class TextEncoding {
 			}
 			lastIndex--;
 		}
-		encoding=encoding.substring(index,lastIndex+1).toLowerCase();
+		encoding=StringUtility.toLowerCaseAscii(encoding.substring(index,lastIndex+1));
 		if(encodingMap.get(encoding)!=null)
 			return encodingMap.get(encoding);
 		return null;

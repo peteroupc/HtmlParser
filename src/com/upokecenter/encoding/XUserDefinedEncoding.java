@@ -3,12 +3,17 @@ package com.upokecenter.encoding;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.UnmappableCharacterException;
 
 final class XUserDefinedEncoding implements ITextEncoder, ITextDecoder {
 
 	@Override
 	public int decode(InputStream stream, int[] buffer, int offset, int length)
+			throws IOException {
+		return decode(stream, buffer, offset, length, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public int decode(InputStream stream, int[] buffer, int offset, int length, IEncodingError error)
 			throws IOException {
 		if(stream==null || buffer==null || offset<0 || length<0 ||
 				offset+length>buffer.length)
@@ -36,7 +41,7 @@ final class XUserDefinedEncoding implements ITextEncoder, ITextDecoder {
 	}
 
 	@Override
-	public void encode(OutputStream stream, int[] array, int offset, int length)
+	public void encode(OutputStream stream, int[] array, int offset, int length, IEncodingError error)
 			throws IOException {
 		if(stream==null || array==null)throw new IllegalArgumentException();
 		if(offset<0 || length<0 || offset+length>array.length)
@@ -46,16 +51,18 @@ final class XUserDefinedEncoding implements ITextEncoder, ITextDecoder {
 		while(i>0){
 			int count=Math.min(i,buffer.length);
 			for(int j=0;j<count;j++){
-				int c=array[offset];
-				if(c<0 || c>=0x110000)
-					throw new UnmappableCharacterException(1);
-				else if(c<0x80){
+				int c=array[offset++];
+				if(c<0 || c>=0x110000){
+					error.emitEncoderError(stream);
+					continue;
+				} else if(c<0x80){
 					buffer[j]=(byte)c;
 				} else if(c>=0xF780 && c<=0xF7FF){
 					buffer[j]=(byte)(c-0xF780+0x80);
-				} else
-					throw new UnmappableCharacterException(1);
-				offset++;
+				} else {
+					error.emitEncoderError(stream);
+					continue;
+				}
 			}
 			i-=count;
 			stream.write(buffer,0,count);
@@ -64,6 +71,11 @@ final class XUserDefinedEncoding implements ITextEncoder, ITextDecoder {
 
 	@Override
 	public int decode(InputStream stream) throws IOException {
+		return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public int decode(InputStream stream, IEncodingError error) throws IOException {
 		if(stream==null)throw new IllegalArgumentException();
 		int c=stream.read();
 		if(c<0)return -1;
@@ -72,5 +84,12 @@ final class XUserDefinedEncoding implements ITextEncoder, ITextDecoder {
 		else
 			return 0xF780+c-0x80;
 	}
+
+	@Override
+	public void encode(OutputStream stream, int[] buffer, int offset, int length)
+			throws IOException {
+		encode(stream, buffer, offset, length, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
 
 }

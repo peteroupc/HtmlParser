@@ -1,12 +1,21 @@
-package com.upokecenter.html;
+package com.upokecenter.util;
 
-class IntList {
+public class IntList {
 	int[] buffer;
 	int ptr;
 	public IntList(){
 		buffer=new int[64];
 		ptr=0;
 	}
+
+	public int get(int index){
+		return buffer[index];
+	}
+
+	public void set(int index, int value){
+		buffer[index]=value;
+	}
+
 	public void append(int v){
 		if(ptr<buffer.length){
 			buffer[ptr++]=v;

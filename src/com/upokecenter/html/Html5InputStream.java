@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 
 import com.upokecenter.encoding.ITextDecoder;
+import com.upokecenter.encoding.TextEncoding;
 
 /**
  * 
@@ -86,7 +87,7 @@ final class Html5InputStream {
 			// End pos is smaller than buffer size, fill
 			// entire buffer if possible
 			if(endpos<buffer.length){
-				int count=decoder.decode(input,buffer,endpos,buffer.length-endpos);
+				int count=decoder.decode(input,buffer,endpos,buffer.length-endpos, TextEncoding.ENCODING_ERROR_REPLACE);
 				//DebugUtility.log("%s",this);
 				if(count>0) {
 					endpos+=count;
@@ -105,7 +106,7 @@ final class Html5InputStream {
 				System.arraycopy(buffer,0,newBuffer,0,buffer.length);
 				buffer=newBuffer;
 			}
-			int count=decoder.decode(input,buffer, endpos, Math.min(unitCount,buffer.length-endpos));
+			int count=decoder.decode(input,buffer, endpos, Math.min(unitCount,buffer.length-endpos), TextEncoding.ENCODING_ERROR_REPLACE);
 			if(count>0) {
 				endpos+=count;
 			}
@@ -121,7 +122,7 @@ final class Html5InputStream {
 			}
 			return (total==0) ? -1 : total;
 		} else
-			return decoder.decode(input, buf, offset, unitCount);			
+			return decoder.decode(input, buf, offset, unitCount, TextEncoding.ENCODING_ERROR_REPLACE);			
 	}
 
 	public int read() throws IOException{
@@ -133,7 +134,7 @@ final class Html5InputStream {
 			// End pos is smaller than buffer size, fill
 			// entire buffer if possible
 			if(endpos<buffer.length){
-				int count=decoder.decode(input,buffer,endpos,buffer.length-endpos);
+				int count=decoder.decode(input,buffer,endpos,buffer.length-endpos, TextEncoding.ENCODING_ERROR_REPLACE);
 				if(count>0) {
 					endpos+=count;
 				}
@@ -144,7 +145,7 @@ final class Html5InputStream {
 				return buffer[pos++];
 			//DebugUtility.log(this);
 			// No room, read next character and put it in buffer
-			int c=decoder.decode(input);
+			int c=decoder.decode(input, TextEncoding.ENCODING_ERROR_REPLACE);
 			if(pos>=buffer.length){
 				int[] newBuffer=new int[buffer.length*2];
 				System.arraycopy(buffer,0,newBuffer,0,buffer.length);
@@ -155,7 +156,7 @@ final class Html5InputStream {
 			endpos++;
 			return c;
 		} else
-			return decoder.decode(input);
+			return decoder.decode(input, TextEncoding.ENCODING_ERROR_REPLACE);
 	}
 
 	public void moveBack(int count) throws IOException {

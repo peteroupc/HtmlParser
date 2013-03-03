@@ -8,6 +8,7 @@ import java.util.List;
 
 import com.upokecenter.encoding.TextEncoding;
 import com.upokecenter.util.ConditionalBufferInputStream;
+import com.upokecenter.util.IntList;
 import com.upokecenter.util.StringUtility;
 
 final class HtmlParser {
@@ -220,16 +221,6 @@ final class HtmlParser {
 		AfterAfterFrameset
 	}
 
-	interface ITagToken extends IToken {
-		public Attribute addAttribute(char ch);
-		public Attribute addAttribute(int ch);
-		public void append(int ch);
-		public void appendChar(char ch);
-		boolean checkAttributeName();
-		public String getName();
-		public boolean isSelfClosing();
-		public void setSelfClosing(boolean selfClosing);
-	}
 	interface IToken {
 		public int getType();
 	}
@@ -257,7 +248,7 @@ final class HtmlParser {
 			builder.append(string);
 		}
 	}
-	static abstract class TagToken implements ITagToken {
+	static abstract class TagToken implements IToken {
 
 		protected StringBuilder builder;
 		List<Attribute> attributes=null;
@@ -281,7 +272,7 @@ final class HtmlParser {
 			return !selfClosing || selfClosingAck;
 		}
 
-		@Override public Attribute addAttribute(char ch){
+		public Attribute addAttribute(char ch){
 			if(attributes==null){
 				attributes=new ArrayList<Attribute>();
 			}
@@ -290,7 +281,7 @@ final class HtmlParser {
 			return a;
 		}
 
-		@Override public Attribute addAttribute(int ch){
+		public Attribute addAttribute(int ch){
 			if(attributes==null){
 				attributes=new ArrayList<Attribute>();
 			}
@@ -299,7 +290,6 @@ final class HtmlParser {
 			return a;
 		}
 
-		@Override
 		public void append(int ch) {
 			if(ch<0x10000){
 				builder.append((char)ch);
@@ -312,12 +302,11 @@ final class HtmlParser {
 			}
 		}
 
-		@Override
 		public void appendChar(char ch) {
 			builder.append(ch);
 		}
 
-		@Override public boolean checkAttributeName(){
+		public boolean checkAttributeName(){
 			if(attributes==null)return true;
 			int size=attributes.size();
 			if(size>=2){
@@ -365,13 +354,11 @@ final class HtmlParser {
 				return attributes;
 		}
 
-		@Override
 		public String getName(){
 			return builder.toString();
 		}
 		@Override
 		public abstract int getType();
-		@Override
 		public boolean isSelfClosing() {
 			return selfClosing;
 		}
@@ -399,7 +386,6 @@ final class HtmlParser {
 			}
 		}
 
-		@Override
 		public void setSelfClosing(boolean selfClosing) {
 			this.selfClosing = selfClosing;
 		}
@@ -582,10 +568,10 @@ final class HtmlParser {
 	private DocTypeToken docTypeToken;
 	private final List<Element> integrationElements=new ArrayList<Element>();
 	private final List<IToken> tokens=new ArrayList<IToken>();
-	private ITagToken lastStartTag=null;
+	private TagToken lastStartTag=null;
 	private Html5Decoder decoder=null;
-	private ITagToken currentEndTag=null;
-	private ITagToken currentTag=null;
+	private TagToken currentEndTag=null;
+	private TagToken currentTag=null;
 	private Attribute currentAttribute=null;
 	private int bogusCommentCharacter=0;
 	private final IntList tempBuffer=new IntList();
@@ -1147,7 +1133,8 @@ final class HtmlParser {
 					if(doctypePublicLC==null) {
 						doctypePublicLC=StringUtility.toLowerCaseAscii(doctypePublic);
 					}
-					if("http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd".equals(doctypeSystem.toLowerCase()) ||
+					if("http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd".equals(
+							StringUtility.toLowerCaseAscii(doctypeSystem)) ||
 							(!hasSystemId && doctypePublicLC.startsWith("-//w3c//dtd html 4.01 frameset//")) ||
 							(!hasSystemId && doctypePublicLC.startsWith("-//w3c//dtd html 4.01 transitional//"))){
 						document.setMode(DocumentMode.QuirksMode);
@@ -1155,7 +1142,7 @@ final class HtmlParser {
 				}
 				if(document.getMode()!=DocumentMode.QuirksMode){
 					if(doctypePublicLC==null) {
-						doctypePublicLC=doctypePublic.toLowerCase();
+						doctypePublicLC=StringUtility.toLowerCaseAscii(doctypePublic);
 					}
 					if(doctypePublicLC.startsWith("-//w3c//dtd xhtml 1.0 frameset//") ||
 							doctypePublicLC.startsWith("-//w3c//dtd xhtml 1.0 transitional//") ||
@@ -1199,7 +1186,7 @@ final class HtmlParser {
 					return true;
 				}
 			} else if((token&TOKEN_TYPE_MASK)==TOKEN_END_TAG){
-				ITagToken tag=(ITagToken)getToken(token);
+				TagToken tag=(TagToken)getToken(token);
 				String name=tag.getName();
 				if(!"html".equals(name) && !"br".equals(name) &&
 						!"head".equals(name) && !"body".equals(name)){
@@ -1241,7 +1228,7 @@ final class HtmlParser {
 					return true;
 				}
 			} else if((token&TOKEN_TYPE_MASK)==TOKEN_END_TAG){
-				ITagToken tag=(ITagToken)getToken(token);
+				TagToken tag=(TagToken)getToken(token);
 				String name=tag.getName();
 				if("head".equals(name) ||
 						"br".equals(name) ||
@@ -1355,7 +1342,7 @@ final class HtmlParser {
 					return applyInsertionMode(token,null);
 				}
 			} else if((token&TOKEN_TYPE_MASK)==TOKEN_END_TAG){
-				ITagToken tag=(ITagToken)getToken(token);
+				TagToken tag=(TagToken)getToken(token);
 				String name=tag.getName();
 				if("head".equals(name)){
 					openElements.remove(openElements.size()-1);
@@ -4479,12 +4466,12 @@ final class HtmlParser {
 				} else if(c11==0x2F) {
 					state=TokenizerState.EndTagOpen;
 				} else if(c11>='A' && c11<='Z'){
-					ITagToken token=new StartTagToken((char) (c11+0x20));
+					TagToken token=new StartTagToken((char) (c11+0x20));
 					currentTag=token;
 					state=TokenizerState.TagName;
 				}
 				else if(c11>='a' && c11<='z'){
-					ITagToken token=new StartTagToken((char) (c11));
+					TagToken token=new StartTagToken((char) (c11));
 					currentTag=token;
 					state=TokenizerState.TagName;
 				}
@@ -4505,13 +4492,13 @@ final class HtmlParser {
 			case EndTagOpen:{
 				int ch=stream.read();
 				if(ch>='A' && ch<='Z'){
-					ITagToken token=new EndTagToken((char) (ch+0x20));
+					TagToken token=new EndTagToken((char) (ch+0x20));
 					currentEndTag=token;
 					currentTag=token;
 					state=TokenizerState.TagName;
 				}
 				else if(ch>='a' && ch<='z'){
-					ITagToken token=new EndTagToken((char) (ch));
+					TagToken token=new EndTagToken((char) (ch));
 					currentEndTag=token;
 					currentTag=token;
 					state=TokenizerState.TagName;
@@ -4538,7 +4525,7 @@ final class HtmlParser {
 				stream.markToEnd();
 				int ch=stream.read();
 				if(ch>='A' && ch<='Z'){
-					ITagToken token=new EndTagToken((char) (ch+0x20));
+					TagToken token=new EndTagToken((char) (ch+0x20));
 					tempBuffer.append(ch);
 					currentEndTag=token;
 					currentTag=token;
@@ -4547,7 +4534,7 @@ final class HtmlParser {
 								TokenizerState.RawTextEndTagName;
 				}
 				else if(ch>='a' && ch<='z'){
-					ITagToken token=new EndTagToken((char) (ch));
+					TagToken token=new EndTagToken((char) (ch));
 					tempBuffer.append(ch);
 					currentEndTag=token;
 					currentTag=token;
@@ -5512,7 +5499,7 @@ final class HtmlParser {
 		if(currentTag.getType()==TOKEN_START_TAG) {
 			lastStartTag=currentTag;
 		} else {
-			if(((TagToken)currentTag).getAttributes().size()>0 ||
+			if(currentTag.getAttributes().size()>0 ||
 					currentTag.isSelfClosing()){
 				error=true;
 			}

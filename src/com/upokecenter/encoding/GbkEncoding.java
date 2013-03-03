@@ -3,7 +3,6 @@ package com.upokecenter.encoding;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.UnmappableCharacterException;
 
 final class GbkEncoding implements ITextEncoder, ITextDecoder {
 
@@ -270,7 +269,7 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
 	int gbk3=0;
 
 	@Override
-	public int decode(InputStream stream, int[] buffer, int offset, int length)
+	public int decode(InputStream stream, int[] buffer, int offset, int length, IEncodingError error)
 			throws IOException {
 		if(stream==null || buffer==null || offset<0 || length<0 ||
 				offset+length>buffer.length)
@@ -281,9 +280,10 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
 			if(b<0 && (gbk1|gbk2|gbk3)==0)
 				return count;
 			else if(b<0){
-				buffer[offset++]=(0xFFFD);
-				count++;
-				length--;
+				int o=error.emitDecoderError(buffer, offset, length);
+				offset+=o;
+				count+=o;
+				length-=o;
 				break;
 			}
 			if(gbk3!=0){
@@ -295,9 +295,11 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
 				gbk1=gbk2=gbk3=0;
 				if(cp==0){
 					stream.reset(); // 'decrease the byte pointer by three'
-					buffer[offset++]=(0xFFFD);
-					count++;
-					length--;
+					int o=error.emitDecoderError(buffer, offset, length);
+					offset+=o;
+					count+=o;
+					length-=o;
+
 				} else {
 					buffer[offset++]=(cp);
 					count++;
@@ -311,9 +313,11 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
 				} else {
 					gbk1=gbk2=0;
 					stream.reset(); // 'decrease the byte pointer by two'
-					buffer[offset++]=(0xFFFD);
-					count++;
-					length--;
+					int o=error.emitDecoderError(buffer, offset, length);
+					offset+=o;
+					count+=o;
+					length-=o;
+
 				}
 			}
 			if(gbk1!=0){
@@ -333,9 +337,11 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
 						stream.reset(); // 'decrease byte pointer by one'
 					}
 					if(cp<=0){
-						buffer[offset++]=(0xFFFD);
-						count++;
-						length--;
+						int o=error.emitDecoderError(buffer, offset, length);
+						offset+=o;
+						count+=o;
+						length-=o;
+
 					} else {
 						buffer[offset++]=(cp);
 						count++;
@@ -356,9 +362,11 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
 				stream.mark(4);
 				gbk1=b;
 			} else {
-				buffer[offset++]=(0xFFFD);
-				count++;
-				length--;
+				int o=error.emitDecoderError(buffer, offset, length);
+				offset+=o;
+				count+=o;
+				length-=o;
+
 			}
 		}
 		return (count==0) ? -1 : count;
@@ -367,21 +375,29 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
 
 	@Override
 	public int decode(InputStream stream) throws IOException {
+		return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+
+	@Override
+	public int decode(InputStream stream, IEncodingError error) throws IOException {
 		int[] value=new int[1];
-		int c=decode(stream,value,0,1);
+		int c=decode(stream,value,0,1, error);
 		if(c<=0)return -1;
 		return value[0];
 	}
 	@Override
-	public void encode(OutputStream stream, int[] array, int offset, int length)
+	public void encode(OutputStream stream, int[] array, int offset, int length, IEncodingError error)
 			throws IOException {
 		if(stream==null || array==null)throw new IllegalArgumentException();
 		if(offset<0 || length<0 || offset+length>array.length)
 			throw new IndexOutOfBoundsException();
 		for(int i=0;i<array.length;i++){
 			int cp=array[offset+i];
-			if(cp<0 || cp>=0x110000)
-				throw new UnmappableCharacterException(1);
+			if(cp<0 || cp>=0x110000){
+				error.emitEncoderError(stream);
+				continue;
+			}
 			if(cp<0x7F){
 				stream.write((byte)cp);
 			} else {
@@ -394,11 +410,15 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
 					stream.write(trail);
 					continue;
 				}
-				if(!gb18030)
-					throw new UnmappableCharacterException(1);
+				if(!gb18030){
+					error.emitEncoderError(stream);
+					continue;
+				}
 				pointer=GB18030Pointer(cp);
-				if(pointer<0)
-					throw new UnmappableCharacterException(1);
+				if(pointer<0){
+					error.emitEncoderError(stream);
+					continue;
+				}
 				int b1=pointer/10/126/10;
 				pointer-=b1*10*126*10;
 				int b2=pointer/10/126;
@@ -411,6 +431,20 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
 				stream.write(b4+0x30);
 			}
 		}
+	}
+
+
+	@Override
+	public int decode(InputStream stream, int[] buffer, int offset, int length)
+			throws IOException {
+		return decode(stream,buffer,offset,length,TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+
+	@Override
+	public void encode(OutputStream stream, int[] buffer, int offset, int length)
+			throws IOException {
+		encode(stream,buffer,offset,length,TextEncoding.ENCODING_ERROR_THROW);
 	}
 
 

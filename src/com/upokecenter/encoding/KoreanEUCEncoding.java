@@ -2,15 +2,19 @@ package com.upokecenter.encoding;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.UnmappableCharacterException;
 
 final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 
 
 	@Override
 	public int decode(InputStream stream) throws IOException {
+		return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public int decode(InputStream stream, IEncodingError error) throws IOException {
 		int[] value=new int[1];
-		int c=decode(stream,value,0,1);
+		int c=decode(stream,value,0,1, error);
 		if(c<=0)return -1;
 		return value[0];
 	}
@@ -19,6 +23,12 @@ final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 
 	@Override
 	public int decode(InputStream stream, int[] buffer, int offset, int length)
+			throws IOException {
+		return decode(stream, buffer, offset, length, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public int decode(InputStream stream, int[] buffer, int offset, int length, IEncodingError error)
 			throws IOException {
 		if(stream==null || buffer==null || offset<0 || length<0 ||
 				offset+length>buffer.length)
@@ -30,9 +40,11 @@ final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 			if(b<0 && lead==0){
 				break;
 			} else if(b<0){
-				buffer[offset++]=(0xFFFD);
-				count++;
-				length--;
+				int o=error.emitDecoderError(buffer, offset, length);
+				offset+=o;
+				count+=o;
+				length-=o;
+
 				break;
 			}
 			if(lead!=0){
@@ -58,9 +70,11 @@ final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 					stream.reset();
 				}
 				if(cp<=0){
-					buffer[offset++]=(0xFFFD);
-					count++;
-					length--;
+					int o=error.emitDecoderError(buffer, offset, length);
+					offset+=o;
+					count+=o;
+					length-=o;
+
 					continue;					
 				} else {
 					buffer[offset++]=cp;
@@ -80,9 +94,11 @@ final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 				stream.mark(2);
 				continue;
 			}
-			buffer[offset++]=0xFFFD;
-			count++;
-			length--;
+			int o=error.emitDecoderError(buffer, offset, length);
+			offset+=o;
+			count+=o;
+			length-=o;
+
 		}
 		return (count==0) ? -1 : count;
 	}
@@ -90,19 +106,29 @@ final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 	@Override
 	public void encode(OutputStream stream, int[] array, int offset, int length)
 			throws IOException {
+		encode(stream, array, offset, length, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public void encode(OutputStream stream, int[] array, int offset, int length, IEncodingError error)
+			throws IOException {
 		if(stream==null || array==null)throw new IllegalArgumentException();
 		if(offset<0 || length<0 || offset+length>array.length)
 			throw new IndexOutOfBoundsException();
 		for(int i=0;i<array.length;i++){
 			int cp=array[offset+i];
-			if(cp<0 || cp>=0x110000)
-				throw new UnmappableCharacterException(1);
+			if(cp<0 || cp>=0x110000){
+				error.emitEncoderError(stream);
+				continue;
+			}
 			if(cp<=0x7f){
 				stream.write(cp);
 			} else {
 				int pointer=Korean.codePointToIndex(cp);
-				if(pointer<0)
-					throw new UnmappableCharacterException(1);
+				if(pointer<0){
+					error.emitEncoderError(stream);
+					continue;
+				}
 				if(pointer<(26+26+126)*(0xc7-0x81)){
 					int lead=pointer/(26+26+126)+0x81;
 					int trail=pointer%(26+26+126);

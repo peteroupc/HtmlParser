@@ -3,7 +3,6 @@ package com.upokecenter.encoding;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.UnmappableCharacterException;
 
 final class HzGb2312Encoding implements ITextEncoder, ITextDecoder {
 
@@ -14,13 +13,22 @@ final class HzGb2312Encoding implements ITextEncoder, ITextDecoder {
 
 	@Override
 	public int decode(InputStream stream) throws IOException {
+		return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
+	}
+	@Override
+	public int decode(InputStream stream, IEncodingError error) throws IOException {
 		int[] value=new int[1];
-		int c=decode(stream,value,0,1);
+		int c=decode(stream,value,0,1, error);
 		if(c<=0)return -1;
 		return value[0];
 	}
 	@Override
 	public int decode(InputStream stream, int[] buffer, int offset, int length)
+			throws IOException {
+		return decode(stream, buffer, offset, length, TextEncoding.ENCODING_ERROR_THROW);
+	}
+	@Override
+	public int decode(InputStream stream, int[] buffer, int offset, int length, IEncodingError error)
 			throws IOException {
 		if(stream==null || buffer==null || offset<0 || length<0 ||
 				offset+length>buffer.length)
@@ -33,9 +41,11 @@ final class HzGb2312Encoding implements ITextEncoder, ITextDecoder {
 				break;
 			} else if(b<0){
 				lead=0;
-				buffer[offset++]=(0xFFFD);
-				length--;
-				count++;
+				int o=error.emitDecoderError(buffer, offset, length);
+				offset+=o;
+				count+=o;
+				length-=o;
+
 				break;
 			}
 			if(lead==0x7e){
@@ -55,9 +65,11 @@ final class HzGb2312Encoding implements ITextEncoder, ITextDecoder {
 					continue;
 				} else {
 					stream.reset();
-					buffer[offset++]=(0xFFFD);
-					length--;
-					count++;
+					int o=error.emitDecoderError(buffer, offset, length);
+					offset+=o;
+					count+=o;
+					length-=o;
+
 					continue;
 				}
 			}
@@ -73,9 +85,11 @@ final class HzGb2312Encoding implements ITextEncoder, ITextDecoder {
 					flag=false;
 				}
 				if(cp<0){
-					buffer[offset++]=(0xFFFD);
-					length--;
-					count++;
+					int o=error.emitDecoderError(buffer, offset, length);
+					offset+=o;
+					count+=o;
+					length-=o;
+
 					continue;					
 				} else {
 					buffer[offset++]=cp;
@@ -97,9 +111,11 @@ final class HzGb2312Encoding implements ITextEncoder, ITextDecoder {
 				if(b==0x0a){
 					flag=false;
 				}
-				buffer[offset++]=(0xFFFD);
-				length--;
-				count++;
+				int o=error.emitDecoderError(buffer, offset, length);
+				offset+=o;
+				count+=o;
+				length-=o;
+
 				continue;
 			}
 			if(b<=0x7f){
@@ -108,9 +124,11 @@ final class HzGb2312Encoding implements ITextEncoder, ITextDecoder {
 				count++;
 				continue;					
 			} else {
-				buffer[offset++]=(0xFFFD);
-				length--;
-				count++;
+				int o=error.emitDecoderError(buffer, offset, length);
+				offset+=o;
+				count+=o;
+				length-=o;
+
 				continue;
 			}
 		}
@@ -120,13 +138,20 @@ final class HzGb2312Encoding implements ITextEncoder, ITextDecoder {
 	@Override
 	public void encode(OutputStream stream, int[] array, int offset, int length)
 			throws IOException {
+		encode(stream, array, offset, length, TextEncoding.ENCODING_ERROR_THROW);
+	}
+	@Override
+	public void encode(OutputStream stream, int[] array, int offset, int length, IEncodingError error)
+			throws IOException {
 		if(stream==null || array==null)throw new IllegalArgumentException();
 		if(offset<0 || length<0 || offset+length>array.length)
 			throw new IndexOutOfBoundsException();
 		for(int i=0;i<array.length;i++){
 			int cp=array[offset+i];
-			if(cp<0 || cp>=0x110000)
-				throw new UnmappableCharacterException(1);
+			if(cp<0 || cp>=0x110000){
+				error.emitEncoderError(stream);
+				continue;
+			}
 			if(cp<=0x7F && flag){
 				flag=false;
 				stream.write(0x7E);
@@ -141,8 +166,10 @@ final class HzGb2312Encoding implements ITextEncoder, ITextDecoder {
 				break;
 			}
 			int pointer=GBK.codePointToIndex(cp);
-			if(pointer<0)
-				throw new UnmappableCharacterException(1);
+			if(pointer<0){
+				error.emitEncoderError(stream);
+				continue;
+			}
 			if(!flag){
 				flag=true;
 				stream.write(0x7E);
@@ -150,8 +177,10 @@ final class HzGb2312Encoding implements ITextEncoder, ITextDecoder {
 			}
 			int lead=pointer/190+1;
 			int trail=pointer%190-0x3f;
-			if(lead<0x21 || trail<0x21)
-				throw new UnmappableCharacterException(1);
+			if(lead<0x21 || trail<0x21){
+				error.emitEncoderError(stream);
+				continue;
+			}
 			stream.write(lead);
 			stream.write(trail);
 		}

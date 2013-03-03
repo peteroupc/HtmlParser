@@ -3,7 +3,6 @@ package com.upokecenter.encoding;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.UnmappableCharacterException;
 
 final class Utf16Encoding implements ITextEncoder, ITextDecoder {
 
@@ -18,14 +17,26 @@ final class Utf16Encoding implements ITextEncoder, ITextDecoder {
 
 	@Override
 	public int decode(InputStream stream) throws IOException {
+		return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public int decode(InputStream stream, IEncodingError error) throws IOException {
 		int[] value=new int[1];
-		int c=decode(stream,value,0,1);
+		int c=decode(stream,value,0,1,error);
 		if(c<=0)return -1;
 		return value[0];
 	}
 
 	@Override
 	public int decode(InputStream stream, int[] buffer, int offset, int length)
+			throws IOException {
+		return decode(stream, buffer, offset, length, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+
+	@Override
+	public int decode(InputStream stream, int[] buffer, int offset, int length, IEncodingError error)
 			throws IOException {
 		if(stream==null || buffer==null || offset<0 || length<0 ||
 				offset+length>buffer.length)
@@ -37,9 +48,10 @@ final class Utf16Encoding implements ITextEncoder, ITextDecoder {
 			if(b<0 && (leadByte>=0 || leadSurrogate>=0)){
 				leadByte=-1;
 				leadSurrogate=-1;
-				buffer[offset++]=(0xFFFD);
-				count++;
-				length--;
+				int o=error.emitDecoderError(buffer, offset, length);
+				offset+=o;
+				count+=o;
+				length-=o;
 				break;
 			} else if(b<0){
 				break;
@@ -60,18 +72,20 @@ final class Utf16Encoding implements ITextEncoder, ITextDecoder {
 					length--;					
 				} else {
 					stream.reset();
-					buffer[offset++]=(0xFFFD);
-					count++;
-					length--;					
+					int o=error.emitDecoderError(buffer, offset, length);
+					offset+=o;
+					count+=o;
+					length-=o;
 				}
 			} else if(cp>=0xD800 && cp<=0xDBFF){
 				leadSurrogate=cp;
 				stream.mark(4);
 				continue;
 			} else if(cp>=0xDC00 && cp<=0xDFFF){
-				buffer[offset++]=(0xFFFD);
-				count++;
-				length--;									
+				int o=error.emitDecoderError(buffer, offset, length);
+				offset+=o;
+				count+=o;
+				length-=o;
 			} else {
 				buffer[offset++]=(cp);
 				count++;
@@ -84,13 +98,22 @@ final class Utf16Encoding implements ITextEncoder, ITextDecoder {
 	@Override
 	public void encode(OutputStream stream, int[] array, int offset, int length)
 			throws IOException {
+		encode(stream, array, offset, length, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+
+	@Override
+	public void encode(OutputStream stream, int[] array, int offset, int length, IEncodingError error)
+			throws IOException {
 		if(stream==null || array==null)throw new IllegalArgumentException();
 		if(offset<0 || length<0 || offset+length>array.length)
 			throw new IndexOutOfBoundsException();
 		for(int i=0;i<array.length;i++){
 			int cp=array[offset+i];
-			if(cp<0 || cp>=0x110000 || (cp>=0xd800 && cp<=0xdfff))
-				throw new UnmappableCharacterException(1);
+			if(cp<0 || cp>=0x110000 || (cp>=0xd800 && cp<=0xdfff)){
+				error.emitEncoderError(stream);
+				continue;
+			}
 			if(cp<=0xFFFF){
 				int b1=(cp>>8)&0xFF;
 				int b2=(cp)&0xFF;

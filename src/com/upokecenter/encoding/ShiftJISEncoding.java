@@ -2,7 +2,6 @@ package com.upokecenter.encoding;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.UnmappableCharacterException;
 
 final class ShiftJISEncoding implements ITextEncoder, ITextDecoder {
 
@@ -11,14 +10,25 @@ final class ShiftJISEncoding implements ITextEncoder, ITextDecoder {
 
 	@Override
 	public int decode(InputStream stream) throws IOException {
+		return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public int decode(InputStream stream, IEncodingError error) throws IOException {
 		int[] value=new int[1];
-		int c=decode(stream,value,0,1);
+		int c=decode(stream,value,0,1, error);
 		if(c<=0)return -1;
 		return value[0];
 	}
 
 	@Override
 	public int decode(InputStream stream, int[] buffer, int offset, int length)
+			throws IOException {
+		return decode(stream, buffer, offset, length, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public int decode(InputStream stream, int[] buffer, int offset, int length, IEncodingError error)
 			throws IOException {
 		if(stream==null || buffer==null || offset<0 || length<0 ||
 				offset+length>buffer.length)
@@ -31,9 +41,10 @@ final class ShiftJISEncoding implements ITextEncoder, ITextDecoder {
 				break;
 			} else if(b<0){
 				lead=0;
-				buffer[offset++]=0xFFFD;
-				count++;
-				length--;
+				int o=error.emitDecoderError(buffer, offset, length);
+				offset+=o;
+				count+=o;
+				length-=o;
 				continue;
 			}
 			if(lead!=0){
@@ -51,9 +62,10 @@ final class ShiftJISEncoding implements ITextEncoder, ITextDecoder {
 					stream.reset();
 				}
 				if(cp<=0){
-					buffer[offset++]=0xFFFD;
-					count++;
-					length--;
+					int o=error.emitDecoderError(buffer, offset, length);
+					offset+=o;
+					count+=o;
+					length-=o;
 				} else {
 					buffer[offset++]=cp;
 					count++;
@@ -81,14 +93,48 @@ final class ShiftJISEncoding implements ITextEncoder, ITextDecoder {
 	@Override
 	public void encode(OutputStream stream, int[] array, int offset, int length)
 			throws IOException {
+		encode(stream, array, offset, length, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public void encode(OutputStream stream, int[] array, int offset, int length, IEncodingError error)
+			throws IOException {
 		if(stream==null || array==null)throw new IllegalArgumentException();
 		if(offset<0 || length<0 || offset+length>array.length)
 			throw new IndexOutOfBoundsException();
 		for(int i=0;i<array.length;i++){
 			int cp=array[offset+i];
-			if(cp<0 || cp>=0x110000)
-				throw new UnmappableCharacterException(1);
-
+			if(cp<0 || cp>=0x110000){
+				error.emitEncoderError(stream);
+				continue;
+			}
+			if(cp<0x80){
+				stream.write(cp);
+				continue;
+			}
+			if(cp==0xa5){
+				stream.write(0x5c);
+				continue;
+			}
+			if(cp==0x203e){
+				stream.write(0x7e);
+				continue;
+			}
+			if(cp>=0xff61 && cp<=0xff9f){
+				stream.write(cp-0xff61+0xa1);
+				continue;
+			}
+			int pointer=JIS0208.codePointToIndex(cp);
+			if(pointer<=0){
+				error.emitEncoderError(stream);
+				continue;
+			}
+			int lead=pointer/188;
+			lead+=(lead<0x1f) ? 0x81 : 0xc1;
+			int trail=pointer%188;
+			trail+=(lead<0x3f) ? 0x40 : 0x41;
+			stream.write(lead);
+			stream.write(trail);
 		}
 	}
 
