@@ -3,6 +3,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import com.upokecenter.util.DebugUtility;
+
 final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 
 
@@ -44,7 +46,6 @@ final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 				offset+=o;
 				count+=o;
 				length-=o;
-
 				break;
 			}
 			if(lead!=0){
@@ -57,7 +58,7 @@ final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 						pointer=temp+b-0x41;
 					} else if(b>=0x61 && b<=0x7a) {
 						pointer=temp+26+b-0x61;
-					} else if(b<=0x81 && b<=0xfe) {
+					} else if(b>=0x81 && b<=0xfe) {
 						pointer=temp+26+26+b-0x81;
 					}
 				}
@@ -98,7 +99,6 @@ final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 			offset+=o;
 			count+=o;
 			length-=o;
-
 		}
 		return (count==0) ? -1 : count;
 	}

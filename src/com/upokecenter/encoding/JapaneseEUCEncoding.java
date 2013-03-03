@@ -31,7 +31,6 @@ final class JapaneseEUCEncoding implements ITextEncoder, ITextDecoder {
 				offset+=o;
 				count+=o;
 				length-=o;
-
 				break;
 			}
 			if(eucjp2!=0){
@@ -50,11 +49,12 @@ final class JapaneseEUCEncoding implements ITextEncoder, ITextDecoder {
 					offset+=o;
 					count+=o;
 					length-=o;
-
+					continue;
 				} else {
 					buffer[offset++]=(cp);
 					count++;
 					length--;
+					continue;
 				}
 			}
 			if(eucjp1==0x8E && b>=0xA1 && b<=0xDF){
@@ -63,6 +63,7 @@ final class JapaneseEUCEncoding implements ITextEncoder, ITextDecoder {
 				count++;
 				length--;				
 				//DebugUtility.log("return 0xFF61 cp: %04X",0xFF61+b-0xA1);
+				continue;
 			}
 			if(eucjp1==0x8F && b>=0xA1 && b<=0xFE){
 				eucjp1=0;
@@ -87,17 +88,19 @@ final class JapaneseEUCEncoding implements ITextEncoder, ITextDecoder {
 					offset+=o;
 					count+=o;
 					length-=o;
-
+					continue;
 				} else {
 					buffer[offset++]=(cp);
 					count++;
 					length--;				
+					continue;
 				}				
 			}
 			if(b<0x80){
 				buffer[offset++]=(b);
 				count++;
-				length--;				
+				length--;
+				continue;
 			} else if(b==0x8E || b==0x8F || (b>=0xA1 && b<=0xFE)){
 				eucjp1=b;
 				stream.mark(4);
@@ -107,7 +110,7 @@ final class JapaneseEUCEncoding implements ITextEncoder, ITextDecoder {
 				offset+=o;
 				count+=o;
 				length-=o;
-
+				continue;
 			}
 		}
 		return (count==0) ? -1 : count;

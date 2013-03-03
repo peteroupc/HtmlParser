@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import com.upokecenter.util.DebugUtility;
+
 final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 
 	@Override
@@ -47,12 +49,13 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 					buffer[offset++]=(b);
 					length--;
 					count++;
+					continue;
 				} else {
 					int o=error.emitDecoderError(buffer, offset, length);
 					offset+=o;
 					count+=o;
 					length-=o;
-
+					continue;
 				}
 			} else if(state==2){ // escape start state
 				if(b==0x24 || b==0x28){
@@ -66,12 +69,13 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 					offset+=o;
 					count+=o;
 					length-=o;
-
+					continue;
 				}
 			} else if(state==3){ // escape middle state
 				if(lead==0x24 && (b==0x40 || b==0x42)){
 					jis0212=false;
 					state=5; // lead state
+					continue;
 				} else if(lead==0x24 && b==0x28){
 					state=4; // escape final state
 					continue;
@@ -88,7 +92,7 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 					offset+=o;
 					count+=o;
 					length-=o;
-
+					continue;
 				}
 			} else if(state==4){ // final state
 				if(b==0x44){
@@ -102,7 +106,7 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 					offset+=o;
 					count+=o;
 					length-=o;
-
+					continue;
 				}
 			} else if(state==5){ // lead state
 				if(b==0x0A){
@@ -110,6 +114,7 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 					buffer[offset++]=0x0a;
 					length--;
 					count++;
+					continue;
 				} else if(b==0x1B){
 					state=1; // escape start state
 					continue;
@@ -127,7 +132,7 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 					offset+=o;
 					count+=o;
 					length-=o;
-
+					continue;
 				} else {
 					int cp=-1;
 					int index=(lead-0x21)*94+b-0x21;
@@ -144,11 +149,12 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 						offset+=o;
 						count+=o;
 						length-=o;
-
+						continue;
 					} else {
 						buffer[offset++]=(cp);
 						length--;
 						count++;											
+						continue;
 					}
 				}
 			} else { // Katakana state
@@ -159,6 +165,7 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 					buffer[offset++]=(0xFF61+b-0x21);
 					length--;
 					count++;
+					continue;
 				} else if(b<0){
 					break;
 				} else {
@@ -166,10 +173,9 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 					offset+=o;
 					count+=o;
 					length-=o;
-
+					continue;
 				}
 			}
-			break;
 		}
 		return (count==0) ? -1 : count;
 	}

@@ -34,7 +34,8 @@ public final class TextEncoding {
 	 * 
 	 * An encoding error handler that replaces ill-formed
 	 * bytes with 0xFFFD replacement characters, and replaces
-	 * ill-formed Unicode characters with the byte 0x3F.
+	 * values that are not Unicode characters or Unicode characters
+	 * that can't be converted to bytes with the byte 0x3F.
 	 * 
 	 */
 	public static final IEncodingError ENCODING_ERROR_REPLACE = new IEncodingError(){
@@ -50,8 +51,8 @@ public final class TextEncoding {
 	};
 	private TextEncoding(){};
 
-	static Map<String,String> encodingMap=new HashMap<String,String>();
-	static Map<String,ITextEncoder> indexEncodingMap=new HashMap<String,ITextEncoder>();
+	private static Map<String,String> encodingMap=new HashMap<String,String>();
+	private static Map<String,ITextEncoder> indexEncodingMap=new HashMap<String,ITextEncoder>();
 	static {
 		encodingMap.put("unicode-1-1-utf-8","utf-8");
 		encodingMap.put("utf-8","utf-8");
@@ -271,7 +272,7 @@ public final class TextEncoding {
 		encodingMap.put("x-user-defined","x-user-defined");
 	}
 
-	static Object syncRoot=new Object();
+	private static Object syncRoot=new Object();
 
 	/**
 	 * Converts a name to a supported character encoding

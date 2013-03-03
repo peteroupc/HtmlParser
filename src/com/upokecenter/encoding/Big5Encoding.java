@@ -85,16 +85,19 @@ final class Big5Encoding implements ITextEncoder, ITextDecoder {
 					offset+=o;
 					count+=o;
 					length-=o;
+					continue;
 				} else {
 					buffer[offset++]=(cp);
 					count++;
 					length--;
+					continue;
 				}
 			}
 			if(b<0x7F){
 				buffer[offset++]=(b);
 				count++;
 				length--;
+				continue;
 			} else if(b>=0x81 && b<=0xFE){
 				stream.mark(2);
 				lead=b;
@@ -104,6 +107,7 @@ final class Big5Encoding implements ITextEncoder, ITextDecoder {
 				offset+=o;
 				count+=o;
 				length-=o;
+				continue;
 			}
 		}
 		return count>0 ? count : -1;

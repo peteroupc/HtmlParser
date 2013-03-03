@@ -299,11 +299,12 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
 					offset+=o;
 					count+=o;
 					length-=o;
-
+					continue;
 				} else {
 					buffer[offset++]=(cp);
 					count++;
 					length--;
+					continue;
 				}
 			}
 			if(gbk2!=0){
@@ -317,7 +318,7 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
 					offset+=o;
 					count+=o;
 					length-=o;
-
+					continue;
 				}
 			}
 			if(gbk1!=0){
@@ -341,12 +342,12 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
 						offset+=o;
 						count+=o;
 						length-=o;
-
+						continue;
 					} else {
 						buffer[offset++]=(cp);
 						count++;
 						length--;
-
+						continue;
 					}
 				}
 			}
@@ -354,10 +355,12 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
 				buffer[offset++]=(b);
 				count++;
 				length--;
+				continue;
 			} else if(b==0x80){
 				buffer[offset++]=(0x20AC);
 				count++;
 				length--;
+				continue;
 			} else if(b<=0xFE){
 				stream.mark(4);
 				gbk1=b;
@@ -366,7 +369,7 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
 				offset+=o;
 				count+=o;
 				length-=o;
-
+				continue;
 			}
 		}
 		return (count==0) ? -1 : count;
