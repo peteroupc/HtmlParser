@@ -141,6 +141,7 @@ final class Big5Encoding implements ITextEncoder, ITextDecoder {
 				// "[a]void emitting Hong Kong Supplementary 
 				// Character Set extensions literally."
 				error.emitEncoderError(stream);
+				continue;
 			}
 			int trail=pointer%157;
 			if(trail<0x3f) {

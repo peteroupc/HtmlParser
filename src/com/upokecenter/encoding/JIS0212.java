@@ -45,7 +45,7 @@ final class JIS0212 {
 	public static int codePointToIndex(int codepoint){
 		if(codepoint<161 || codepoint>65374)return -1;
 		for(int i=0;i<indextable.length;i+=4){
-			if(indextable[i]>=codepoint && indextable[i+1]<=codepoint){
+			if(codepoint>=indextable[i] && codepoint<=indextable[i+1]){
 				int startindex=indextable[i+2];
 				int length=indextable[i+3];
 				for(int j=0;j<length;j++){

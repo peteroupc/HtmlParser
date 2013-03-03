@@ -3,8 +3,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import com.upokecenter.util.DebugUtility;
-
 final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 
 

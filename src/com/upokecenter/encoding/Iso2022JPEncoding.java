@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import com.upokecenter.util.DebugUtility;
-
 final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 
 	@Override

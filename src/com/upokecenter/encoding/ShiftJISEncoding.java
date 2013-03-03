@@ -125,14 +125,14 @@ final class ShiftJISEncoding implements ITextEncoder, ITextDecoder {
 				continue;
 			}
 			int pointer=JIS0208.codePointToIndex(cp);
-			if(pointer<=0){
+			if(pointer<0){
 				error.emitEncoderError(stream);
 				continue;
 			}
 			int lead=pointer/188;
 			lead+=(lead<0x1f) ? 0x81 : 0xc1;
 			int trail=pointer%188;
-			trail+=(lead<0x3f) ? 0x40 : 0x41;
+			trail+=(trail<0x3f) ? 0x40 : 0x41;
 			stream.write(lead);
 			stream.write(trail);
 		}

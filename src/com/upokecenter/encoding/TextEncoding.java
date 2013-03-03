@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+
 import com.upokecenter.util.StringUtility;
 
 public final class TextEncoding {
@@ -351,7 +352,7 @@ public final class TextEncoding {
 		Collections.sort(values);
 		return values.toArray(new String[]{});
 	}
-	
+
 	private static ITextEncoder setIndexEncoding(String name, ITextEncoder enc){
 		synchronized(syncRoot){
 			indexEncodingMap.put(name,enc);
