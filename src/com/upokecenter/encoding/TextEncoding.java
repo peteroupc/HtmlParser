@@ -13,6 +13,14 @@ import java.util.Map;
 
 import com.upokecenter.util.StringUtility;
 
+/**
+ * 
+ * Main class for an API that converts bytes to and from
+ * Unicode characters.
+ * 
+ * @author Peter
+ *
+ */
 public final class TextEncoding {
 	/**
 	 * 

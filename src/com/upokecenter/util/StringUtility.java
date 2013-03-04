@@ -53,6 +53,5 @@ public final class StringUtility {
 			}
 		}
 		return b.toString();
-
 	}
 }
