@@ -131,7 +131,7 @@ final class SingleByteEncoding implements ITextEncoder, ITextDecoder {
 			for(int j=0;j<count;j++){
 				int c=array[offset];
 				if(c<0 || c>maxValue){
-					error.emitEncoderError(stream);
+					error.emitEncoderError(stream, c);
 					continue;
 				}
 				else if(c<0x80){
@@ -141,7 +141,7 @@ final class SingleByteEncoding implements ITextEncoder, ITextDecoder {
 					buffer[j]=(byte)c;
 				} else {
 					if(c<minValue){
-						error.emitEncoderError(stream);
+						error.emitEncoderError(stream, c);
 						continue;
 					}
 					int pointer=-1;
@@ -156,7 +156,7 @@ final class SingleByteEncoding implements ITextEncoder, ITextDecoder {
 						}
 						buffer[j]=(byte)pointer;
 					} else {
-						error.emitEncoderError(stream);
+						error.emitEncoderError(stream, c);
 						continue;
 					}
 				}

@@ -105,7 +105,7 @@ final class ShiftJISEncoding implements ITextEncoder, ITextDecoder {
 		for(int i=0;i<array.length;i++){
 			int cp=array[offset+i];
 			if(cp<0 || cp>=0x110000){
-				error.emitEncoderError(stream);
+				error.emitEncoderError(stream, cp);
 				continue;
 			}
 			if(cp<0x80){
@@ -126,7 +126,7 @@ final class ShiftJISEncoding implements ITextEncoder, ITextDecoder {
 			}
 			int pointer=JIS0208.codePointToIndex(cp);
 			if(pointer<0){
-				error.emitEncoderError(stream);
+				error.emitEncoderError(stream, cp);
 				continue;
 			}
 			int lead=pointer/188;

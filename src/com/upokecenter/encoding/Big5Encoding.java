@@ -123,7 +123,7 @@ final class Big5Encoding implements ITextEncoder, ITextDecoder {
 		for(int i=0;i<buffer.length;i++){
 			int cp=buffer[offset+i];
 			if(cp<0 || cp>=0x110000){
-				error.emitEncoderError(stream);
+				error.emitEncoderError(stream, cp);
 				continue;
 			}
 			if(cp<=0x7F){
@@ -132,7 +132,7 @@ final class Big5Encoding implements ITextEncoder, ITextDecoder {
 			}
 			int pointer=Big5.codePointToIndex(cp);
 			if(pointer<0){
-				error.emitEncoderError(stream);
+				error.emitEncoderError(stream, cp);
 				continue;
 			}
 			int lead=pointer/157+0x81;
@@ -140,7 +140,7 @@ final class Big5Encoding implements ITextEncoder, ITextDecoder {
 				// NOTE: Encoding specification says to
 				// "[a]void emitting Hong Kong Supplementary 
 				// Character Set extensions literally."
-				error.emitEncoderError(stream);
+				error.emitEncoderError(stream, cp);
 				continue;
 			}
 			int trail=pointer%157;

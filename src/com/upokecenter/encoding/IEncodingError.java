@@ -35,9 +35,10 @@ public interface IEncodingError {
 	 * Handles an error when encoding Unicode characters into bytes.
 	 * 
 	 * @param stream a stream to write bytes
+	 * @param codePoint the code point that caused the encoder error
 	 * @throws IOException if the method decides to handle the 
 	 * error by throwing an IOException or a derived class, or
 	 * if another I/O error occurs.
 	 */
-	public void emitEncoderError(OutputStream stream) throws IOException;
+	public void emitEncoderError(OutputStream stream, int codePoint) throws IOException;
 }

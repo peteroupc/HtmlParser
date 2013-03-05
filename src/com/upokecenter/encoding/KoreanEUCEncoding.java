@@ -116,7 +116,7 @@ final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 		for(int i=0;i<array.length;i++){
 			int cp=array[offset+i];
 			if(cp<0 || cp>=0x110000){
-				error.emitEncoderError(stream);
+				error.emitEncoderError(stream, cp);
 				continue;
 			}
 			if(cp<=0x7f){
@@ -124,7 +124,7 @@ final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 			} else {
 				int pointer=Korean.codePointToIndex(cp);
 				if(pointer<0){
-					error.emitEncoderError(stream);
+					error.emitEncoderError(stream, cp);
 					continue;
 				}
 				if(pointer<(26+26+126)*(0xc7-0x81)){

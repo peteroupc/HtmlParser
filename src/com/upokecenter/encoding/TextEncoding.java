@@ -1,6 +1,7 @@
 package com.upokecenter.encoding;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.MalformedInputException;
 import java.nio.charset.UnmappableCharacterException;
@@ -34,7 +35,7 @@ public final class TextEncoding {
 			throw new MalformedInputException(1);
 		}
 		@Override
-		public void emitEncoderError(OutputStream stream) throws IOException {
+		public void emitEncoderError(OutputStream stream, int codePoint) throws IOException {
 			throw new UnmappableCharacterException(1);
 		}
 	};
@@ -42,7 +43,7 @@ public final class TextEncoding {
 	/**
 	 * 
 	 * An encoding error handler that replaces ill-formed
-	 * bytes with 0xFFFD replacement characters, and replaces
+	 * bytes with U+FFFD replacement characters, and replaces
 	 * values that are not Unicode characters or Unicode characters
 	 * that can't be converted to bytes with the byte 0x3F.
 	 * 
@@ -54,7 +55,7 @@ public final class TextEncoding {
 			return 1;
 		}
 		@Override
-		public void emitEncoderError(OutputStream stream) throws IOException {
+		public void emitEncoderError(OutputStream stream, int codePoint) throws IOException {
 			stream.write(0x3F);
 		}
 	};
@@ -314,6 +315,70 @@ public final class TextEncoding {
 			return encodingMap.get(encoding);
 		return null;
 	}
+	
+	/**
+	 * Utility method to decode an input byte stream into a string.
+	 * 
+	 * @param input
+	 * @param decoder
+	 * @param error
+	 * @return
+	 * @throws IOException
+	 */
+	public static String decodeString(
+			InputStream input, ITextDecoder decoder, IEncodingError error)
+	throws IOException {
+		if(decoder==null || input==null || error==null){
+			throw new IllegalArgumentException();
+		}
+		int[] data=new int[64];
+		StringBuilder builder=new StringBuilder();
+		while(true){
+			int count=decoder.decode(input,data,0,data.length,error);
+			if(count<0)break;
+			for(int i=0;i<count;i++){
+				builder.appendCodePoint(data[i]);
+			}
+		}
+		return builder.toString();
+	}
+	
+	/**
+	 * 
+	 * Utility method to write a string to an output byte stream. 
+	 * 
+	 * @param str String. If null, throws IllegalArgumentException.
+	 * Any unpaired surrogates in the string are kept intact in the
+	 * input to the encoder.
+	 * @param output
+	 * @param encoder Encoder for converting Unicode characters
+	 * to bytes
+	 * @param error Error handler called when a Unicode character
+	 * cannot be converted to bytes
+	 * @throws IOException if the error handler throws an exception
+	 * or another I/O error occurs
+	 */
+	public static void encodeString(
+			String str, OutputStream output, 
+			ITextEncoder encoder, IEncodingError error) throws IOException{
+		if(str==null || encoder==null || output==null || error==null){
+			throw new IllegalArgumentException();
+		}
+		int[] data=new int[1];
+		int length=str.length();
+		for(int i=0;i<length;i++){
+			int c=str.charAt(i);
+			if(c>=0xD800 && c<=0xDBFF && i+1<length &&
+					str.charAt(i+1)>=0xDC00 && str.charAt(i+1)<=0xDFFF){
+				// Get the Unicode code point for the surrogate pair
+				c=0x10000+(c-0xD800)*0x400+(str.charAt(i+1)-0xDC00);
+				i++;
+			}
+			data[0]=c;
+			encoder.encode(output,data,0,1,error);
+		}
+	}
+	
 	private static ITextEncoder getIndexEncoding(String name){
 		synchronized(syncRoot){
 			ITextEncoder encoder=indexEncodingMap.get(name);
@@ -443,7 +508,7 @@ public final class TextEncoding {
 		ITextEncoder encoder=getIndexEncoding(name);
 		if(encoder!=null)return (ITextDecoder)encoder;
 		if(name.equals("replacement"))
-			return null;
+			return new ReplacementDecoder();
 		if(name.equals("utf-8"))
 			return new Utf8Encoding();
 		if(name.equals("utf-16le"))

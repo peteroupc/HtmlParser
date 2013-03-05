@@ -53,14 +53,14 @@ final class XUserDefinedEncoding implements ITextEncoder, ITextDecoder {
 			for(int j=0;j<count;j++){
 				int c=array[offset++];
 				if(c<0 || c>=0x110000){
-					error.emitEncoderError(stream);
+					error.emitEncoderError(stream, c);
 					continue;
 				} else if(c<0x80){
 					buffer[j]=(byte)c;
 				} else if(c>=0xF780 && c<=0xF7FF){
 					buffer[j]=(byte)(c-0xF780+0x80);
 				} else {
-					error.emitEncoderError(stream);
+					error.emitEncoderError(stream, c);
 					continue;
 				}
 			}

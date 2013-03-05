@@ -398,7 +398,7 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
 		for(int i=0;i<array.length;i++){
 			int cp=array[offset+i];
 			if(cp<0 || cp>=0x110000){
-				error.emitEncoderError(stream);
+				error.emitEncoderError(stream, cp);
 				continue;
 			}
 			if(cp<0x7F){
@@ -414,12 +414,12 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
 					continue;
 				}
 				if(!gb18030){
-					error.emitEncoderError(stream);
+					error.emitEncoderError(stream, cp);
 					continue;
 				}
 				pointer=GB18030Pointer(cp);
 				if(pointer<0){
-					error.emitEncoderError(stream);
+					error.emitEncoderError(stream, cp);
 					continue;
 				}
 				int b1=pointer/10/126/10;

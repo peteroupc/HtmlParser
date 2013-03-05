@@ -193,7 +193,7 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 		for(int i=0;i<array.length;i++){
 			int cp=array[offset+i];
 			if(cp<0 || cp>=0x110000){
-				error.emitEncoderError(stream);
+				error.emitEncoderError(stream, cp);
 				continue;
 			}
 			if((cp<=0x7F || cp==0xa5 || cp==0x203e) && state!=0){
@@ -226,7 +226,7 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 			}
 			int pointer=JIS0208.codePointToIndex(cp);
 			if(pointer<0){
-				error.emitEncoderError(stream);
+				error.emitEncoderError(stream, cp);
 				continue;
 			}
 			if(state!=5){ // lead state

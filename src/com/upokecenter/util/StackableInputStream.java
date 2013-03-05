@@ -1,50 +1,46 @@
-package com.upokecenter.html;
+package com.upokecenter.util;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-
-import com.upokecenter.encoding.ITextDecoder;
-import com.upokecenter.encoding.TextEncoding;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 
- * Unicode character stream with more advanced
- * marking capabilities
+ * A character input stream where additional inputs can be stacked on
+ * top of it.  It supports advanced marking capabilities.
  * 
+ * @author Peter
+ *
  */
-
-final class Html5InputStream {
-
-	@Override
-	public String toString() {
-		return "Html5InputStream [pos=" + pos + ", endpos=" + endpos
-				+ ", haveMark=" + haveMark + ", buffer="
-				+ Arrays.toString(buffer) + "]";
-	}
+public final class StackableInputStream implements IMarkableCharacterInput {
 
 	int pos=0;
 	int endpos=0;
 	boolean haveMark=false;
 	int[] buffer=null;
-	InputStream input=null;
-	ITextDecoder decoder=null;
+	List<ICharacterInput> stack=new ArrayList<ICharacterInput>();
 
-	protected Html5InputStream(InputStream input, ITextDecoder decoder) {
-		this.input=input;
-		this.decoder=decoder;
+	public StackableInputStream(ICharacterInput source) {
+		this.stack.add(source);
 	}
 
+	@Override
 	public int getMarkPosition(){
 		return pos;
 	}
+	
+	public void pushInput(ICharacterInput input){
+		stack.add(input);
+	}
 
+	@Override
 	public void setMarkPosition(int pos) throws IOException{
 		if(!haveMark || pos<0 || pos>endpos)
 			throw new IOException();
 		this.pos=pos;
 	}
 
+	@Override
 	public int markIfNeeded(){
 		if(!haveMark){
 			markToEnd();
@@ -52,6 +48,7 @@ final class Html5InputStream {
 		return getMarkPosition();
 	}
 
+	@Override
 	public void markToEnd(){
 		if(buffer==null){
 			buffer=new int[16];
@@ -71,7 +68,43 @@ final class Html5InputStream {
 			haveMark=true;
 		}
 	}
+	
+	private int readInternal(int[] buf, int offset, int unitCount) throws IOException {
+		if(this.stack.size()==0)return -1;
+		if(unitCount==0)return 0;
+		int count=0;
+		while(this.stack.size()>0 && unitCount>0){
+			int index=this.stack.size()-1;
+			int c=this.stack.get(index).read(buf,offset,unitCount);
+			if(c<=0){
+				this.stack.remove(index);
+				continue;
+			}
+			count+=c;
+			unitCount-=c;
+			if(unitCount==0){
+				break;
+			}
+			this.stack.remove(index);
+		}
+		return count;
+	}
 
+	private int readInternal() throws IOException {
+		if(this.stack.size()==0)return -1;
+		while(this.stack.size()>0){
+			int index=this.stack.size()-1;
+			int c=this.stack.get(index).read();
+			if(c==-1){
+				this.stack.remove(index);
+				continue;
+			}
+			return c;
+		}
+		return -1;
+	}
+
+	@Override
 	public int read(int[] buf, int offset, int unitCount) throws IOException {
 		if(haveMark){
 			if(buf==null)throw new IllegalArgumentException();
@@ -87,7 +120,7 @@ final class Html5InputStream {
 			// End pos is smaller than buffer size, fill
 			// entire buffer if possible
 			if(endpos<buffer.length){
-				int count=decoder.decode(input,buffer,endpos,buffer.length-endpos, TextEncoding.ENCODING_ERROR_REPLACE);
+				int count=readInternal(buffer,endpos,buffer.length-endpos);
 				//DebugUtility.log("%s",this);
 				if(count>0) {
 					endpos+=count;
@@ -106,7 +139,7 @@ final class Html5InputStream {
 				System.arraycopy(buffer,0,newBuffer,0,buffer.length);
 				buffer=newBuffer;
 			}
-			int count=decoder.decode(input,buffer, endpos, Math.min(unitCount,buffer.length-endpos), TextEncoding.ENCODING_ERROR_REPLACE);
+			int count=readInternal(buffer, endpos, Math.min(unitCount,buffer.length-endpos));
 			if(count>0) {
 				endpos+=count;
 			}
@@ -122,9 +155,10 @@ final class Html5InputStream {
 			}
 			return (total==0) ? -1 : total;
 		} else
-			return decoder.decode(input, buf, offset, unitCount, TextEncoding.ENCODING_ERROR_REPLACE);			
+			return readInternal(buf, offset, unitCount);			
 	}
 
+	@Override
 	public int read() throws IOException{
 		if(haveMark){
 			// Read from buffer
@@ -134,7 +168,7 @@ final class Html5InputStream {
 			// End pos is smaller than buffer size, fill
 			// entire buffer if possible
 			if(endpos<buffer.length){
-				int count=decoder.decode(input,buffer,endpos,buffer.length-endpos, TextEncoding.ENCODING_ERROR_REPLACE);
+				int count=readInternal(buffer,endpos,buffer.length-endpos);
 				if(count>0) {
 					endpos+=count;
 				}
@@ -145,7 +179,7 @@ final class Html5InputStream {
 				return buffer[pos++];
 			//DebugUtility.log(this);
 			// No room, read next character and put it in buffer
-			int c=decoder.decode(input, TextEncoding.ENCODING_ERROR_REPLACE);
+			int c=readInternal();
 			if(pos>=buffer.length){
 				int[] newBuffer=new int[buffer.length*2];
 				System.arraycopy(buffer,0,newBuffer,0,buffer.length);
@@ -156,9 +190,10 @@ final class Html5InputStream {
 			endpos++;
 			return c;
 		} else
-			return decoder.decode(input, TextEncoding.ENCODING_ERROR_REPLACE);
+			return readInternal();
 	}
 
+	@Override
 	public void moveBack(int count) throws IOException {
 		if(haveMark && pos>=count){
 			pos-=count;

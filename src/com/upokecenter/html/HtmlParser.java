@@ -8,7 +8,9 @@ import java.util.List;
 
 import com.upokecenter.encoding.TextEncoding;
 import com.upokecenter.util.ConditionalBufferInputStream;
+import com.upokecenter.util.IMarkableCharacterInput;
 import com.upokecenter.util.IntList;
+import com.upokecenter.util.StackableInputStream;
 import com.upokecenter.util.StringUtility;
 
 final class HtmlParser {
@@ -558,7 +560,7 @@ final class HtmlParser {
 
 
 	private final ConditionalBufferInputStream inputStream;
-	private Html5InputStream stream=null;
+	private IMarkableCharacterInput stream=null;
 	private EncodingConfidence encoding=null;
 
 
@@ -633,7 +635,7 @@ final class HtmlParser {
 		encoding=CharsetSniffer.sniffEncoding(inputStream,null);
 		inputStream.rewind();
 		decoder=new Html5Decoder(TextEncoding.getDecoder(encoding.getEncoding()));
-		stream=new Html5InputStream(inputStream,decoder);
+		stream=new StackableInputStream(new DecoderCharacterInput(inputStream,decoder));
 	}
 	private boolean isMathMLIntegrationPoint(Element element) {
 		String name=element.getLocalName();
@@ -3325,7 +3327,7 @@ final class HtmlParser {
 		inputStream.rewind();
 		encoding=new EncodingConfidence(charset,EncodingConfidence.Certain);
 		decoder=new Html5Decoder(TextEncoding.getDecoder(encoding.getEncoding()));
-		stream=new Html5InputStream(inputStream,decoder);
+		stream=new StackableInputStream(new DecoderCharacterInput(inputStream,decoder));
 	}
 
 	private void clearFormattingToMarker() {

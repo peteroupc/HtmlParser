@@ -168,7 +168,7 @@ final class Iso2022KREncoding implements ITextEncoder, ITextDecoder {
 		for(int i=0;i<array.length;i++){
 			int cp=array[offset+i];
 			if(cp<0 || cp>=0x110000){
-				error.emitEncoderError(stream);
+				error.emitEncoderError(stream, cp);
 				continue;
 			}
 			if(!initialization){
@@ -188,7 +188,7 @@ final class Iso2022KREncoding implements ITextEncoder, ITextDecoder {
 			}
 			int pointer=Korean.codePointToIndex(cp);
 			if(pointer<0){
-				error.emitEncoderError(stream);
+				error.emitEncoderError(stream, cp);
 				continue;
 			}
 			if(state!=5){
@@ -199,7 +199,7 @@ final class Iso2022KREncoding implements ITextEncoder, ITextDecoder {
 				int lead=pointer/(26+26+126)+1;
 				int trail=pointer%(26+26+126)-26-26+1;
 				if(lead<0x21 || trail<0x21){
-					error.emitEncoderError(stream);
+					error.emitEncoderError(stream, cp);
 					continue;
 				}
 				stream.write(lead);

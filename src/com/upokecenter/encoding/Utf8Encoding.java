@@ -198,7 +198,7 @@ final class Utf8Encoding implements ITextEncoder, ITextDecoder {
 		for(int i=0;i<array.length;i++){
 			int cp=array[offset+i];
 			if(cp<0 || cp>=0x10000 || (cp>=0xd800 && cp<=0xdfff)){
-				error.emitEncoderError(stream);
+				error.emitEncoderError(stream, cp);
 				continue;
 			}
 			if(cp<=0x7F){

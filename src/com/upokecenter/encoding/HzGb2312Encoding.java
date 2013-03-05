@@ -149,7 +149,7 @@ final class HzGb2312Encoding implements ITextEncoder, ITextDecoder {
 		for(int i=0;i<array.length;i++){
 			int cp=array[offset+i];
 			if(cp<0 || cp>=0x110000){
-				error.emitEncoderError(stream);
+				error.emitEncoderError(stream, cp);
 				continue;
 			}
 			if(cp<=0x7F && flag){
@@ -167,7 +167,7 @@ final class HzGb2312Encoding implements ITextEncoder, ITextDecoder {
 			}
 			int pointer=GBK.codePointToIndex(cp);
 			if(pointer<0){
-				error.emitEncoderError(stream);
+				error.emitEncoderError(stream, cp);
 				continue;
 			}
 			if(!flag){
@@ -178,7 +178,7 @@ final class HzGb2312Encoding implements ITextEncoder, ITextDecoder {
 			int lead=pointer/190+1;
 			int trail=pointer%190-0x3f;
 			if(lead<0x21 || trail<0x21){
-				error.emitEncoderError(stream);
+				error.emitEncoderError(stream, cp);
 				continue;
 			}
 			stream.write(lead);

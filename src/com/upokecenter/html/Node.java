@@ -73,4 +73,9 @@ class Node implements INode {
 	public List<INode> getChildNodes() {
 		return new ArrayList<INode>(childNodes);
 	}
+
+	void setData(String string) {
+		// TODO Auto-generated method stub
+		
+	}
 }
