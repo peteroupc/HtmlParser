@@ -10,7 +10,7 @@ public interface IMarkableCharacterInput extends ICharacterInput {
 
 	public int markIfNeeded();
 
-	public void markToEnd();
+	public int markToEnd();
 
 	public void moveBack(int count) throws IOException;
 

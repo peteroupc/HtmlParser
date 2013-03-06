@@ -1,6 +1,5 @@
 package com.upokecenter.html;
 
-import com.upokecenter.html.HtmlParser.NodeType;
 
 class Comment extends Node implements IComment {
 	String data;

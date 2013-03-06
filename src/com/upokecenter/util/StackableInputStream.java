@@ -14,6 +14,73 @@ import java.util.List;
  */
 public final class StackableInputStream implements IMarkableCharacterInput {
 
+	
+	private static class InputAndBuffer implements ICharacterInput {
+
+		int[] buffer;
+		ICharacterInput input;
+		int pos=0;
+		
+		public InputAndBuffer(ICharacterInput input, int[] buffer, int offset, int length){
+			this.input=input;
+			if(length>0){
+				this.buffer=new int[length];
+				System.arraycopy(buffer,offset,this.buffer,0,length);
+			} else {
+				this.buffer=null;
+			}
+		}
+		
+		@Override
+		public int read(int[] buf, int offset, int unitCount)
+				throws IOException {
+			if(buf==null)throw new IllegalArgumentException();
+			if(offset<0 || unitCount<0 || offset+unitCount>buf.length)
+				throw new IndexOutOfBoundsException();
+			if(unitCount==0)return 0;
+			int count=0;
+			if(input!=null){
+				int c=input.read(buf,offset,unitCount);
+				if(c<=0){
+					input=null;
+				} else {
+					offset+=c;
+					unitCount-=c;
+					count+=c;
+				}
+			}
+			if(buffer!=null){
+				int c=Math.min(unitCount,this.buffer.length-pos);
+				if(c>0){
+					System.arraycopy(this.buffer,pos,buf,offset,c);
+				}
+				pos+=c;
+				count+=c;
+				if(c==0){
+					buffer=null;
+				}
+			}
+			return (count==0) ? -1 : count;
+		}
+
+		@Override
+		public int read() throws IOException {
+			if(input!=null){
+				int c=input.read();
+				if(c>=0)return c;
+				input=null;
+			}
+			if(buffer!=null){
+				if(pos<buffer.length){
+					return buffer[pos++];
+				}
+				buffer=null;
+			}
+			return -1;
+		}
+		
+	}
+	
 	int pos=0;
 	int endpos=0;
 	boolean haveMark=false;
@@ -30,7 +97,12 @@ public final class StackableInputStream implements IMarkableCharacterInput {
 	}
 	
 	public void pushInput(ICharacterInput input){
-		stack.add(input);
+		if(input==null)
+			throw new IllegalArgumentException();
+		// Move unread characters in buffer, since this new
+		// input sits on top of the existing input
+		stack.add(new InputAndBuffer(input,buffer,pos,endpos-pos));
+		endpos=pos;
 	}
 
 	@Override
@@ -49,7 +121,7 @@ public final class StackableInputStream implements IMarkableCharacterInput {
 	}
 
 	@Override
-	public void markToEnd(){
+	public int markToEnd(){
 		if(buffer==null){
 			buffer=new int[16];
 			pos=0;
@@ -67,6 +139,7 @@ public final class StackableInputStream implements IMarkableCharacterInput {
 			endpos=0;
 			haveMark=true;
 		}
+		return 0;
 	}
 	
 	private int readInternal(int[] buf, int offset, int unitCount) throws IOException {
@@ -173,7 +246,6 @@ public final class StackableInputStream implements IMarkableCharacterInput {
 					endpos+=count;
 				}
 			}
-			//DebugUtility.log(this);
 			// Try reading from buffer again
 			if(pos<endpos)
 				return buffer[pos++];

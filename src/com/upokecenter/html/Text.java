@@ -1,6 +1,5 @@
 package com.upokecenter.html;
 
-import com.upokecenter.html.HtmlParser.NodeType;
 import com.upokecenter.util.IntList;
 
 class Text extends Node implements IText {

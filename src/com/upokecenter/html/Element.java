@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Locale;
 
 import com.upokecenter.html.HtmlParser.Attribute;
-import com.upokecenter.html.HtmlParser.NodeType;
 import com.upokecenter.html.HtmlParser.StartTagToken;
 import com.upokecenter.util.StringUtility;
 
@@ -148,6 +147,7 @@ class Element extends Node implements IElement {
 		}
 		for(Node node : childNodes){
 			String str=node.toDebugString();
+			if(str==null)continue;
 			String[] strarray=str.split("\n");
 			for(String el : strarray){
 				builder.append("  ");

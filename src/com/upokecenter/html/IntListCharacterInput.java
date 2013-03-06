@@ -20,20 +20,22 @@ public final class IntListCharacterInput implements ICharacterInput {
 			throw new IndexOutOfBoundsException();
 		if(unitCount==0)return 0;
 		int[] arr=this.ilist.array();
+		int size=this.ilist.size();
 		int count=0;
-		while(pos<arr.length){
+		while(pos<size && unitCount>0){
 			buf[offset]=arr[pos];
 			offset++;
 			count++;
+			unitCount--;
 			pos++;
 		}
-		return count==0 ? -1 : 0;
+		return count==0 ? -1 : count;
 	}
 
 	@Override
 	public int read() throws IOException {
 		int[] arr=this.ilist.array();
-		if(pos<arr.length)
+		if(pos<this.ilist.size())
 			return arr[pos];
 		return -1;
 	}

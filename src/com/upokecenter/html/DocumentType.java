@@ -2,7 +2,6 @@ package com.upokecenter.html;
 
 import java.util.Locale;
 
-import com.upokecenter.html.HtmlParser.NodeType;
 
 final class DocumentType extends Node implements IDocumentType {
 

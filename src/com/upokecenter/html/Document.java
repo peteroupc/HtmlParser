@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.upokecenter.html.HtmlParser.DocumentMode;
-import com.upokecenter.html.HtmlParser.NodeType;
 import com.upokecenter.util.StringUtility;
 
 class Document extends Node implements IDocument {
@@ -34,6 +33,7 @@ class Document extends Node implements IDocument {
 		StringBuilder builder=new StringBuilder();
 		for(Node node : childNodes){
 			String str=node.toDebugString();
+			if(str==null)continue;
 			String[] strarray=str.split("\n");
 			for(String el : strarray){
 				builder.append("| ");

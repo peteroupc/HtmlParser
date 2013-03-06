@@ -227,13 +227,6 @@ final class HtmlParser {
 		public int getType();
 	}
 
-	static class NodeType {
-		public static final int DOCUMENT_NODE=9;
-		public static final int COMMENT_NODE=8;
-		public static final int ELEMENT_NODE=1;
-		public static final int TEXT_NODE=3;
-		public static final int DOCUMENT_TYPE_NODE = 10;
-	}
 	static class StartTagToken extends TagToken {
 		public StartTagToken(char c){
 			super(c);
@@ -5447,15 +5440,27 @@ final class HtmlParser {
 						break;
 					}
 					buffer.append(ch);
-					if(phase==0 && ch==']') {
-						phase++;
-					} else if(phase==1 && ch==']') {
-						phase++;
-					} else if(phase==2 && ch=='>'){
-						phase++;
-						break;
-					} else {
-						phase=0;
+					if(phase==0){
+						if(ch==']') {
+							phase++;
+						} else {
+							phase=0;
+						}
+					} else if(phase==1) {
+						if(ch==']'){
+							phase++;
+						} else {
+							phase=0;
+						}
+					} else if(phase==2) {
+						if(ch=='>'){
+							phase++;
+							break;
+						} else if(ch==']'){
+							phase=2;
+						} else {
+							phase=0;
+						}
 					}
 				}
 				int[] arr=buffer.array();
