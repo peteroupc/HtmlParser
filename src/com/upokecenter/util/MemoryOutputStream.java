@@ -13,8 +13,9 @@ public final class MemoryOutputStream extends OutputStream {
 	@Override
 	public void write(int b) throws IOException {
 		if(pos>=buffer.length){
-			byte[] newbuffer=new byte[buffer.length*2];
+			byte[] newbuffer=new byte[Math.max(pos+10,buffer.length*2)];
 			System.arraycopy(buffer,0,newbuffer,0,buffer.length);
+			buffer=newbuffer;
 		}
 		buffer[pos++]=(byte)(b&0xFF);
 	}
@@ -26,6 +27,7 @@ public final class MemoryOutputStream extends OutputStream {
 		if(pos+len>buffer.length){
 			byte[] newbuffer=new byte[Math.max(pos+len+1024, buffer.length*2)];
 			System.arraycopy(buffer,0,newbuffer,0,buffer.length);			
+			buffer=newbuffer;
 		}
 		System.arraycopy(buf,off,buffer,pos,len);
 	}

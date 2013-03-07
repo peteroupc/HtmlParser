@@ -580,6 +580,7 @@ final class HtmlParser {
 	private Element headElement=null;
 	private Element formElement=null;
 	private Element inputElement=null;
+	private String baseurl=null;
 	private boolean hasForeignContent=false;
 	Document document=new Document();
 	private boolean done=false;
@@ -595,6 +596,7 @@ final class HtmlParser {
 		context=null;
 		openElements.clear();
 		error=false;
+		baseurl=null;
 		hasForeignContent=false; // performance optimization
 		lastState=null;
 		lastComment=null;
@@ -1264,7 +1266,11 @@ final class HtmlParser {
 						"bgsound".equals(name)||
 						"basefont".equals(name)||
 						"link".equals(name)){
-					addHtmlElementNoPush(tag);
+					Element e=addHtmlElementNoPush(tag);
+					if(baseurl==null && "base".equals(name)){
+						// Get the document base URL
+						baseurl=e.getAttribute("href");
+					}
 					tag.ackSelfClosing();
 					return true;
 				} else if("meta".equals(name)){
@@ -5672,6 +5678,8 @@ final class HtmlParser {
 
 	private void stopParsing() {
 		done=true;
+		document.encoding=encoding.getEncoding();
+		document.baseurl=baseurl;
 		openElements.clear();
 		formattingElements.clear();
 	}

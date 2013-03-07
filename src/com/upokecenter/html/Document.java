@@ -8,6 +8,8 @@ import com.upokecenter.util.StringUtility;
 
 class Document extends Node implements IDocument {
 	DocumentType doctype;
+	String encoding;
+	String baseurl;
 	private DocumentMode docmode=DocumentMode.NoQuirksMode;
 
 	Document() {
