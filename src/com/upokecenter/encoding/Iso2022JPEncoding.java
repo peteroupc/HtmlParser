@@ -151,7 +151,7 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 					} else {
 						buffer[offset++]=(cp);
 						length--;
-						count++;											
+						count++;
 						continue;
 					}
 				}
@@ -218,7 +218,7 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 				state=7;
 				stream.write(0x1b);
 				stream.write(0x28);
-				stream.write(0x49);				
+				stream.write(0x49);
 			}
 			if(cp>=0xFF61 && cp<=0xFF9F){
 				stream.write(cp-0xFF61+0x21);

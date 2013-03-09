@@ -35,7 +35,9 @@ class Document extends Node implements IDocument {
 		StringBuilder builder=new StringBuilder();
 		for(Node node : childNodes){
 			String str=node.toDebugString();
-			if(str==null)continue;
+			if(str==null) {
+				continue;
+			}
 			String[] strarray=str.split("\n");
 			for(String el : strarray){
 				builder.append("| ");
@@ -44,6 +46,12 @@ class Document extends Node implements IDocument {
 			}
 		}
 		return builder.toString();
+	}
+
+
+	@Override
+	public String getBaseURI() {
+		return (baseurl==null) ? "" : baseurl;
 	}
 
 	DocumentMode getMode() {
@@ -67,7 +75,7 @@ class Document extends Node implements IDocument {
 		}
 	}
 
-	private void collectElementsHtml(INode c, String s, 
+	private void collectElementsHtml(INode c, String s,
 			String sLowercase, List<IElement> nodes){
 		if(c.getNodeType()==NodeType.ELEMENT_NODE){
 			Element e=(Element)c;
@@ -99,6 +107,11 @@ class Document extends Node implements IDocument {
 			collectElements(this,tagName,ret);
 		}
 		return ret;
+	}
+
+	@Override
+	public String getCharacterSet() {
+		return (encoding==null) ? "utf-8" : encoding;
 	}
 
 }

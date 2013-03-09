@@ -26,12 +26,12 @@ public final class MemoryOutputStream extends OutputStream {
 			throw new IndexOutOfBoundsException();
 		if(pos+len>buffer.length){
 			byte[] newbuffer=new byte[Math.max(pos+len+1024, buffer.length*2)];
-			System.arraycopy(buffer,0,newbuffer,0,buffer.length);			
+			System.arraycopy(buffer,0,newbuffer,0,buffer.length);
 			buffer=newbuffer;
 		}
 		System.arraycopy(buf,off,buffer,pos,len);
 	}
-	
+
 	public InputStream toInputStream(){
 		return new ByteArrayInputStream(buffer,0,pos);
 	}
@@ -42,7 +42,7 @@ public final class MemoryOutputStream extends OutputStream {
 	}
 
 	public int length(){
-		return pos;		
+		return pos;
 	}
 
 	public void reset(){

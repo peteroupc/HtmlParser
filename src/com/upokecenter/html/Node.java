@@ -37,7 +37,7 @@ class Node implements INode {
 		for(int j=0;j<childNodesSize;j++){
 			if(childNodes.get(j).equals(sibling)){
 				child.parentNode=this;
-				child.ownerDocument=ownerDocument;
+				child.ownerDocument=(child instanceof IDocument) ? (IDocument)this : ownerDocument;
 				childNodes.add(j,child);
 				return;
 			}
@@ -49,7 +49,7 @@ class Node implements INode {
 		if(node==this)
 			throw new IllegalArgumentException();
 		node.parentNode=this;
-		node.ownerDocument=ownerDocument;
+		node.ownerDocument=(this instanceof IDocument) ? (IDocument)this : ownerDocument;
 		childNodes.add(node);
 	}
 
@@ -76,6 +76,13 @@ class Node implements INode {
 
 	void setData(String string) {
 		// TODO Auto-generated method stub
-		
+
+	}
+
+	@Override
+	public String getBaseURI() {
+		IDocument doc=getOwnerDocument();
+		if(doc==null)return "";
+		return doc.getBaseURI();
 	}
 }

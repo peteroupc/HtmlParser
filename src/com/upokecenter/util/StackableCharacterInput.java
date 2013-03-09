@@ -12,15 +12,15 @@ import java.util.List;
  * @author Peter
  *
  */
-public final class StackableInputStream implements IMarkableCharacterInput {
+public final class StackableCharacterInput implements IMarkableCharacterInput {
 
-	
+
 	private static class InputAndBuffer implements ICharacterInput {
 
 		int[] buffer;
 		ICharacterInput input;
 		int pos=0;
-		
+
 		public InputAndBuffer(ICharacterInput input, int[] buffer, int offset, int length){
 			this.input=input;
 			if(length>0){
@@ -30,7 +30,7 @@ public final class StackableInputStream implements IMarkableCharacterInput {
 				this.buffer=null;
 			}
 		}
-		
+
 		@Override
 		public int read(int[] buf, int offset, int unitCount)
 				throws IOException {
@@ -71,23 +71,22 @@ public final class StackableInputStream implements IMarkableCharacterInput {
 				input=null;
 			}
 			if(buffer!=null){
-				if(pos<buffer.length){
+				if(pos<buffer.length)
 					return buffer[pos++];
-				}
 				buffer=null;
 			}
 			return -1;
 		}
-		
+
 	}
-	
+
 	int pos=0;
 	int endpos=0;
 	boolean haveMark=false;
 	int[] buffer=null;
 	List<ICharacterInput> stack=new ArrayList<ICharacterInput>();
 
-	public StackableInputStream(ICharacterInput source) {
+	public StackableCharacterInput(ICharacterInput source) {
 		this.stack.add(source);
 	}
 
@@ -95,7 +94,7 @@ public final class StackableInputStream implements IMarkableCharacterInput {
 	public int getMarkPosition(){
 		return pos;
 	}
-	
+
 	public void pushInput(ICharacterInput input){
 		if(input==null)
 			throw new IllegalArgumentException();
@@ -141,7 +140,7 @@ public final class StackableInputStream implements IMarkableCharacterInput {
 		}
 		return 0;
 	}
-	
+
 	private int readInternal(int[] buf, int offset, int unitCount) throws IOException {
 		if(this.stack.size()==0)return -1;
 		if(unitCount==0)return 0;
@@ -228,7 +227,7 @@ public final class StackableInputStream implements IMarkableCharacterInput {
 			}
 			return (total==0) ? -1 : total;
 		} else
-			return readInternal(buf, offset, unitCount);			
+			return readInternal(buf, offset, unitCount);
 	}
 
 	@Override

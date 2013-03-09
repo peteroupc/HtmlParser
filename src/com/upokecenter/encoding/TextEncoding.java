@@ -315,7 +315,7 @@ public final class TextEncoding {
 			return encodingMap.get(encoding);
 		return null;
 	}
-	
+
 	/**
 	 * Utility method to decode an input byte stream into a string.
 	 * 
@@ -327,25 +327,26 @@ public final class TextEncoding {
 	 */
 	public static String decodeString(
 			InputStream input, ITextDecoder decoder, IEncodingError error)
-	throws IOException {
-		if(decoder==null || input==null || error==null){
+					throws IOException {
+		if(decoder==null || input==null || error==null)
 			throw new IllegalArgumentException();
-		}
 		int[] data=new int[64];
 		StringBuilder builder=new StringBuilder();
 		while(true){
 			int count=decoder.decode(input,data,0,data.length,error);
-			if(count<0)break;
+			if(count<0) {
+				break;
+			}
 			for(int i=0;i<count;i++){
 				builder.appendCodePoint(data[i]);
 			}
 		}
 		return builder.toString();
 	}
-	
+
 	/**
 	 * 
-	 * Utility method to write a string to an output byte stream. 
+	 * Utility method to write a string to an output byte stream.
 	 * 
 	 * @param str String. If null, throws IllegalArgumentException.
 	 * Any unpaired surrogates in the string are kept intact in the
@@ -359,11 +360,10 @@ public final class TextEncoding {
 	 * or another I/O error occurs
 	 */
 	public static void encodeString(
-			String str, OutputStream output, 
+			String str, OutputStream output,
 			ITextEncoder encoder, IEncodingError error) throws IOException{
-		if(str==null || encoder==null || output==null || error==null){
+		if(str==null || encoder==null || output==null || error==null)
 			throw new IllegalArgumentException();
-		}
 		int[] data=new int[1];
 		int length=str.length();
 		for(int i=0;i<length;i++){
@@ -378,7 +378,7 @@ public final class TextEncoding {
 			encoder.encode(output,data,0,1,error);
 		}
 	}
-	
+
 	private static ITextEncoder getIndexEncoding(String name){
 		synchronized(syncRoot){
 			ITextEncoder encoder=indexEncodingMap.get(name);

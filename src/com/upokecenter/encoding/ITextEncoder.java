@@ -14,7 +14,7 @@ public interface ITextEncoder {
 	 * 
 	 * @param stream stream where bytes will be written
 	 * @param buffer an array of Unicode characters
-	 * @param offset offset into the array 
+	 * @param offset offset into the array
 	 * @param length number of characters to write
 	 * @throws IOException if there are characters that can't be
 	 * converted to bytes, or if another I/O error occurs.
@@ -26,7 +26,7 @@ public interface ITextEncoder {
 	 * 
 	 * @param stream stream where bytes will be written
 	 * @param buffer an array of Unicode characters
-	 * @param offset offset into the array 
+	 * @param offset offset into the array
 	 * @param length number of characters to write
 	 * @param error error handler to use.  If there are characters
 	 * that can't be converted to bytes, this object's emitEncoderError

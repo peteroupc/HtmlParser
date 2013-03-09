@@ -10,6 +10,7 @@ class Comment extends Node implements IComment {
 	}
 
 
+	@Override
 	void setData(String data){
 		this.data=data;
 	}

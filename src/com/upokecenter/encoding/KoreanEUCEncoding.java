@@ -74,7 +74,7 @@ final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 					count+=o;
 					length-=o;
 
-					continue;					
+					continue;
 				} else {
 					buffer[offset++]=cp;
 					count++;
@@ -86,7 +86,7 @@ final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 				buffer[offset++]=b;
 				count++;
 				length--;
-				continue;				
+				continue;
 			}
 			if(b>=0x81 && b<=0xFE){
 				lead=b;

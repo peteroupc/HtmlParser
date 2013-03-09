@@ -5,6 +5,7 @@ import java.util.List;
 public interface INode {
 	List<INode> getChildNodes();
 	int getNodeType();
+	String getBaseURI();
 	INode getParentNode();
 	IDocument getOwnerDocument();
 }

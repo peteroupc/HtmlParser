@@ -1,11 +1,9 @@
-package com.upokecenter.html;
+package com.upokecenter.util;
 
 import java.io.IOException;
 
-import com.upokecenter.util.DebugUtility;
-import com.upokecenter.util.ICharacterInput;
 
-public class StringCharacterInput implements ICharacterInput {
+public final class StringCharacterInput implements ICharacterInput {
 
 	String str=null;
 	int pos=0;
@@ -14,7 +12,7 @@ public class StringCharacterInput implements ICharacterInput {
 			throw new IllegalArgumentException();
 		this.str=str;
 	}
-	
+
 	@Override
 	public int read(int[] buf, int offset, int unitCount) throws IOException {
 		if(offset<0 || unitCount<0 || offset+unitCount>buf.length)

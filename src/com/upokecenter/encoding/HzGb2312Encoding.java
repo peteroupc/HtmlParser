@@ -90,12 +90,12 @@ final class HzGb2312Encoding implements ITextEncoder, ITextDecoder {
 					count+=o;
 					length-=o;
 
-					continue;					
+					continue;
 				} else {
 					buffer[offset++]=cp;
 					length--;
 					count++;
-					continue;					
+					continue;
 				}
 			}
 			if(b==0x7e){
@@ -122,7 +122,7 @@ final class HzGb2312Encoding implements ITextEncoder, ITextDecoder {
 				buffer[offset++]=b;
 				length--;
 				count++;
-				continue;					
+				continue;
 			} else {
 				int o=error.emitDecoderError(buffer, offset, length);
 				offset+=o;

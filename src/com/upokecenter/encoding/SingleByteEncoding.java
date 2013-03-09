@@ -92,7 +92,7 @@ final class SingleByteEncoding implements ITextEncoder, ITextDecoder {
 				if(c<0x80){
 					buffer[offset++]=c;
 					total++;
-					length--;						
+					length--;
 				} else {
 					int cp=indexes[(c)&0x7F];
 					if(cp==0){

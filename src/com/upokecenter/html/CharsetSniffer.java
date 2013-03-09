@@ -23,7 +23,7 @@ final class CharsetSniffer {
 			if(b1==0xEF && b2==0xBB && b3==0xBF)
 				return EncodingConfidence.UTF8;
 		} finally {
-			stream.reset();			
+			stream.reset();
 		}
 		if(encoding!=null && encoding.length()>0){
 			encoding=TextEncoding.resolveEncoding(encoding);
@@ -41,7 +41,7 @@ final class CharsetSniffer {
 		}
 		int position=0;
 		while(position<count){
-			if(position+4<=count && 
+			if(position+4<=count &&
 					data[position+0]==0x3c && (data[position+1]&0xFF)==0x21 &&
 					(data[position+2]&0xFF)==0x2d && (data[position+3]&0xFF)==0x2d){
 				// Skip comment
@@ -146,8 +146,8 @@ final class CharsetSniffer {
 				position++;
 			}
 			else if(position+2<=count &&
-					data[position]==0x3C && 
-					((data[position+1]&0xFF)==0x21 || (data[position+1]&0xFF)==0x3F || 
+					data[position]==0x3C &&
+					((data[position+1]&0xFF)==0x21 || (data[position+1]&0xFF)==0x3F ||
 					(data[position+1]&0xFF)==0x2F)){
 				// <! or </ or <?
 				while(position<count){
@@ -168,14 +168,14 @@ final class CharsetSniffer {
 		while(position<count){
 			if((data[position]&0xFF)<0x80){
 				position++;
-			} else if(position+2<=count && 
+			} else if(position+2<=count &&
 					((data[position]&0xFF)>=0xC2 && (data[position]&0xFF)<=0xDF) &&
 					((data[position+1]&0xFF)>=0x80 && (data[position+1]&0xFF)<=0xBF)
 					){
 				position+=2;
 				maybeUtf8=1;
 			} else if(position+3<=count &&
-					((data[position]&0xFF)>=0xE0 && (data[position]&0xFF)<=0xEF) && 
+					((data[position]&0xFF)>=0xE0 && (data[position]&0xFF)<=0xEF) &&
 					((data[position+2]&0xFF)>=0x80 && (data[position+2]&0xFF)<=0xBF)){
 				byte startbyte=((data[position]&0xFF)==0xE0) ? (byte)0xA0 : (byte)0x80;
 				byte endbyte=((data[position]&0xFF)==0xED) ? (byte)0x9F : (byte)0xBF;
@@ -186,7 +186,7 @@ final class CharsetSniffer {
 				position+=3;
 				maybeUtf8=1;
 			} else if(position+4<=count &&
-					((data[position]&0xFF)>=0xF0 && (data[position]&0xFF)<=0xF4) && 
+					((data[position]&0xFF)>=0xF0 && (data[position]&0xFF)<=0xF4) &&
 					((data[position+2]&0xFF)>=0x80 && (data[position+2]&0xFF)<=0xBF) &&
 					((data[position+3]&0xFF)>=0x80 && (data[position+3]&0xFF)<=0xBF)){
 				byte startbyte=((data[position]&0xFF)==0xF0) ? (byte)0x90 : (byte)0x80;
@@ -234,7 +234,7 @@ final class CharsetSniffer {
 			return new EncodingConfidence("windows-1250");
 		if(lang.equals("lv"))
 			return new EncodingConfidence("iso-8859-13");
-		if(lang.equals("iw") || lang.equals("he")) 
+		if(lang.equals("iw") || lang.equals("he"))
 			// NOTE: Java's two-letter code for Hebrew
 			return new EncodingConfidence("windows-1255");
 		if(maybeUtf8>=0){
@@ -248,8 +248,8 @@ final class CharsetSniffer {
 	}
 
 	private static int readAttribute(
-			byte[] data, 
-			int length, 
+			byte[] data,
+			int length,
 			int position,
 			StringBuilder attrName,
 			StringBuilder attrValue

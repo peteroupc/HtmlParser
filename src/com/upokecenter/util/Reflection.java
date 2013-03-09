@@ -12,7 +12,7 @@ public final class Reflection {
 		Method con=null;
 		for(Method c : clazz.getMethods()){
 			int paramLength=c.getParameterTypes().length;
-			if((paramLength==argCount || (c.isVarArgs() && paramLength>=argCount+1)) && 
+			if((paramLength==argCount || (c.isVarArgs() && paramLength>=argCount+1)) &&
 					c.getName().equals(name)){
 				if(con==null) {
 					con=c;
@@ -117,7 +117,7 @@ public final class Reflection {
 		return getStaticMethodWithTypes(obj.getClass(),name,types);
 	}
 	public static boolean invokeWithTest(
-			Object obj, Method method, 
+			Object obj, Method method,
 			Object[] retvalue, Object... args){
 		if(retvalue!=null && retvalue.length>0){
 			retvalue[0]=null;
@@ -144,12 +144,12 @@ public final class Reflection {
 		}
 	}
 	public static boolean invokeStaticByNameWithTest(
-			Class<?> clazz, String name, 
+			Class<?> clazz, String name,
 			Object[] retvalue, Object... args){
 		return invokeWithTest(clazz,getStaticMethod(clazz,name,args.length),retvalue,args);
 	}
 	public static boolean invokeByNameWithTest(
-			Object obj, String name, 
+			Object obj, String name,
 			Object[] retvalue, Object... args){
 		return invokeWithTest(obj,getStaticMethod(obj.getClass(),name,args.length),retvalue,args);
 	}

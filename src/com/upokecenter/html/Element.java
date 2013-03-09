@@ -84,9 +84,9 @@ class Element extends Node implements IElement {
 	}
 	void mergeAttributes(StartTagToken token){
 		for(Attribute attr : token.getAttributes()){
-			String s=this.getAttribute(attr.getName());
+			String s=getAttribute(attr.getName());
 			if(s==null){
-				this.setAttribute(attr.getName(),attr.getValue());
+				setAttribute(attr.getName(),attr.getValue());
 			}
 		}
 	}
@@ -139,15 +139,17 @@ class Element extends Node implements IElement {
 				}
 				extra1+=attribute.getLocalName();
 				builder.append(String.format(Locale.US,"  %s=\"%s\"\n",
-						extra1,attribute.getValue().toString()));				
+						extra1,attribute.getValue().toString()));
 			} else {
 				builder.append(String.format(Locale.US,"  %s=\"%s\"\n",
-						attribute.getName().toString(),attribute.getValue().toString()));				
+						attribute.getName().toString(),attribute.getValue().toString()));
 			}
 		}
 		for(Node node : childNodes){
 			String str=node.toDebugString();
-			if(str==null)continue;
+			if(str==null) {
+				continue;
+			}
 			String[] strarray=str.split("\n");
 			for(String el : strarray){
 				builder.append("  ");
@@ -165,7 +167,7 @@ class Element extends Node implements IElement {
 				namespace.toString()));
 		for(Attribute attribute : getAttributes()){
 			builder.append(String.format(Locale.US,"Attribute: %s=%s\n",
-					attribute.getName().toString(),attribute.getValue().toString()));				
+					attribute.getName().toString(),attribute.getValue().toString()));
 		}
 		for(Node node : childNodes){
 			String str=node.toString();
@@ -203,7 +205,7 @@ class Element extends Node implements IElement {
 		}
 	}
 
-	private void collectElementsHtml(INode c, String s, 
+	private void collectElementsHtml(INode c, String s,
 			String sLowercase, List<IElement> nodes){
 		if(c.getNodeType()==NodeType.ELEMENT_NODE){
 			Element e=(Element)c;

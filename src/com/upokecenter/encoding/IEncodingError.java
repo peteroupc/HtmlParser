@@ -26,7 +26,7 @@ public interface IEncodingError {
 	 * as a decoder error, so that additional characters that
 	 * would overflow the buffer passed to the decode methods
 	 * may be ignored.
-	 * @throws IOException if the method decides to handle the 
+	 * @throws IOException if the method decides to handle the
 	 * error by throwing an IOException or a derived class, or
 	 * if another I/O error occurs.
 	 */
@@ -36,7 +36,7 @@ public interface IEncodingError {
 	 * 
 	 * @param stream a stream to write bytes
 	 * @param codePoint the code point that caused the encoder error
-	 * @throws IOException if the method decides to handle the 
+	 * @throws IOException if the method decides to handle the
 	 * error by throwing an IOException or a derived class, or
 	 * if another I/O error occurs.
 	 */

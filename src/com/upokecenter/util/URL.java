@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+
 import com.upokecenter.encoding.IEncodingError;
 import com.upokecenter.encoding.ITextDecoder;
 import com.upokecenter.encoding.ITextEncoder;
@@ -77,11 +78,10 @@ public final class URL {
 	}
 
 	public String getPathname(){
-		if(schemeData.length()>0){
+		if(schemeData.length()>0)
 			return schemeData;
-		} else {
+		else
 			return path;
-		}
 	}
 
 	private enum ParseState {
@@ -95,7 +95,7 @@ public final class URL {
 		AuthorityFirstSlash,
 		AuthoritySecondSlash,
 		AuthorityIgnoreSlashes,
-		Authority, Query, Fragment, Host, FileHost, 
+		Authority, Query, Fragment, Host, FileHost,
 		RelativePathStart, RelativePath, HostName, Port
 	}
 
@@ -128,7 +128,9 @@ public final class URL {
 		public void emitEncoderError(OutputStream stream, int codePoint) throws IOException {
 			stream.write(0x26);
 			stream.write(0x23);
-			if(codePoint<0 || codePoint>=0x110000)codePoint=0xFFFD;
+			if(codePoint<0 || codePoint>=0x110000) {
+				codePoint=0xFFFD;
+			}
 			if(codePoint==0){
 				stream.write('0');
 				stream.write(0x3B);
@@ -150,14 +152,14 @@ public final class URL {
 	private static void percentEncode(IntList buffer, int b){
 		buffer.append('%');
 		buffer.append(hex.charAt((b>>4)&0x0F));
-		buffer.append(hex.charAt((b)&0x0F));								
+		buffer.append(hex.charAt((b)&0x0F));
 	}
 
 	private static void percentEncodeUtf8(IntList buffer, int cp){
 		if(cp<=0x7F){
 			buffer.append('%');
 			buffer.append(hex.charAt((cp>>4)&0x0F));
-			buffer.append(hex.charAt((cp)&0x0F));								
+			buffer.append(hex.charAt((cp)&0x0F));
 		} else if(cp<=0x7FF){
 			percentEncode(buffer,(0xC0|((cp>>6)&0x1F)));
 			percentEncode(buffer,(0x80|(cp   &0x3F)));
@@ -184,7 +186,7 @@ public final class URL {
 				scheme.equals("ftp") ||
 				scheme.equals("gopher") ||
 				scheme.equals("ws") ||
-				scheme.equals("wss")){ 
+				scheme.equals("wss")){
 			// NOTE: We check relative schemes here
 			// rather than have a relative flag,
 			// as specified in the URL Standard
@@ -224,8 +226,9 @@ public final class URL {
 			MemoryOutputStream baos){
 		for(int i=0;i<baos.length();i++){
 			int c=baos.get(i);
-			if(c==0x20)output.append((char)0x2b);
-			else if(c==0x2a || c==0x2d || c==0x2e ||
+			if(c==0x20) {
+				output.append((char)0x2b);
+			} else if(c==0x2a || c==0x2d || c==0x2e ||
 					(c>=0x30 && c<=0x39) ||
 					(c>=0x41 && c<=0x5a) ||
 					(c>=0x5f) || (c>=0x61 && c<=0x7a)){
@@ -233,9 +236,9 @@ public final class URL {
 			} else {
 				output.append('%');
 				output.append(hex.charAt((c>>4)&0x0F));
-				output.append(hex.charAt((c)&0x0F));								
+				output.append(hex.charAt((c)&0x0F));
 			}
-		}		
+		}
 	}
 
 	private static void percentDecode(String str, OutputStream output) throws IOException{
@@ -257,9 +260,11 @@ public final class URL {
 		}
 	}
 
-	public static String toQueryString(List<String[]> pairs, 
+	public static String toQueryString(List<String[]> pairs,
 			String delimiter, String encoding){
-		if(encoding==null)encoding="utf-8";
+		if(encoding==null) {
+			encoding="utf-8";
+		}
 		ITextEncoder encoder=TextEncoding.getEncoder(encoding);
 		if(encoder==null)
 			throw new IllegalArgumentException();
@@ -292,17 +297,22 @@ public final class URL {
 			String input, String delimiter, String encoding, boolean useCharset, boolean isindex){
 		if(input==null)
 			throw new IllegalArgumentException();
-		if(delimiter==null)delimiter="&";
-		if(encoding==null)encoding="utf-8";
+		if(delimiter==null) {
+			delimiter="&";
+		}
+		if(encoding==null) {
+			encoding="utf-8";
+		}
 		for(int i=0;i<input.length();i++){
-			if(input.charAt(i)>0x7F){
+			if(input.charAt(i)>0x7F)
 				throw new IllegalArgumentException();
-			}
 		}
 		String[] strings=input.split("&");
 		List<String[]> pairs=new ArrayList<String[]>();
 		for(String str : strings){
-			if(str.length()==0)continue;
+			if(str.length()==0) {
+				continue;
+			}
 			int index=str.indexOf('=');
 			String name=str;
 			String value="";
@@ -327,12 +337,12 @@ public final class URL {
 			for(String[] pair : pairs){
 				mos.reset();
 				percentDecode(pair[0],mos);
-				pair[0]=TextEncoding.decodeString(mos.toInputStream(), 
+				pair[0]=TextEncoding.decodeString(mos.toInputStream(),
 						decoder, TextEncoding.ENCODING_ERROR_REPLACE);
 				mos.reset();
 				percentDecode(pair[1],mos);
-				pair[1]=TextEncoding.decodeString(mos.toInputStream(), 
-						decoder, TextEncoding.ENCODING_ERROR_REPLACE);				
+				pair[1]=TextEncoding.decodeString(mos.toInputStream(),
+						decoder, TextEncoding.ENCODING_ERROR_REPLACE);
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -404,8 +414,9 @@ public final class URL {
 			}
 			ending--;
 		}
-		if(ending<beginning)
+		if(ending<beginning) {
 			ending=beginning;
+		}
 		boolean atflag=false;
 		boolean bracketflag=false;
 		IntList buffer=new IntList();
@@ -414,7 +425,7 @@ public final class URL {
 		IntList password=null;
 		IntList username=null;
 		IntList schemeData=null;
-		boolean error=true;
+		boolean error=false;
 		List<String> path=new ArrayList<String>();
 		int index=beginning;
 		int hostStart=-1;
@@ -432,10 +443,9 @@ public final class URL {
 					// Get the Unicode code point for the surrogate pair
 					c=0x10000+(c-0xD800)*0x400+(s.charAt(index+1)-0xDC00);
 					index++;
-				} else if(c>=0xD800 && c<=0xDFFF){
+				} else if(c>=0xD800 && c<=0xDFFF)
 					// illegal surrogate
 					throw new IllegalArgumentException();
-				}
 				index++;
 			}
 			switch(state){
@@ -445,7 +455,7 @@ public final class URL {
 					state=ParseState.Scheme;
 				} else if(c>='a' && c<='z'){
 					buffer.append(c);
-					state=ParseState.Scheme;					
+					state=ParseState.Scheme;
 				} else {
 					index=oldindex;
 					state=ParseState.NoScheme;
@@ -495,7 +505,7 @@ public final class URL {
 					state=ParseState.Fragment;
 					break;
 				}
-				if(!isUrlCodePoint(c) || (c=='%' && 
+				if(!isUrlCodePoint(c) || (c=='%' &&
 						(index+2>ending ||
 								!isHexDigit(s.charAt(index)) ||
 								!isHexDigit(s.charAt(index+1))))){
@@ -505,7 +515,7 @@ public final class URL {
 					if(c<0x20 || c==0x7F){
 						percentEncode(schemeData,c);
 					} else if(c<0x7F){
-						schemeData.append(c);						
+						schemeData.append(c);
 					} else {
 						percentEncodeUtf8(schemeData,c);
 					}
@@ -522,9 +532,8 @@ public final class URL {
 						baseurl.scheme.equals("ws") ||
 						baseurl.scheme.equals("wss") ||
 						baseurl.scheme.equals("file")
-						)){
+						))
 					return null;
-				}
 				state=ParseState.Relative;
 				index=oldindex;
 				break;
@@ -540,7 +549,9 @@ public final class URL {
 				break;
 			case Relative:{
 				relative=true;
-				if(baseurl==null)baseurl=url;
+				if(baseurl==null) {
+					baseurl=url;
+				}
 				url.scheme=baseurl.scheme;
 				if(c<0){
 					url.host=baseurl.host;
@@ -574,7 +585,7 @@ public final class URL {
 						path.remove(path.size()-1);
 					}
 					DebugUtility.log(path);
-					state=ParseState.RelativePath;					
+					state=ParseState.RelativePath;
 					index=oldindex;
 				}
 				break;
@@ -592,8 +603,8 @@ public final class URL {
 				} else {
 					url.host=baseurl.host;
 					url.port=baseurl.port;
-					state=ParseState.RelativePath;					
-					index=oldindex;					
+					state=ParseState.RelativePath;
+					index=oldindex;
 				}
 				break;
 			case AuthorityFirstSlash:
@@ -641,7 +652,7 @@ public final class URL {
 							error=true;
 							continue;
 						}
-						if(!isUrlCodePoint(cp) || (cp=='%' && 
+						if(!isUrlCodePoint(cp) || (cp=='%' &&
 								(i+3>buffer.size() ||
 										!isHexDigit(array[index+1]) ||
 										!isHexDigit(array[index+2])))){
@@ -737,19 +748,19 @@ public final class URL {
 						bufport=buffer.toString();
 					}
 					//DebugUtility.log("port: [%s]",buffer.toString());
-					if((url.scheme.equals("http") || url.scheme.equals("ws")) 
+					if((url.scheme.equals("http") || url.scheme.equals("ws"))
 							&& bufport.equals("80")) {
 						bufport="";
 					}
-					if((url.scheme.equals("https") || url.scheme.equals("wss")) 
+					if((url.scheme.equals("https") || url.scheme.equals("wss"))
 							&& bufport.equals("443")) {
 						bufport="";
 					}
-					if((url.scheme.equals("gopher")) 
+					if((url.scheme.equals("gopher"))
 							&& bufport.equals("70")) {
 						bufport="";
 					}
-					if((url.scheme.equals("ftp")) 
+					if((url.scheme.equals("ftp"))
 							&& bufport.equals("21")) {
 						bufport="";
 					}
@@ -759,9 +770,8 @@ public final class URL {
 					index=oldindex;
 				} else if(c==0x09 || c==0x0a || c==0x0d){
 					error=true;
-				} else {
+				} else
 					return null;
-				}
 				break;
 			case Query:
 				if(c<0 || c=='#'){
@@ -786,8 +796,7 @@ public final class URL {
 							ByteArrayOutputStream baos=new ByteArrayOutputStream();
 							encoder.encode(baos,buffer.array(),0,buffer.size(),encodingError);
 							byte[] bytes=baos.toByteArray();
-							for(int i=0;i<bytes.length;i++){
-								int ch=bytes[i];
+							for (byte ch : bytes) {
 								if(ch<0x21 || ch>0x7e || ch==0x22 || ch==0x23 ||
 										ch==0x3c || ch==0x3e || ch==0x60){
 									percentEncode(query,ch);
@@ -809,7 +818,7 @@ public final class URL {
 				} else if(c==0x09 || c==0x0a || c==0x0d){
 					error=true;
 				} else {
-					if(!isUrlCodePoint(c) || (c=='%' && 
+					if(!isUrlCodePoint(c) || (c=='%' &&
 							(index+2>ending ||
 									!isHexDigit(s.charAt(index)) ||
 									!isHexDigit(s.charAt(index+1))))){
@@ -824,15 +833,16 @@ public final class URL {
 				}
 				state=ParseState.RelativePath;
 				if((c!='/' && c!='\\')){
-				index=oldindex;
+					index=oldindex;
 				}
 				break;
 			case RelativePath:
-				if((c<0 || c=='/' || c=='\\') || 
+				if((c<0 || c=='/' || c=='\\') ||
 						(c=='?' || c=='#')){
-					if(c=='\\')
+					if(c=='\\') {
 						error=true;
-					if(buffer.size()==2 && buffer.get(0)=='.' 
+					}
+					if(buffer.size()==2 && buffer.get(0)=='.'
 							&& buffer.get(1)=='.'){
 						if(path.size()>0){
 							path.remove(path.size()-1);
@@ -872,11 +882,11 @@ public final class URL {
 				} else if(c==0x09 || c==0x0a || c==0x0d){
 					error=true;
 				} else {
-					if(!isUrlCodePoint(c) || (c=='%' && 
+					if(!isUrlCodePoint(c) || (c=='%' &&
 							(index+2>ending ||
 									!isHexDigit(s.charAt(index)) ||
 									!isHexDigit(s.charAt(index+1))))){
-					error=true;
+						error=true;
 					}
 					if(c<=0x20 || c>=0x7F || "#<>?`\"".indexOf((char)c)>=0){
 						percentEncodeUtf8(buffer,c);
@@ -892,7 +902,7 @@ public final class URL {
 				if(c==0x09 || c==0x0a || c==0x0d) {
 					error=true;
 				} else {
-					if(!isUrlCodePoint(c) || (c=='%' && 
+					if(!isUrlCodePoint(c) || (c=='%' &&
 							(index+2>ending ||
 									!isHexDigit(s.charAt(index)) ||
 									!isHexDigit(s.charAt(index+1))))){
@@ -901,7 +911,7 @@ public final class URL {
 					if(c<0x20 || c==0x7F){
 						percentEncode(fragment,c);
 					} else if(c<0x7F){
-						fragment.append(c);						
+						fragment.append(c);
 					} else {
 						percentEncodeUtf8(fragment,c);
 					}
@@ -911,9 +921,8 @@ public final class URL {
 				throw new IllegalStateException();
 			}
 		}
-		if(error && strict){
+		if(error && strict)
 			return null;
-		}
 		if(schemeData!=null) {
 			url.schemeData=schemeData.toString();
 		}
@@ -938,7 +947,7 @@ public final class URL {
 		}
 		if(username!=null) {
 			url.username=username.toString();
-		}		
+		}
 		return url;
 	}
 
@@ -956,12 +965,11 @@ public final class URL {
 				int ending=string.length()-1;
 				int c=(index>=ending) ? -1 : string.charAt(index);
 				if(c==':'){
-					if(index+1>=ending || string.charAt(index+1)!=':'){
+					if(index+1>=ending || string.charAt(index+1)!=':')
 						return null;
-					}
 					index+=2;
 					piecePointer++;
-					compress=piecePointer;					
+					compress=piecePointer;
 				}
 				while(index<ending){
 					if(piecePointer>=8)return null;
@@ -992,12 +1000,12 @@ public final class URL {
 						} else if(c>='a' && c<='z'){
 							value=value*16+(c-'a')+10;
 							index++;
-							length++;						
+							length++;
 							c=(index>=ending) ? -1 : string.charAt(index);
 						} else if(c>='0' && c<='9'){
 							value=value*16+(c-'0');
 							index++;
-							length++;							
+							length++;
 							c=(index>=ending) ? -1 : string.charAt(index);
 						} else {
 							break;
@@ -1011,17 +1019,15 @@ public final class URL {
 						index++;
 						c=(index>=ending) ? -1 : string.charAt(index);
 						if(c<0)return null;
-					} else if(c>=0){
+					} else if(c>=0)
 						return null;
-					}
 					ipv6[piecePointer]=value;
 					piecePointer++;
 				}
 				// IPv4
 				if(c>=0){
-					if(piecePointer>6){
+					if(piecePointer>6)
 						return null;
-					}
 					int dotsSeen=0;
 					while(index<ending){
 						int value=0;
@@ -1031,11 +1037,10 @@ public final class URL {
 							index++;
 							c=(index>=ending) ? -1 : string.charAt(index);
 						}
-						if(dotsSeen<3 && c!='.'){
+						if(dotsSeen<3 && c!='.')
 							return null;
-						} else if(dotsSeen==3 && c=='.'){
+						else if(dotsSeen==3 && c=='.')
 							return null;
-						}
 						ipv6[piecePointer]=ipv6[piecePointer]*256+value;
 						if(dotsSeen==0 || dotsSeen==2){
 							piecePointer++;
@@ -1054,17 +1059,16 @@ public final class URL {
 						piecePointer--;
 						swaps--;
 					}
-				} else if(compress<0 && piecePointer!=8){
+				} else if(compress<0 && piecePointer!=8)
 					return null;
-				}
 			}
 		}
 		MemoryOutputStream mos=new MemoryOutputStream();
-	    try {
-		    percentDecode(string,mos);
-			string=TextEncoding.decodeString(mos.toInputStream(), 
-								TextEncoding.getDecoder("utf-8"),
-								TextEncoding.ENCODING_ERROR_REPLACE);
+		try {
+			percentDecode(string,mos);
+			string=TextEncoding.decodeString(mos.toInputStream(),
+					TextEncoding.getDecoder("utf-8"),
+					TextEncoding.ENCODING_ERROR_REPLACE);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -1086,19 +1090,18 @@ public final class URL {
 
 	private static boolean isUrlCodePoint(int c) {
 		if(c<=0x20)return false;
-		if(c<0x80){
+		if(c<0x80)
 			return((c>='a' && c<='z') ||
 					(c>='A' && c<='Z') ||
 					(c>='0' && c<='9') ||
 					"!$&'()*+,-./:;=?@_~".indexOf(c)>=0);
-		} else if((c&0xFFFE)==0xFFFE){
+		else if((c&0xFFFE)==0xFFFE)
 			return false;
-		} else if((c>=0xa0 && c<=0xd7ff) ||
+		else if((c>=0xa0 && c<=0xd7ff) ||
 				(c>=0xe000 && c<=0xfdcf) ||
 				(c>=0xfdf0 && c<=0xffef) ||
-				(c>=0x10000 && c<=0x10fffd)){
+				(c>=0x10000 && c<=0x10fffd))
 			return true;
-		}
 		return false;
 	}
 

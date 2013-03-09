@@ -10,8 +10,9 @@ import com.upokecenter.encoding.TextEncoding;
 import com.upokecenter.util.ConditionalBufferInputStream;
 import com.upokecenter.util.IMarkableCharacterInput;
 import com.upokecenter.util.IntList;
-import com.upokecenter.util.StackableInputStream;
+import com.upokecenter.util.StackableCharacterInput;
 import com.upokecenter.util.StringUtility;
+import com.upokecenter.util.URL;
 
 final class HtmlParser {
 
@@ -104,7 +105,7 @@ final class HtmlParser {
 		}
 
 		public boolean isAttribute(String name, String namespace){
-			String thisname=this.getLocalName();
+			String thisname=getLocalName();
 			boolean match=(name==null ? thisname==null : name.equals(thisname));
 			if(!match)return false;
 			match=(namespace==null ? this.namespace==null : namespace.equals(this.namespace));
@@ -115,14 +116,14 @@ final class HtmlParser {
 			if(value==null)
 				throw new IllegalArgumentException();
 			namespace=value;
-			nameString=this.getName();
+			nameString=getName();
 			int io=nameString.indexOf(':');
 			if(io>=1){
 				prefix=nameString.substring(0,io);
 				localName=nameString.substring(io+1);
 			} else {
 				prefix="";
-				localName=this.getName();
+				localName=getName();
 			}
 		}
 
@@ -582,17 +583,19 @@ final class HtmlParser {
 	private Element inputElement=null;
 	private String baseurl=null;
 	private boolean hasForeignContent=false;
-	Document document=new Document();
+	Document document=null;
 	private boolean done=false;
 
 	private final IntList pendingTableCharacters=new IntList();
 	private boolean doFosterParent;
 	private Element context;
 	private boolean noforeign;
+	private final String address;
 
 	private void initialize(){
 		noforeign=false;
 		document=new Document();
+		document.baseurl=address;
 		context=null;
 		openElements.clear();
 		error=false;
@@ -623,14 +626,20 @@ final class HtmlParser {
 		pendingTableCharacters.clear();
 	}
 
-	public HtmlParser(InputStream source) throws IOException{
+	public HtmlParser(InputStream source, String address) throws IOException{
 		if(source==null)throw new IllegalArgumentException();
+		if(address!=null && address.length()>0){
+			URL url=URL.parse(address);
+			if(url==null || url.getScheme().length()==0)
+				throw new IllegalArgumentException();
+		}
+		this.address=address;
 		initialize();
 		inputStream=new ConditionalBufferInputStream(source);
 		encoding=CharsetSniffer.sniffEncoding(inputStream,null);
 		inputStream.rewind();
 		decoder=new Html5Decoder(TextEncoding.getDecoder(encoding.getEncoding()));
-		stream=new StackableInputStream(new DecoderCharacterInput(inputStream,decoder));
+		stream=new StackableCharacterInput(new DecoderCharacterInput(inputStream,decoder));
 	}
 	private boolean isMathMLIntegrationPoint(Element element) {
 		String name=element.getLocalName();
@@ -775,7 +784,6 @@ final class HtmlParser {
 	private Comment createCommentNode(int token){
 		CommentToken comment=(CommentToken)getToken(token);
 		Comment node=new Comment();
-		node.setOwnerDocument(document);
 		node.setData(comment.getValue());
 		return node;
 	}
@@ -823,7 +831,7 @@ final class HtmlParser {
 			document.appendChild(element);
 		}
 		openElements.add(element);
-		return element;		
+		return element;
 	}
 
 	private Element addHtmlElementNoPush(StartTagToken tag){
@@ -890,16 +898,16 @@ final class HtmlParser {
 					return applyInsertionMode(token,null);
 				}
 			} else if(name.equals("b") ||
-					name.equals("big") || name.equals("blockquote") || name.equals("body") || name.equals("br") || 
-					name.equals("center") || name.equals("code") || name.equals("dd") || name.equals("div") || 
-					name.equals("dl") || name.equals("dt") || name.equals("em") || name.equals("embed") || 
-					name.equals("h1") || name.equals("h2") || name.equals("h3") || name.equals("h4") || 
-					name.equals("h5") || name.equals("h6") || name.equals("head") || name.equals("hr") || 
-					name.equals("i") || name.equals("img") || name.equals("li") || name.equals("listing") || 
-					name.equals("menu") || name.equals("meta") || name.equals("nobr") || name.equals("ol") || 
-					name.equals("p") || name.equals("pre") || name.equals("ruby") || name.equals("s") || 
-					name.equals("small") || name.equals("span") || name.equals("strong") || name.equals("strike") || 
-					name.equals("sub") || name.equals("sup") || name.equals("table") || name.equals("tt") || 
+					name.equals("big") || name.equals("blockquote") || name.equals("body") || name.equals("br") ||
+					name.equals("center") || name.equals("code") || name.equals("dd") || name.equals("div") ||
+					name.equals("dl") || name.equals("dt") || name.equals("em") || name.equals("embed") ||
+					name.equals("h1") || name.equals("h2") || name.equals("h3") || name.equals("h4") ||
+					name.equals("h5") || name.equals("h6") || name.equals("head") || name.equals("hr") ||
+					name.equals("i") || name.equals("img") || name.equals("li") || name.equals("listing") ||
+					name.equals("menu") || name.equals("meta") || name.equals("nobr") || name.equals("ol") ||
+					name.equals("p") || name.equals("pre") || name.equals("ruby") || name.equals("s") ||
+					name.equals("small") || name.equals("span") || name.equals("strong") || name.equals("strike") ||
+					name.equals("sub") || name.equals("sup") || name.equals("table") || name.equals("tt") ||
 					name.equals("u") || name.equals("ul") || name.equals("var")){
 				error=true;
 				while(true){
@@ -911,7 +919,7 @@ final class HtmlParser {
 						break;
 					}
 				}
-				return applyInsertionMode(token,null);				
+				return applyInsertionMode(token,null);
 			} else {
 				String namespace=getCurrentNode().getNamespaceURI();
 				boolean mathml=false;
@@ -1021,8 +1029,8 @@ final class HtmlParser {
 		} else if((token&TOKEN_TYPE_MASK)==TOKEN_END_TAG){
 			EndTagToken tag=(EndTagToken)getToken(token);
 			String name=tag.getName();
-			if(name.equals("script") && 
-					getCurrentNode().getLocalName().equals("script") && 
+			if(name.equals("script") &&
+					getCurrentNode().getLocalName().equals("script") &&
 					SVG_NAMESPACE.equals(getCurrentNode().getNamespaceURI())){
 				popCurrentNode();
 			} else {
@@ -1079,7 +1087,7 @@ final class HtmlParser {
 				String doctypeSystem=(doctype.systemID==null) ? null : doctype.systemID.toString();
 				boolean matchesHtml="html".equals(doctypeName);
 				boolean hasSystemId=(doctype.systemID!=null);
-				if(!matchesHtml || doctypePublic!=null || 
+				if(!matchesHtml || doctypePublic!=null ||
 						(doctypeSystem!=null && !"about:legacy-compat".equals(doctypeSystem))){
 					boolean html4=(matchesHtml && "-//W3C//DTD HTML 4.0//EN".equals(doctypePublic) &&
 							(doctypeSystem==null || "http://www.w3.org/TR/REC-html40/strict.dtd".equals(doctypeSystem)));
@@ -1156,8 +1164,10 @@ final class HtmlParser {
 
 				return true;
 			}
-			error=true; // except if 'iframe srcdoc'
-			document.setMode(DocumentMode.QuirksMode); // except if 'iframe srcdoc'
+			if(!"about:srcdoc".equals(address)){
+				error=true;
+				document.setMode(DocumentMode.QuirksMode);
+			}
 			insertionMode=InsertionMode.BeforeHtml;
 			return applyInsertionMode(token,null);
 		}
@@ -1173,7 +1183,7 @@ final class HtmlParser {
 			if((token&TOKEN_TYPE_MASK)==TOKEN_COMMENT){
 				addCommentNodeToDocument(token);
 
-				return true;			
+				return true;
 			} else if((token&TOKEN_TYPE_MASK)==TOKEN_START_TAG){
 				StartTagToken tag=(StartTagToken)getToken(token);
 				String name=tag.getName();
@@ -1211,7 +1221,7 @@ final class HtmlParser {
 			if((token&TOKEN_TYPE_MASK)==TOKEN_DOCTYPE){
 				error=true;
 				return false;
-			} 
+			}
 			if((token&TOKEN_TYPE_MASK)==TOKEN_START_TAG){
 				StartTagToken tag=(StartTagToken)getToken(token);
 				String name=tag.getName();
@@ -1324,7 +1334,7 @@ final class HtmlParser {
 					state=TokenizerState.RawText;
 					originalInsertionMode=insertionMode;
 					insertionMode=InsertionMode.Text;
-					return true;	
+					return true;
 				} else if("noscript".equals(name)){
 					addHtmlElement(tag);
 					insertionMode=InsertionMode.InHeadNoscript;
@@ -1334,7 +1344,7 @@ final class HtmlParser {
 					state=TokenizerState.ScriptData;
 					originalInsertionMode=insertionMode;
 					insertionMode=InsertionMode.Text;
-					return true;	
+					return true;
 				} else if("head".equals(name)){
 					error=true;
 					return false;
@@ -1365,7 +1375,7 @@ final class HtmlParser {
 		}
 		case AfterHead:{
 			if((token&TOKEN_TYPE_MASK)==TOKEN_CHARACTER){
-				if(token==0x20 || token==0x09 || token==0x0a || 
+				if(token==0x20 || token==0x09 || token==0x0a ||
 						token==0x0c || token==0x0d){
 					insertCharacter(getCurrentNode(),token);
 				} else {
@@ -1420,7 +1430,7 @@ final class HtmlParser {
 						name.equals("br")){
 					applyStartTag("body",insMode);
 					framesetOk=true;
-					return applyInsertionMode(token,null);	
+					return applyInsertionMode(token,null);
 				} else {
 					error=true;
 					return false;
@@ -1463,7 +1473,7 @@ final class HtmlParser {
 				return applyInsertionMode(token,null);
 			} else if((token&TOKEN_TYPE_MASK)==TOKEN_END_TAG){
 				openElements.remove(openElements.size()-1);
-				insertionMode=originalInsertionMode;			   
+				insertionMode=originalInsertionMode;
 			}
 			return true;
 		}
@@ -1599,7 +1609,7 @@ final class HtmlParser {
 						){
 					closeParagraph(insMode);
 					addHtmlElement(tag);
-					return true;	
+					return true;
 				} else if("h1".equals(name) ||
 						"h2".equals(name) ||
 						"h3".equals(name) ||
@@ -1620,7 +1630,7 @@ final class HtmlParser {
 						error=true;
 						openElements.remove(openElements.size()-1);
 					}
-					addHtmlElement(tag);					
+					addHtmlElement(tag);
 					return true;
 				} else if("pre".equals(name)||
 						"listing".equals(name)){
@@ -1660,7 +1670,7 @@ final class HtmlParser {
 									insMode);
 							break;
 						}
-						if(isSpecialElement(node) && 
+						if(isSpecialElement(node) &&
 								!"address".equals(nodeName) &&
 								!"div".equals(nodeName) &&
 								!"p".equals(nodeName)){
@@ -1680,7 +1690,7 @@ final class HtmlParser {
 							applyEndTag(nodeName,insMode);
 							break;
 						}
-						if(isSpecialElement(node) && 
+						if(isSpecialElement(node) &&
 								!"address".equals(nodeName) &&
 								!"div".equals(nodeName) &&
 								!"p".equals(nodeName)){
@@ -1694,7 +1704,7 @@ final class HtmlParser {
 					closeParagraph(insMode);
 					addHtmlElement(tag);
 					state=TokenizerState.PlainText;
-					return true;	
+					return true;
 				} else if("button".equals(name)){
 					if(hasHtmlElementInScope("button")){
 						error=true;
@@ -1729,7 +1739,7 @@ final class HtmlParser {
 					}
 					reconstructFormatting();
 					pushFormattingElement(tag);
-				} else if("b".equals(name) || 
+				} else if("b".equals(name) ||
 						"big".equals(name)||
 						"code".equals(name)||
 						"em".equals(name)||
@@ -1758,7 +1768,7 @@ final class HtmlParser {
 					addHtmlElement(tag);
 					framesetOk=false;
 					insertionMode=InsertionMode.InTable;
-					return true;	
+					return true;
 				} else if("area".equals(name)||
 						"br".equals(name)||
 						"embed".equals(name)||
@@ -1857,13 +1867,13 @@ final class HtmlParser {
 					addHtmlElement(tag);
 					state=TokenizerState.RawText;
 					originalInsertionMode=insertionMode;
-					insertionMode=InsertionMode.Text;					
+					insertionMode=InsertionMode.Text;
 				} else if("iframe".equals(name)){
 					framesetOk=false;
 					addHtmlElement(tag);
 					state=TokenizerState.RawText;
 					originalInsertionMode=insertionMode;
-					insertionMode=InsertionMode.Text;					
+					insertionMode=InsertionMode.Text;
 				} else if("noembed".equals(name)){
 					addHtmlElement(tag);
 					state=TokenizerState.RawText;
@@ -1978,19 +1988,19 @@ final class HtmlParser {
 					}
 					insertionMode=InsertionMode.AfterBody;
 				} else if(name.equals("a") ||
-						name.equals("b") || 
-						name.equals("big") || 
-						name.equals("code") || 
-						name.equals("em") || 
-						name.equals("b") || 
-						name.equals("font") || 
-						name.equals("i") || 
-						name.equals("nobr") || 
-						name.equals("s") || 
-						name.equals("small") || 
-						name.equals("strike") || 
-						name.equals("strong") || 
-						name.equals("tt") || 
+						name.equals("b") ||
+						name.equals("big") ||
+						name.equals("code") ||
+						name.equals("em") ||
+						name.equals("b") ||
+						name.equals("font") ||
+						name.equals("i") ||
+						name.equals("nobr") ||
+						name.equals("s") ||
+						name.equals("small") ||
+						name.equals("strike") ||
+						name.equals("strong") ||
+						name.equals("tt") ||
 						name.equals("u")
 						){
 					for(int i=0;i<8;i++){
@@ -2068,7 +2078,7 @@ final class HtmlParser {
 							//DebugUtility.log(openElements);
 							//DebugUtility.log("Formatting elements now:");
 							//DebugUtility.log(formattingElements);
-							break;							
+							break;
 						}
 						Element commonAncestor=openElements.get(formattingElementPos-1);
 						//	DebugUtility.log("common ancestor: %s",commonAncestor);
@@ -2260,7 +2270,7 @@ final class HtmlParser {
 						}
 					}
 				} else if(name.equals("h1") || name.equals("h2") ||
-						name.equals("h3") || name.equals("h4") || 
+						name.equals("h3") || name.equals("h4") ||
 						name.equals("h5") || name.equals("h6")){
 					if(!hasHtmlHeaderElementInScope()){
 						error=true;
@@ -2273,7 +2283,7 @@ final class HtmlParser {
 					while(true){
 						Element node=popCurrentNode();
 						String name2=node.getLocalName();
-						if(name2.equals("h1") || 
+						if(name2.equals("h1") ||
 								name2.equals("h2") ||
 								name2.equals("h3") ||
 								name2.equals("h4") ||
@@ -2370,7 +2380,7 @@ final class HtmlParser {
 				} else if(name.equals("br")){
 					error=true;
 					applyEndTag("noscript",insMode);
-					return applyInsertionMode(token,null);					
+					return applyInsertionMode(token,null);
 				} else {
 					error=true;
 					return false;
@@ -2422,9 +2432,9 @@ final class HtmlParser {
 								node.getLocalName().equals("table") ||
 								node.getLocalName().equals("html")) {
 							break;
-						}			
+						}
 						popCurrentNode();
-					}	
+					}
 					insertFormattingMarker(tag,addHtmlElement(tag));
 					insertionMode=InsertionMode.InCaption;
 					return true;
@@ -2435,9 +2445,9 @@ final class HtmlParser {
 								node.getLocalName().equals("table") ||
 								node.getLocalName().equals("html")) {
 							break;
-						}			
+						}
 						popCurrentNode();
-					}	
+					}
 					addHtmlElement(tag);
 					insertionMode=InsertionMode.InColumnGroup;
 					return true;
@@ -2453,16 +2463,16 @@ final class HtmlParser {
 								node.getLocalName().equals("table") ||
 								node.getLocalName().equals("html")) {
 							break;
-						}			
+						}
 						popCurrentNode();
-					}	
+					}
 					addHtmlElement(tag);
-					insertionMode=InsertionMode.InTableBody;					
+					insertionMode=InsertionMode.InTableBody;
 				} else if(name.equals("td") ||
 						name.equals("th") ||
 						name.equals("tr")){
 					applyStartTag("tbody",insMode);
-					return applyInsertionMode(token,null);					
+					return applyInsertionMode(token,null);
 				} else if(name.equals("style") ||
 						name.equals("script")){
 					applyInsertionMode(token,InsertionMode.InHead);
@@ -2501,7 +2511,7 @@ final class HtmlParser {
 							if(node.getLocalName().equals(name)) {
 								break;
 							}
-						}	
+						}
 						resetInsertionMode();
 					}
 				} else if(name.equals("body") ||
@@ -2520,7 +2530,7 @@ final class HtmlParser {
 				} else {
 					doFosterParent=true;
 					applyInsertionMode(token,InsertionMode.InBody);
-					doFosterParent=false;					
+					doFosterParent=false;
 				}
 			} else if((token&TOKEN_TYPE_MASK)==TOKEN_COMMENT){
 				addCommentNodeToCurrentNode(token);
@@ -2559,7 +2569,7 @@ final class HtmlParser {
 					for(int i=0;i<size;i++){
 						int c=array[i];
 						applyInsertionMode(c,InsertionMode.InBody);
-					}					
+					}
 					doFosterParent=false;
 				} else {
 					insertString(getCurrentNode(),pendingTableCharacters.toString());
@@ -2585,7 +2595,7 @@ final class HtmlParser {
 						){
 					error=true;
 					if(applyEndTag("caption",insMode))
-						return applyInsertionMode(token,null);					
+						return applyInsertionMode(token,null);
 				} else
 					return applyInsertionMode(token,InsertionMode.InBody);
 			} else if((token&TOKEN_TYPE_MASK)==TOKEN_END_TAG){
@@ -2699,11 +2709,11 @@ final class HtmlParser {
 								node.getLocalName().equals("thead") ||
 								node.getLocalName().equals("html")) {
 							break;
-						}		
+						}
 						popCurrentNode();
-					}	
+					}
 					addHtmlElement(tag);
-					insertionMode=InsertionMode.InRow;					
+					insertionMode=InsertionMode.InRow;
 				} else if(name.equals("th") || name.equals("td")){
 					error=true;
 					applyStartTag("tr",insMode);
@@ -2729,9 +2739,9 @@ final class HtmlParser {
 								node.getLocalName().equals("thead") ||
 								node.getLocalName().equals("html")) {
 							break;
-						}		
+						}
 						popCurrentNode();
-					}	
+					}
 					applyEndTag(getCurrentNode().getLocalName(),insMode);
 					return applyInsertionMode(token,null);
 				} else
@@ -2754,9 +2764,9 @@ final class HtmlParser {
 								node.getLocalName().equals("thead") ||
 								node.getLocalName().equals("html")) {
 							break;
-						}		
+						}
 						popCurrentNode();
-					}	
+					}
 					popCurrentNode();
 					insertionMode=InsertionMode.InTable;
 				} else if(name.equals("table")){
@@ -2775,7 +2785,7 @@ final class HtmlParser {
 								node.getLocalName().equals("thead") ||
 								node.getLocalName().equals("html")) {
 							break;
-						}		
+						}
 						popCurrentNode();
 					}
 					applyEndTag(getCurrentNode().getLocalName(),insMode);
@@ -3279,7 +3289,7 @@ final class HtmlParser {
 				if("html".equals(name)){
 					applyInsertionMode(token,InsertionMode.InBody);
 				} else if("noframes".equals(name)){
-					applyInsertionMode(token,InsertionMode.InHead);					
+					applyInsertionMode(token,InsertionMode.InHead);
 				} else {
 					error=true;
 				}
@@ -3326,7 +3336,7 @@ final class HtmlParser {
 		inputStream.rewind();
 		encoding=new EncodingConfidence(charset,EncodingConfidence.Certain);
 		decoder=new Html5Decoder(TextEncoding.getDecoder(encoding.getEncoding()));
-		stream=new StackableInputStream(new DecoderCharacterInput(inputStream,decoder));
+		stream=new StackableCharacterInput(new DecoderCharacterInput(inputStream,decoder));
 	}
 
 	private void clearFormattingToMarker() {
@@ -3485,7 +3495,7 @@ final class HtmlParser {
 				if(thisName.equals("foreignObject")||
 						thisName.equals("desc")||
 						thisName.equals("title"))
-					return false;				
+					return false;
 			}
 		}
 		return false;
@@ -3653,13 +3663,13 @@ final class HtmlParser {
 	}
 
 	private boolean isSpecialElement(Element node) {
-		if(node.isHtmlElement("address") || node.isHtmlElement("applet") || node.isHtmlElement("area") || node.isHtmlElement("article") || node.isHtmlElement("aside") || node.isHtmlElement("base") || node.isHtmlElement("basefont") || node.isHtmlElement("bgsound") || node.isHtmlElement("blockquote") || node.isHtmlElement("body") || node.isHtmlElement("br") || node.isHtmlElement("button") || node.isHtmlElement("caption") || node.isHtmlElement("center") || node.isHtmlElement("col") || node.isHtmlElement("colgroup") || node.isHtmlElement("dd") || node.isHtmlElement("details") || node.isHtmlElement("dir") || node.isHtmlElement("div") || node.isHtmlElement("dl") || node.isHtmlElement("dt") || node.isHtmlElement("embed") || node.isHtmlElement("fieldset") || node.isHtmlElement("figcaption") || node.isHtmlElement("figure") 
-				|| node.isHtmlElement("footer") || node.isHtmlElement("form") || node.isHtmlElement("frame") || node.isHtmlElement("frameset") || node.isHtmlElement("h1") || node.isHtmlElement("h2") || node.isHtmlElement("h3") || node.isHtmlElement("h4") || node.isHtmlElement("h5") || node.isHtmlElement("h6") || node.isHtmlElement("head") || node.isHtmlElement("header") || node.isHtmlElement("hgroup") || node.isHtmlElement("hr") || node.isHtmlElement("html") || node.isHtmlElement("iframe") || node.isHtmlElement("img") || node.isHtmlElement("input") || node.isHtmlElement("isindex") || node.isHtmlElement("li") || node.isHtmlElement("link") || 
-				node.isHtmlElement("listing") || node.isHtmlElement("main") || node.isHtmlElement("marquee") || node.isHtmlElement("menu") || node.isHtmlElement("menuitem") || node.isHtmlElement("meta") || node.isHtmlElement("nav") || node.isHtmlElement("noembed") || node.isHtmlElement("noframes") || node.isHtmlElement("noscript") || node.isHtmlElement("object") || node.isHtmlElement("ol") || node.isHtmlElement("p") || node.isHtmlElement("param") || node.isHtmlElement("plaintext") || node.isHtmlElement("pre") || node.isHtmlElement("script") || node.isHtmlElement("section") || 
+		if(node.isHtmlElement("address") || node.isHtmlElement("applet") || node.isHtmlElement("area") || node.isHtmlElement("article") || node.isHtmlElement("aside") || node.isHtmlElement("base") || node.isHtmlElement("basefont") || node.isHtmlElement("bgsound") || node.isHtmlElement("blockquote") || node.isHtmlElement("body") || node.isHtmlElement("br") || node.isHtmlElement("button") || node.isHtmlElement("caption") || node.isHtmlElement("center") || node.isHtmlElement("col") || node.isHtmlElement("colgroup") || node.isHtmlElement("dd") || node.isHtmlElement("details") || node.isHtmlElement("dir") || node.isHtmlElement("div") || node.isHtmlElement("dl") || node.isHtmlElement("dt") || node.isHtmlElement("embed") || node.isHtmlElement("fieldset") || node.isHtmlElement("figcaption") || node.isHtmlElement("figure")
+				|| node.isHtmlElement("footer") || node.isHtmlElement("form") || node.isHtmlElement("frame") || node.isHtmlElement("frameset") || node.isHtmlElement("h1") || node.isHtmlElement("h2") || node.isHtmlElement("h3") || node.isHtmlElement("h4") || node.isHtmlElement("h5") || node.isHtmlElement("h6") || node.isHtmlElement("head") || node.isHtmlElement("header") || node.isHtmlElement("hgroup") || node.isHtmlElement("hr") || node.isHtmlElement("html") || node.isHtmlElement("iframe") || node.isHtmlElement("img") || node.isHtmlElement("input") || node.isHtmlElement("isindex") || node.isHtmlElement("li") || node.isHtmlElement("link") ||
+				node.isHtmlElement("listing") || node.isHtmlElement("main") || node.isHtmlElement("marquee") || node.isHtmlElement("menu") || node.isHtmlElement("menuitem") || node.isHtmlElement("meta") || node.isHtmlElement("nav") || node.isHtmlElement("noembed") || node.isHtmlElement("noframes") || node.isHtmlElement("noscript") || node.isHtmlElement("object") || node.isHtmlElement("ol") || node.isHtmlElement("p") || node.isHtmlElement("param") || node.isHtmlElement("plaintext") || node.isHtmlElement("pre") || node.isHtmlElement("script") || node.isHtmlElement("section") ||
 				node.isHtmlElement("select") || node.isHtmlElement("source") || node.isHtmlElement("style") || node.isHtmlElement("summary") || node.isHtmlElement("table") || node.isHtmlElement("tbody") || node.isHtmlElement("td") || node.isHtmlElement("textarea") || node.isHtmlElement("tfoot") || node.isHtmlElement("th") || node.isHtmlElement("thead") || node.isHtmlElement("title") || node.isHtmlElement("tr") || node.isHtmlElement("track") || node.isHtmlElement("ul") || node.isHtmlElement("wbr") || node.isHtmlElement("xmp"))
 			return true;
 		if(node.isMathMLElement("mi") || node.isMathMLElement("mo") || node.isMathMLElement("mn") || node.isMathMLElement("ms") || node.isMathMLElement("mtext") || node.isMathMLElement("annotation-xml"))
-			return true; 
+			return true;
 		if(node.isSvgElement("foreignObject") || node.isSvgElement("desc") || node.isSvgElement("title"))
 			return true;
 
@@ -3669,7 +3679,7 @@ final class HtmlParser {
 	private int parseCharacterReference(int allowedCharacter) throws IOException{
 		int markStart=stream.markIfNeeded();
 		int c1=stream.read();
-		if(c1<0 || c1==0x09 || c1==0x0a || c1==0x0c || 
+		if(c1<0 || c1==0x09 || c1==0x0a || c1==0x0c ||
 				c1==0x20 || c1==0x3c || c1==0x26 || (allowedCharacter>=0 && c1==allowedCharacter)){
 			stream.setMarkPosition(markStart);
 			return 0x26; // emit ampersand
@@ -3701,7 +3711,7 @@ final class HtmlParser {
 						if(!overflow) {
 							value=(value<<4)+(number-'a')+10;
 						}
-						haveHex=true;								
+						haveHex=true;
 					} else if(number>='A' && number<='F'){
 						if(!overflow) {
 							value=(value<<4)+(number-'A')+10;
@@ -3785,7 +3795,7 @@ final class HtmlParser {
 				error=true;
 				value=0xFFFD;
 			}
-			if(value==0x08 || value==0x0B || 
+			if(value==0x08 || value==0x0B ||
 					(value&0xFFFE)==0xFFFE ||
 					(value>=0x0e && value<=0x1f) ||
 					value==0x7F || (value>=0xFDD0 && value<=0xFDEF)){
@@ -3793,7 +3803,7 @@ final class HtmlParser {
 				error=true;
 			}
 			return value;
-		} else if((c1>='A' && c1<='Z') || 
+		} else if((c1>='A' && c1<='Z') ||
 				(c1>='a' && c1<='z') ||
 				(c1>='0' && c1<='9')){
 			int[] data=null;
@@ -3846,7 +3856,7 @@ final class HtmlParser {
 					}
 					if(matched){
 						// Move back the difference between the
-						// number of bytes actually read and 
+						// number of bytes actually read and
 						// this entity's length
 						stream.moveBack(count-(entity.length()-1));
 						//DebugUtility.log("lastchar=%c",entity.charAt(entity.length()-1));
@@ -3854,7 +3864,7 @@ final class HtmlParser {
 								entity.charAt(entity.length()-1)!=';'){
 							// Get the next character after the entity
 							int ch2=stream.read();
-							if(ch2=='=' || (ch2>='A' && ch2<='Z') || 
+							if(ch2=='=' || (ch2>='A' && ch2<='Z') ||
 									(ch2>='a' && ch2<='z') ||
 									(ch2>='0' && ch2<='9')){
 								if(ch2=='=') {
@@ -3884,7 +3894,7 @@ final class HtmlParser {
 				if(ch2==';'){
 					error=true;
 					break;
-				} else if(!((ch2>='A' && ch2<='Z') || 
+				} else if(!((ch2>='A' && ch2<='Z') ||
 						(ch2>='a' && ch2<='z') ||
 						(ch2>='0' && ch2<='9'))){
 					break;
@@ -3992,17 +4002,17 @@ final class HtmlParser {
 					name.equals("xlink:show") ||
 					name.equals("xlink:title") ||
 					name.equals("xlink:type")
-					){ 
+					){
 				attr.setNamespace(XLINK_NAMESPACE);
 			}
 			else if(name.equals("xml:base") ||
 					name.equals("xml:lang") ||
 					name.equals("xml:space")
-					){ 
+					){
 				attr.setNamespace(XML_NAMESPACE);
 			}
 			else if(name.equals("xmlns") ||
-					name.equals("xmlns:xlink")){ 
+					name.equals("xmlns:xlink")){
 				attr.setNamespace(XMLNS_NAMESPACE);
 			}
 		}
@@ -4109,7 +4119,7 @@ final class HtmlParser {
 			case ScriptData:{
 				int c11=stream.read();
 				if(c11==0x3c) {
-					state=(state==TokenizerState.RawText) ? 
+					state=(state==TokenizerState.RawText) ?
 							TokenizerState.RawTextLessThan :
 								TokenizerState.ScriptDataLessThan;
 				} else if(c11==0){
@@ -4154,7 +4164,7 @@ final class HtmlParser {
 						state=TokenizerState.ScriptDataEndTagName;
 					} else {
 						state=TokenizerState.ScriptDataEscapedEndTagName;
-					}						
+					}
 				} else if(ch>='a' && ch<='z'){
 					EndTagToken token=new EndTagToken((char)ch);
 					tempBuffer.append(ch);
@@ -4164,18 +4174,18 @@ final class HtmlParser {
 						state=TokenizerState.ScriptDataEndTagName;
 					} else {
 						state=TokenizerState.ScriptDataEscapedEndTagName;
-					}						
+					}
 				} else {
 					if(state==TokenizerState.ScriptDataEndTagOpen) {
 						state=TokenizerState.ScriptData;
 					} else {
 						state=TokenizerState.ScriptDataEscaped;
-					}						
+					}
 					tokenQueue.add(0x2f);
 					if(ch>=0) {
 						stream.moveBack(1);
 					}
-					return 0x3c;					
+					return 0x3c;
 				}
 				break;
 			}
@@ -4196,7 +4206,7 @@ final class HtmlParser {
 					tempBuffer.append(ch);
 				} else if(ch>='a' && ch<='z'){
 					currentTag.append((char)ch);
-					tempBuffer.append(ch);				
+					tempBuffer.append(ch);
 				} else {
 					if(state==TokenizerState.ScriptDataEndTagName) {
 						state=TokenizerState.ScriptData;
@@ -4218,7 +4228,7 @@ final class HtmlParser {
 			case ScriptDataDoubleEscapeStart:{
 				stream.markToEnd();
 				int ch=stream.read();
-				if(ch==0x09 || ch==0x0a || ch==0x0c || ch==0x20 || 
+				if(ch==0x09 || ch==0x0a || ch==0x0c || ch==0x20 ||
 						ch==0x2f || ch==0x3e){
 					String bufferString=tempBuffer.toString();
 					if(bufferString.equals("script")){
@@ -4244,7 +4254,7 @@ final class HtmlParser {
 			case ScriptDataDoubleEscapeEnd:{
 				stream.markToEnd();
 				int ch=stream.read();
-				if(ch==0x09 || ch==0x0a || ch==0x0c || ch==0x20 || 
+				if(ch==0x09 || ch==0x0a || ch==0x0c || ch==0x20 ||
 						ch==0x2f || ch==0x3e){
 					String bufferString=tempBuffer.toString();
 					if(bufferString.equals("script")){
@@ -4301,7 +4311,7 @@ final class HtmlParser {
 					state=TokenizerState.Data;
 				} else
 					return ch;
-				break;				
+				break;
 			}
 			case ScriptDataDoubleEscaped:{
 				int ch=stream.read();
@@ -4319,7 +4329,7 @@ final class HtmlParser {
 					state=TokenizerState.Data;
 				} else
 					return ch;
-				break;				
+				break;
 			}
 			case ScriptDataEscapedDash:{
 				int ch=stream.read();
@@ -4339,7 +4349,7 @@ final class HtmlParser {
 					state=TokenizerState.ScriptDataEscaped;
 					return ch;
 				}
-				break;				
+				break;
 			}
 			case ScriptDataDoubleEscapedDash:{
 				int ch=stream.read();
@@ -4360,7 +4370,7 @@ final class HtmlParser {
 					state=TokenizerState.ScriptDataDoubleEscaped;
 					return ch;
 				}
-				break;				
+				break;
 			}
 			case ScriptDataEscapedDashDash:{
 				int ch=stream.read();
@@ -4382,7 +4392,7 @@ final class HtmlParser {
 					state=TokenizerState.ScriptDataEscaped;
 					return ch;
 				}
-				break;				
+				break;
 			}
 			case ScriptDataDoubleEscapedDashDash:{
 				int ch=stream.read();
@@ -4405,7 +4415,7 @@ final class HtmlParser {
 					state=TokenizerState.ScriptDataDoubleEscaped;
 					return ch;
 				}
-				break;				
+				break;
 			}
 			case ScriptDataDoubleEscapedLessThan:{
 				stream.markToEnd();
@@ -4610,7 +4620,7 @@ final class HtmlParser {
 						error=true;
 					}
 					currentAttribute=currentTag.addAttribute(ch);
-					state=TokenizerState.AttributeName;					
+					state=TokenizerState.AttributeName;
 				}
 				break;
 			}
@@ -4653,7 +4663,7 @@ final class HtmlParser {
 					error=true;
 					currentAttribute.appendToName(ch);
 				} else {
-					currentAttribute.appendToName(ch);					
+					currentAttribute.appendToName(ch);
 				}
 				break;
 			}
@@ -4685,7 +4695,7 @@ final class HtmlParser {
 						error=true;
 					}
 					currentAttribute=currentTag.addAttribute(ch);
-					state=TokenizerState.AttributeName;					
+					state=TokenizerState.AttributeName;
 				}
 				break;
 			}
@@ -4713,13 +4723,13 @@ final class HtmlParser {
 				} else if(ch==0x3c || ch==0x3d || ch==0x60){
 					error=true;
 					currentAttribute.appendToValue(ch);
-					state=TokenizerState.AttributeValueUnquoted;					
+					state=TokenizerState.AttributeValueUnquoted;
 				} else if(ch<0){
 					error=true;
 					state=TokenizerState.Data;
 				} else {
 					currentAttribute.appendToValue(ch);
-					state=TokenizerState.AttributeValueUnquoted;					
+					state=TokenizerState.AttributeValueUnquoted;
 				}
 				break;
 			}
@@ -4877,7 +4887,7 @@ final class HtmlParser {
 							((ch=stream.read())=='e' || ch=='E')){
 						state=TokenizerState.DocType;
 						break;
-					}			
+					}
 				} else if(ch=='[' && true){
 					if(stream.read()=='C' &&
 							stream.read()=='D' &&
@@ -4908,7 +4918,7 @@ final class HtmlParser {
 					state=TokenizerState.Comment;
 				} else if(ch==0x3e || ch<0){
 					error=true;
-					state=TokenizerState.Data;					
+					state=TokenizerState.Data;
 					int ret=tokens.size()|lastComment.getType();
 					tokens.add(lastComment);
 					return ret;
@@ -4929,7 +4939,7 @@ final class HtmlParser {
 					state=TokenizerState.Comment;
 				} else if(ch==0x3e || ch<0){
 					error=true;
-					state=TokenizerState.Data;					
+					state=TokenizerState.Data;
 					int ret=tokens.size()|lastComment.getType();
 					tokens.add(lastComment);
 					return ret;
@@ -4949,7 +4959,7 @@ final class HtmlParser {
 					lastComment.append(0xFFFD);
 				} else if(ch<0){
 					error=true;
-					state=TokenizerState.Data;					
+					state=TokenizerState.Data;
 					int ret=tokens.size()|lastComment.getType();
 					tokens.add(lastComment);
 					return ret;
@@ -4969,7 +4979,7 @@ final class HtmlParser {
 					state=TokenizerState.Comment;
 				} else if(ch<0){
 					error=true;
-					state=TokenizerState.Data;					
+					state=TokenizerState.Data;
 					int ret=tokens.size()|lastComment.getType();
 					tokens.add(lastComment);
 					return ret;
@@ -5001,7 +5011,7 @@ final class HtmlParser {
 					lastComment.append('-');
 				} else if(ch<0){
 					error=true;
-					state=TokenizerState.Data;					
+					state=TokenizerState.Data;
 					int ret=tokens.size()|lastComment.getType();
 					tokens.add(lastComment);
 					return ret;
@@ -5035,7 +5045,7 @@ final class HtmlParser {
 					state=TokenizerState.CommentEndDash;
 				} else if(ch<0){
 					error=true;
-					state=TokenizerState.Data;					
+					state=TokenizerState.Data;
 					int ret=tokens.size()|lastComment.getType();
 					tokens.add(lastComment);
 					return ret;
@@ -5064,7 +5074,7 @@ final class HtmlParser {
 					currentAttribute.appendToValue(entityDoubles[index*2]);
 					currentAttribute.appendToValue(entityDoubles[index*2+1]);
 				} else {
-					currentAttribute.appendToValue(ch);					
+					currentAttribute.appendToValue(ch);
 				}
 				state=lastState;
 				break;
@@ -5083,7 +5093,7 @@ final class HtmlParser {
 					currentTag.appendChar((char)(ch+0x20));
 				} else if(ch==0){
 					error=true;
-					currentTag.appendChar((char)0xFFFD);					
+					currentTag.appendChar((char)0xFFFD);
 				} else if(ch<0){
 					error=true;
 					state=TokenizerState.Data;
@@ -5105,7 +5115,7 @@ final class HtmlParser {
 					}
 					return 0x3c;
 				}
-				break;				
+				break;
 			}
 			case BogusComment:{
 				CommentToken comment=new CommentToken();
@@ -5161,7 +5171,7 @@ final class HtmlParser {
 					docTypeToken=new DocTypeToken();
 					docTypeToken.name=new IntList();
 					docTypeToken.name.append(0xFFFD);
-					state=TokenizerState.DocTypeName;					
+					state=TokenizerState.DocTypeName;
 				} else if(ch==0x3e || ch<0){
 					error=true;
 					state=TokenizerState.Data;
@@ -5173,8 +5183,8 @@ final class HtmlParser {
 				} else {
 					docTypeToken=new DocTypeToken();
 					docTypeToken.name=new IntList();
-					docTypeToken.name.append(ch);					
-					state=TokenizerState.DocTypeName;					
+					docTypeToken.name.append(ch);
+					state=TokenizerState.DocTypeName;
 				}
 				break;
 			}
@@ -5198,9 +5208,9 @@ final class HtmlParser {
 					state=TokenizerState.Data;
 					int ret=tokens.size()|docTypeToken.getType();
 					tokens.add(docTypeToken);
-					return ret;					
+					return ret;
 				} else {
-					docTypeToken.name.append(ch);					
+					docTypeToken.name.append(ch);
 				}
 				break;
 			}
@@ -5212,23 +5222,23 @@ final class HtmlParser {
 					state=TokenizerState.Data;
 					int ret=tokens.size()|docTypeToken.getType();
 					tokens.add(docTypeToken);
-					return ret;					
+					return ret;
 				} else if(ch<0){
 					error=true;
 					docTypeToken.forceQuirks=true;
 					state=TokenizerState.Data;
 					int ret=tokens.size()|docTypeToken.getType();
 					tokens.add(docTypeToken);
-					return ret;					
+					return ret;
 				} else {
 					int ch2=0;
 					int pos=stream.markIfNeeded();
 					if(ch=='P' || ch=='p'){
-						if(((ch2=stream.read())=='u' || ch2=='U') && 
-								((ch2=stream.read())=='b' || ch2=='B') &&  
-								((ch2=stream.read())=='l' || ch2=='L') && 
-								((ch2=stream.read())=='i' || ch2=='I') && 
-								((ch2=stream.read())=='c' || ch2=='C') 
+						if(((ch2=stream.read())=='u' || ch2=='U') &&
+								((ch2=stream.read())=='b' || ch2=='B') &&
+								((ch2=stream.read())=='l' || ch2=='L') &&
+								((ch2=stream.read())=='i' || ch2=='I') &&
+								((ch2=stream.read())=='c' || ch2=='C')
 								){
 							state=TokenizerState.AfterDocTypePublic;
 						} else {
@@ -5238,11 +5248,11 @@ final class HtmlParser {
 							state=TokenizerState.BogusDocType;
 						}
 					} else if(ch=='S' || ch=='s'){
-						if(((ch2=stream.read())=='y' || ch2=='Y') && 
-								((ch2=stream.read())=='s' || ch2=='S') &&  
-								((ch2=stream.read())=='t' || ch2=='T') && 
-								((ch2=stream.read())=='e' || ch2=='E') && 
-								((ch2=stream.read())=='m' || ch2=='M') 
+						if(((ch2=stream.read())=='y' || ch2=='Y') &&
+								((ch2=stream.read())=='s' || ch2=='S') &&
+								((ch2=stream.read())=='t' || ch2=='T') &&
+								((ch2=stream.read())=='e' || ch2=='E') &&
+								((ch2=stream.read())=='m' || ch2=='M')
 								){
 							state=TokenizerState.AfterDocTypeSystem;
 						} else {
@@ -5250,13 +5260,13 @@ final class HtmlParser {
 							stream.setMarkPosition(pos);
 							docTypeToken.forceQuirks=true;
 							state=TokenizerState.BogusDocType;
-						}						
+						}
 					} else {
 						error=true;
 						stream.setMarkPosition(pos);
 						docTypeToken.forceQuirks=true;
 						state=TokenizerState.BogusDocType;
-					}	
+					}
 				}
 				break;
 			}
@@ -5285,7 +5295,7 @@ final class HtmlParser {
 					state=TokenizerState.Data;
 					int ret=tokens.size()|docTypeToken.getType();
 					tokens.add(docTypeToken);
-					return ret;					
+					return ret;
 				} else {
 					error=true;
 					docTypeToken.forceQuirks=true;
@@ -5318,7 +5328,7 @@ final class HtmlParser {
 					state=TokenizerState.Data;
 					int ret=tokens.size()|docTypeToken.getType();
 					tokens.add(docTypeToken);
-					return ret;					
+					return ret;
 				} else {
 					error=true;
 					docTypeToken.forceQuirks=true;
@@ -5340,7 +5350,7 @@ final class HtmlParser {
 					state=TokenizerState.Data;
 					int ret=tokens.size()|docTypeToken.getType();
 					tokens.add(docTypeToken);
-					return ret;					
+					return ret;
 				} else {
 					docTypeToken.publicID.append(ch);
 				}
@@ -5360,7 +5370,7 @@ final class HtmlParser {
 					state=TokenizerState.Data;
 					int ret=tokens.size()|docTypeToken.getType();
 					tokens.add(docTypeToken);
-					return ret;					
+					return ret;
 				} else {
 					docTypeToken.systemID.append(ch);
 				}
@@ -5377,7 +5387,7 @@ final class HtmlParser {
 					state=TokenizerState.Data;
 					int ret=tokens.size()|docTypeToken.getType();
 					tokens.add(docTypeToken);
-					return ret;										
+					return ret;
 				} else if(ch==0x22){
 					docTypeToken.systemID=new IntList();
 					if(state==TokenizerState.AfterDocTypePublicID) {
@@ -5396,7 +5406,7 @@ final class HtmlParser {
 					state=TokenizerState.Data;
 					int ret=tokens.size()|docTypeToken.getType();
 					tokens.add(docTypeToken);
-					return ret;										
+					return ret;
 				} else {
 					error=true;
 					docTypeToken.forceQuirks=true;
@@ -5412,14 +5422,14 @@ final class HtmlParser {
 					state=TokenizerState.Data;
 					int ret=tokens.size()|docTypeToken.getType();
 					tokens.add(docTypeToken);
-					return ret;	
+					return ret;
 				} else if(ch<0){
 					error=true;
 					docTypeToken.forceQuirks=true;
 					state=TokenizerState.Data;
 					int ret=tokens.size()|docTypeToken.getType();
 					tokens.add(docTypeToken);
-					return ret;	
+					return ret;
 				} else {
 					error=true;
 					state=TokenizerState.BogusDocType;
@@ -5432,7 +5442,7 @@ final class HtmlParser {
 					state=TokenizerState.Data;
 					int ret=tokens.size()|docTypeToken.getType();
 					tokens.add(docTypeToken);
-					return ret;						
+					return ret;
 				}
 				break;
 			}
@@ -5676,10 +5686,33 @@ final class HtmlParser {
 		state=TokenizerState.CData;
 	}
 
+	static String resolveURL(INode node, String url, String base){
+		String encoding=(node instanceof IDocument) ?
+				((IDocument)node).getCharacterSet() :
+					node.getOwnerDocument().getCharacterSet();
+				if("utf-16be".equals(encoding) ||
+						"utf-16le".equals(encoding)){
+					encoding="utf-8";
+				}
+				if(base==null){
+					base=node.getBaseURI();
+				}
+				URL resolved=URL.parse(url,URL.parse(base),encoding,true);
+				if(resolved==null)
+					return base;
+				return resolved.toString();
+	}
+
 	private void stopParsing() {
 		done=true;
 		document.encoding=encoding.getEncoding();
-		document.baseurl=baseurl;
+		if(document.baseurl==null || document.baseurl.length()==0){
+			document.baseurl=baseurl;
+		} else {
+			if(baseurl!=null && baseurl.length()>0){
+				document.baseurl=resolveURL(document,baseurl,document.baseurl);
+			}
+		}
 		openElements.clear();
 		formattingElements.clear();
 	}
@@ -5726,7 +5759,7 @@ final class HtmlParser {
 				}
 			}
 			ownerDocument=ownerDocument.getParentNode();
-			if(ownerDocument==null || 
+			if(ownerDocument==null ||
 					ownerDocument.getNodeType()==NodeType.DOCUMENT_NODE){
 				break;
 			}

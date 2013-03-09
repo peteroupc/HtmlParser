@@ -1,6 +1,6 @@
 package com.upokecenter.util;
 
-public class IntList {
+public final class IntList {
 	int[] buffer;
 	int ptr;
 	public IntList(){

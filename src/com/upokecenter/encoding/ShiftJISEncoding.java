@@ -69,18 +69,18 @@ final class ShiftJISEncoding implements ITextEncoder, ITextDecoder {
 				} else {
 					buffer[offset++]=cp;
 					count++;
-					length--;					
+					length--;
 				}
 				continue;
 			}
 			if(b<=0x80){
 				buffer[offset++]=b;
 				count++;
-				length--;									
+				length--;
 			} else if(b>=0xA1 && b<=0xDF){
 				buffer[offset++]=0xFF61+b-0xA1;
 				count++;
-				length--;													
+				length--;
 			} else if((b>=0x81 && b<=0x9F) || (b>=0xE0 && b<=0xFC)){
 				lead=b;
 				stream.mark(2);

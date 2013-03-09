@@ -61,7 +61,7 @@ final class JapaneseEUCEncoding implements ITextEncoder, ITextDecoder {
 				eucjp1=0;
 				buffer[offset++]=(0xFF61+b-0xA1);
 				count++;
-				length--;				
+				length--;
 				//DebugUtility.log("return 0xFF61 cp: %04X",0xFF61+b-0xA1);
 				continue;
 			}
@@ -92,9 +92,9 @@ final class JapaneseEUCEncoding implements ITextEncoder, ITextDecoder {
 				} else {
 					buffer[offset++]=(cp);
 					count++;
-					length--;				
+					length--;
 					continue;
-				}				
+				}
 			}
 			if(b<0x80){
 				buffer[offset++]=(b);

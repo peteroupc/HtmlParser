@@ -1,26 +1,24 @@
-package com.upokecenter.html;
+package com.upokecenter.util;
 
 import java.io.IOException;
 
-import com.upokecenter.util.ICharacterInput;
-import com.upokecenter.util.IntList;
 
-public final class IntListCharacterInput implements ICharacterInput {
+public final class IntArrayCharacterInput implements ICharacterInput {
 
 	int pos;
-	IntList ilist;
-	
-	public IntListCharacterInput(IntList ilist){
+	int[] ilist;
+
+	public IntArrayCharacterInput(int[] ilist){
 		this.ilist=ilist;
 	}
-	
+
 	@Override
 	public int read(int[] buf, int offset, int unitCount) throws IOException {
 		if(offset<0 || unitCount<0 || offset+unitCount>buf.length)
 			throw new IndexOutOfBoundsException();
 		if(unitCount==0)return 0;
-		int[] arr=this.ilist.array();
-		int size=this.ilist.size();
+		int[] arr=this.ilist;
+		int size=this.ilist.length;
 		int count=0;
 		while(pos<size && unitCount>0){
 			buf[offset]=arr[pos];
@@ -34,9 +32,9 @@ public final class IntListCharacterInput implements ICharacterInput {
 
 	@Override
 	public int read() throws IOException {
-		int[] arr=this.ilist.array();
-		if(pos<this.ilist.size())
-			return arr[pos];
+		int[] arr=this.ilist;
+		if(pos<this.ilist.length)
+			return arr[pos++];
 		return -1;
 	}
 

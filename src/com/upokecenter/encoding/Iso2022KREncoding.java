@@ -145,7 +145,7 @@ final class Iso2022KREncoding implements ITextEncoder, ITextDecoder {
 					} else {
 						buffer[offset++]=(cp);
 						length--;
-						count++;											
+						count++;
 					}
 				}
 			}

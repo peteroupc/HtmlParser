@@ -114,7 +114,7 @@ final class Big5Encoding implements ITextEncoder, ITextDecoder {
 	}
 
 	@Override
-	public void encode(OutputStream stream, int[] buffer, int offset, int length, 
+	public void encode(OutputStream stream, int[] buffer, int offset, int length,
 			IEncodingError error)
 					throws IOException {
 		if(stream==null || buffer==null)throw new IllegalArgumentException();
@@ -138,7 +138,7 @@ final class Big5Encoding implements ITextEncoder, ITextDecoder {
 			int lead=pointer/157+0x81;
 			if(lead<0xa1){
 				// NOTE: Encoding specification says to
-				// "[a]void emitting Hong Kong Supplementary 
+				// "[a]void emitting Hong Kong Supplementary
 				// Character Set extensions literally."
 				error.emitEncoderError(stream, cp);
 				continue;

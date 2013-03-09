@@ -69,7 +69,7 @@ final class Utf16Encoding implements ITextEncoder, ITextDecoder {
 					int cp2=0x10000+(lead-0xD800)*0x400+(cp-0xDC00);
 					buffer[offset++]=(cp2);
 					count++;
-					length--;					
+					length--;
 				} else {
 					stream.reset();
 					int o=error.emitDecoderError(buffer, offset, length);
@@ -89,7 +89,7 @@ final class Utf16Encoding implements ITextEncoder, ITextDecoder {
 			} else {
 				buffer[offset++]=(cp);
 				count++;
-				length--;								
+				length--;
 			}
 		}
 		return (count<=0) ? -1 : count;

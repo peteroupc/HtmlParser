@@ -60,8 +60,6 @@ public final class ConditionalBufferInputStream extends FilterInputStream {
 
 	@Override
 	public boolean markSupported(){
-		if(isDisabled())
-			return super.markSupported();
 		return true;
 	}
 

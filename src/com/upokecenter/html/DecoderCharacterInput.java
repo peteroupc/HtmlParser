@@ -9,8 +9,8 @@ import com.upokecenter.encoding.TextEncoding;
 import com.upokecenter.util.ICharacterInput;
 
 final class DecoderCharacterInput implements ICharacterInput {
-	private InputStream input;
-	private ITextDecoder decoder;
+	private final InputStream input;
+	private final ITextDecoder decoder;
 	private IEncodingError error=TextEncoding.ENCODING_ERROR_REPLACE;
 
 	public DecoderCharacterInput(InputStream input, ITextDecoder decoder) {

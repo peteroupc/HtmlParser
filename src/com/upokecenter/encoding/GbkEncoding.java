@@ -290,7 +290,7 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
 				int cp=0;
 				if(b>=0x30 && b<=0x39){
 					int index=(((gbk1-0x81)*10+gbk2-0x30)*126+gbk3-0x81)*10+b-0x30;
-					cp=GB18030CodePoint(index);				
+					cp=GB18030CodePoint(index);
 				}
 				gbk1=gbk2=gbk3=0;
 				if(cp==0){
