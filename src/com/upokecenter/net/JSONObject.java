@@ -44,7 +44,7 @@ import java.util.NoSuchElementException;
  * @author JSON.org
  * @version 0.1
  */
- class JSONObject {
+class JSONObject {
 
 	/**
 	 * JSONObject.NULL is equivalent to the value that JavaScript calls null,

@@ -24,6 +24,7 @@ class Comment extends Node implements IComment {
 	}
 
 
+	@Override
 	public String getTextContent(){
 		return null;
 	}

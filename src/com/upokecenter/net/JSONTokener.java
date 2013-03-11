@@ -13,7 +13,7 @@ import java.text.ParseException;
  * @author JSON.org
  * @version 0.1
  */
- class JSONTokener {
+class JSONTokener {
 
 	/**
 	 * The index of the next character.

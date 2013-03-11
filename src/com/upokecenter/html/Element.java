@@ -238,8 +238,9 @@ class Element extends Node implements IElement {
 		}
 		return ret;
 	}
-	
 
+
+	@Override
 	public String getTextContent(){
 		StringBuilder builder=new StringBuilder();
 		for(INode node : getChildNodes()){

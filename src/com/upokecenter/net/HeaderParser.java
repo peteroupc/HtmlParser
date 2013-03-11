@@ -307,7 +307,7 @@ public final class HeaderParser {
 		}
 	}
 
-	 static int getResponseCode(String s){
+	static int getResponseCode(String s){
 		int index=0;
 		int length=s.length();
 		if(s.indexOf("HTTP/",index)!=index)
@@ -334,7 +334,7 @@ public final class HeaderParser {
 		return num;
 	}
 
-	 static int skipZeros(String v, int index){
+	static int skipZeros(String v, int index){
 		char c=0;
 		int length=v.length();
 		while(index<length){
@@ -344,7 +344,7 @@ public final class HeaderParser {
 		}
 		return index;
 	}
-	 static int skipDigits(String v, int index){
+	static int skipDigits(String v, int index){
 		char c=0;
 		int length=v.length();
 		while(index<length){
@@ -354,7 +354,7 @@ public final class HeaderParser {
 		}
 		return index;
 	}
-	 static int skipSpace(String v, int index){
+	static int skipSpace(String v, int index){
 		char c=0;
 		int length=v.length();
 		while(index<length){
@@ -364,7 +364,7 @@ public final class HeaderParser {
 		}
 		return index;
 	}
-	 static int skipSpaceOrTab(String v, int index){
+	static int skipSpaceOrTab(String v, int index){
 		char c=0;
 		int length=v.length();
 		while(index<length){
@@ -374,7 +374,7 @@ public final class HeaderParser {
 		}
 		return index;
 	}
-	 static int skipLinearWhitespace(String v, int index){
+	static int skipLinearWhitespace(String v, int index){
 		char c=0;
 		int length=v.length();
 		while(index<length){ // skip whitespace
@@ -401,7 +401,7 @@ public final class HeaderParser {
 	}
 
 
-	 static int skipDirective(String str, int io){
+	static int skipDirective(String str, int io){
 		int length=str.length();
 		char c=0;
 		while(io<length){ // skip non-separator
@@ -437,7 +437,7 @@ public final class HeaderParser {
 		return io;
 	}
 
-	 static int parseTokenWithDelta(String str, int index, String token, int[] result){
+	static int parseTokenWithDelta(String str, int index, String token, int[] result){
 		int length=str.length();
 		int j=0;
 		int startIndex=index;
@@ -475,7 +475,7 @@ public final class HeaderParser {
 		return startIndex;
 	}
 
-	 static int parseToken(String str, int index, String token, boolean optionalQuoted){
+	static int parseToken(String str, int index, String token, boolean optionalQuoted){
 		int length=str.length();
 		int j=0;
 		int startIndex=index;
@@ -505,7 +505,7 @@ public final class HeaderParser {
 		return startIndex;
 	}
 
-	 static String getQuotedString(String v, int index){
+	static String getQuotedString(String v, int index){
 		// assumes index points to quotation mark
 		index++;
 		int length=v.length();

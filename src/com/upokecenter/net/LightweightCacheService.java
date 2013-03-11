@@ -90,7 +90,7 @@ public final class LightweightCacheService {
 		};
 		pool.scheduleAtFixedRate(runnable,5,120,TimeUnit.SECONDS);
 	}
-	public void close(){
+	public void shutdown(){
 		pool.shutdown();
 		runnable=null;
 	}

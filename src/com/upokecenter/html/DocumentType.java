@@ -31,8 +31,9 @@ final class DocumentType extends Node implements IDocumentType {
 	public String getSystemId() {
 		return systemId;
 	}
-	
 
+
+	@Override
 	public String getTextContent(){
 		return null;
 	}

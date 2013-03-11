@@ -14,13 +14,20 @@ import com.upokecenter.net.IResponseListener;
 public final class HtmlDocument {
 	private HtmlDocument(){};
 
+	/**
+	 * 
+	 * Gets the absolute URL from an HTML element.
+	 * 
+	 * @param node An IMG, A, AREA, LINK, BASE, FRAME, or SCRIPT element
+	 * @return an absolute URL of the element's SRC or HREF.
+	 */
 	public static String getHref(IElement node){
 		String name=node.getTagName();
 		String href="";
 		if("A".equals(name) || "LINK".equals(name) || "AREA".equals(name) ||
 				"BASE".equals(name)){
 			href=node.getAttribute("href");
-		} else if("IMG".equals(name) || "SCRIPT".equals(name)){
+		} else if("IMG".equals(name) || "SCRIPT".equals(name) || "FRAME".equals(name)){
 			href=node.getAttribute("src");
 		} else
 			return "";
@@ -29,14 +36,31 @@ public final class HtmlDocument {
 		return HtmlParser.resolveURL(node,href,null);
 	}
 
+	/**
+	 * 
+	 * Resolves a URL relative to an HTML element.
+	 * 
+	 * @param node an HTML element.
+	 * @param href Absolute or relative URL.
+	 * @return an absolute URL corresponding to the HTML element.
+	 */
 	public static String getHref(IElement node, String href){
 		if(href==null || href.length()==0)
 			return "";
 		return HtmlParser.resolveURL(node,href,null);
 	}
 
+	/**
+	 * 
+	 * Parses an HTML document from a URL.
+	 * 
+	 * @param url URL of the HTML document
+	 * @return a document object from the HTML document
+	 * @throws IOException if an I/O error occurs, such as a network
+	 * error, a download error, and so on.
+	 */
 	public static IDocument parseURL(String url) throws IOException {
-		return DownloadHelper.downloadUrl(url, 
+		return DownloadHelper.downloadUrl(url,
 				new IResponseListener<IDocument>(){
 			@Override
 			public IDocument processResponse(String url, InputStream stream,
@@ -49,10 +73,30 @@ public final class HtmlDocument {
 		});
 	}
 
+	/**
+	 * 
+	 * Parses an HTML document from an input stream, using "about:blank"
+	 * as its address.
+	 * 
+	 * @param stream an input stream
+	 * 
+	 * @throws IOException if an I/O error occurs.
+	 */
 	public static IDocument parseStream(InputStream stream)
 			throws IOException {
 		return parseStream(stream,"about:blank");
 	}
+	
+	/**
+	 * 
+	 * Parses an HTML document from an input stream, using the given
+	 * URL as its address.
+	 * 
+	 * @param stream
+	 * @param address
+	 * 
+	 * @throws IOException
+	 */
 	public static IDocument parseStream(InputStream stream, String address)
 			throws IOException {
 		if(!stream.markSupported()){
@@ -61,6 +105,14 @@ public final class HtmlDocument {
 		HtmlParser parser=new HtmlParser(stream,address,null);
 		return parser.parse();
 	}
+	/**
+	 * 
+	 * Parses an HTML document from a file on the file system.
+	 * 
+	 * @param file
+	 * 
+	 * @throws IOException
+	 */
 	public static IDocument parseFile(String file)
 			throws IOException {
 		InputStream stream=null;

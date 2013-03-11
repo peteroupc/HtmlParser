@@ -86,6 +86,7 @@ class Node implements INode {
 		return doc.getBaseURI();
 	}
 
+	@Override
 	public String getTextContent(){
 		return null;
 	}

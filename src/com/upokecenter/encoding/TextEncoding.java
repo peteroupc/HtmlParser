@@ -322,7 +322,7 @@ public final class TextEncoding {
 	 * @param input
 	 * @param decoder
 	 * @param error
-	 * @return
+	 * 
 	 * @throws IOException
 	 */
 	public static String decodeString(

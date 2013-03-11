@@ -11,7 +11,7 @@ import java.io.IOException;
 public interface ICharacterInput {
 
 	/**
-	 * Reads several Unicode characters into a buffer.
+	 * Reads multiple Unicode characters into a buffer.
 	 * 
 	 * @param buf
 	 * @param offset

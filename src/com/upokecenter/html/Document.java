@@ -117,9 +117,8 @@ class Document extends Node implements IDocument {
 	@Override
 	public IElement getDocumentElement() {
 		for(INode node : getChildNodes()){
-			if(node instanceof IElement){
+			if(node instanceof IElement)
 				return (IElement)node;
-			}
 		}
 		return null;
 	}

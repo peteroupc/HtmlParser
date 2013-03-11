@@ -26,8 +26,8 @@ public final class LightweightDownloadService {
 		}
 	}
 
-	public void close(){
-		service.close();
+	public void shutdown(){
+		service.shutdown();
 		pool.shutdown();
 	}
 
