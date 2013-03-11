@@ -6,6 +6,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.upokecenter.net.DownloadHelper;
+import com.upokecenter.net.HeaderParser;
+import com.upokecenter.net.IHttpHeaders;
+import com.upokecenter.net.IResponseListener;
+
 public final class HtmlDocument {
 	private HtmlDocument(){};
 
@@ -30,6 +35,19 @@ public final class HtmlDocument {
 		return HtmlParser.resolveURL(node,href,null);
 	}
 
+	public static IDocument parseURL(String url) throws IOException {
+		return DownloadHelper.downloadUrl(url, 
+				new IResponseListener<IDocument>(){
+			@Override
+			public IDocument processResponse(String url, InputStream stream,
+					IHttpHeaders headers) throws IOException {
+				String charset=HeaderParser.getCharset(
+						headers.getHeaderField("content-type"));
+				HtmlParser parser=new HtmlParser(stream,headers.getUrl(),charset);
+				return parser.parse();
+			}
+		});
+	}
 
 	public static IDocument parseStream(InputStream stream)
 			throws IOException {
@@ -40,7 +58,7 @@ public final class HtmlDocument {
 		if(!stream.markSupported()){
 			stream=new BufferedInputStream(stream);
 		}
-		HtmlParser parser=new HtmlParser(stream,address);
+		HtmlParser parser=new HtmlParser(stream,address,null);
 		return parser.parse();
 	}
 	public static IDocument parseFile(String file)
@@ -49,7 +67,7 @@ public final class HtmlDocument {
 		try {
 			String fileURL="file:///"+new File(file).getAbsolutePath().replace("\\", "/");
 			stream=new BufferedInputStream(new FileInputStream(file),8192);
-			HtmlParser parser=new HtmlParser(stream,fileURL);
+			HtmlParser parser=new HtmlParser(stream,fileURL,null);
 			return parser.parse();
 		} finally {
 			if(stream!=null) {

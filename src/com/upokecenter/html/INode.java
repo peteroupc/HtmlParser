@@ -8,4 +8,5 @@ public interface INode {
 	String getBaseURI();
 	INode getParentNode();
 	IDocument getOwnerDocument();
+	String getTextContent();
 }

@@ -22,4 +22,10 @@ class Comment extends Node implements IComment {
 	@Override String toDebugString(){
 		return "<!-- "+getData().toString()+" -->\n";
 	}
+
+
+	public String getTextContent(){
+		return null;
+	}
+
 }

@@ -626,7 +626,7 @@ final class HtmlParser {
 		pendingTableCharacters.clear();
 	}
 
-	public HtmlParser(InputStream source, String address) throws IOException{
+	public HtmlParser(InputStream source, String address, String charset) throws IOException{
 		if(source==null)throw new IllegalArgumentException();
 		if(address!=null && address.length()>0){
 			URL url=URL.parse(address);
@@ -636,11 +636,15 @@ final class HtmlParser {
 		this.address=address;
 		initialize();
 		inputStream=new ConditionalBufferInputStream(source);
-		encoding=CharsetSniffer.sniffEncoding(inputStream,null);
+		encoding=CharsetSniffer.sniffEncoding(inputStream,charset);
 		inputStream.rewind();
 		decoder=new Html5Decoder(TextEncoding.getDecoder(encoding.getEncoding()));
 		stream=new StackableCharacterInput(new DecoderCharacterInput(inputStream,decoder));
 	}
+	public HtmlParser(InputStream s, String string) throws IOException {
+		this(s,string,null);
+	}
+
 	private boolean isMathMLIntegrationPoint(Element element) {
 		String name=element.getLocalName();
 		return MATHML_NAMESPACE.equals(element.getNamespaceURI()) && (
@@ -1492,6 +1496,7 @@ final class HtmlParser {
 				return true;
 			}
 			if((token&TOKEN_TYPE_MASK)==TOKEN_CHARACTER){
+				//DebugUtility.log("%c %s",token,getCurrentNode().getTagName());
 				reconstructFormatting();
 				Text textNode=getTextNodeToInsert(getCurrentNode());
 				int ch=token;

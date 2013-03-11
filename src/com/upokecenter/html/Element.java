@@ -238,4 +238,15 @@ class Element extends Node implements IElement {
 		}
 		return ret;
 	}
+	
+
+	public String getTextContent(){
+		StringBuilder builder=new StringBuilder();
+		for(INode node : getChildNodes()){
+			if(node.getNodeType()!=NodeType.COMMENT_NODE){
+				builder.append(node.getTextContent());
+			}
+		}
+		return builder.toString();
+	}
 }

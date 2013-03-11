@@ -85,4 +85,8 @@ class Node implements INode {
 		if(doc==null)return "";
 		return doc.getBaseURI();
 	}
+
+	public String getTextContent(){
+		return null;
+	}
 }
