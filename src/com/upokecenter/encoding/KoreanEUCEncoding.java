@@ -40,6 +40,7 @@ final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 			if(b<0 && lead==0){
 				break;
 			} else if(b<0){
+				lead=0;
 				int o=error.emitDecoderError(buffer, offset, length);
 				offset+=o;
 				count+=o;
@@ -51,13 +52,13 @@ final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 				lead=0;
 				int pointer=-1;
 				if(thislead>=0x81 && thislead<=0xc6){
-					int temp=(26+26+126)*(thislead-0x81);
+					pointer=(26+26+126)*(thislead-0x81);
 					if(b>=0x41 && b<=0x5a) {
-						pointer=temp+b-0x41;
+						pointer+=b-0x41;
 					} else if(b>=0x61 && b<=0x7a) {
-						pointer=temp+26+b-0x61;
+						pointer+=26+b-0x61;
 					} else if(b>=0x81 && b<=0xfe) {
-						pointer=temp+26+26+b-0x81;
+						pointer+=26+26+b-0x81;
 					}
 				}
 				if(thislead>=0xc7 && thislead<=0xfe &&
@@ -73,7 +74,6 @@ final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 					offset+=o;
 					count+=o;
 					length-=o;
-
 					continue;
 				} else {
 					buffer[offset++]=cp;
@@ -82,7 +82,7 @@ final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 					continue;
 				}
 			}
-			if(b<0){
+			if(b<0x80){
 				buffer[offset++]=b;
 				count++;
 				length--;

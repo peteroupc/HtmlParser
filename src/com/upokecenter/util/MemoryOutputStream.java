@@ -32,6 +32,12 @@ public final class MemoryOutputStream extends OutputStream {
 		System.arraycopy(buf,off,buffer,pos,len);
 	}
 
+	public byte[] toByteArray(){
+		byte[] bytes=new byte[pos];
+		System.arraycopy(buffer,0,bytes,0,pos);
+		return bytes;
+	}
+
 	public InputStream toInputStream(){
 		return new ByteArrayInputStream(buffer,0,pos);
 	}

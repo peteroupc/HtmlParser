@@ -19,7 +19,8 @@ public final class HtmlDocument {
 	 * Gets the absolute URL from an HTML element.
 	 * 
 	 * @param node An IMG, A, AREA, LINK, BASE, FRAME, or SCRIPT element
-	 * @return an absolute URL of the element's SRC or HREF.
+	 * @return an absolute URL of the element's SRC or HREF, or an 
+	 * empty string if none exists.
 	 */
 	public static String getHref(IElement node){
 		String name=node.getTagName();
@@ -42,7 +43,8 @@ public final class HtmlDocument {
 	 * 
 	 * @param node an HTML element.
 	 * @param href Absolute or relative URL.
-	 * @return an absolute URL corresponding to the HTML element.
+	 * @return an absolute URL corresponding to the HTML element,
+	 * or an empty string if _href_ is null or empty.
 	 */
 	public static String getHref(IElement node, String href){
 		if(href==null || href.length()==0)
@@ -54,7 +56,9 @@ public final class HtmlDocument {
 	 * 
 	 * Parses an HTML document from a URL.
 	 * 
-	 * @param url URL of the HTML document
+	 * @param url URL of the HTML document. In addition to HTTP
+	 * and other URLs supported by URLConnection, this method also
+	 * supports Data URLs.
 	 * @return a document object from the HTML document
 	 * @throws IOException if an I/O error occurs, such as a network
 	 * error, a download error, and so on.
@@ -66,7 +70,7 @@ public final class HtmlDocument {
 			public IDocument processResponse(String url, InputStream stream,
 					IHttpHeaders headers) throws IOException {
 				String charset=HeaderParser.getCharset(
-						headers.getHeaderField("content-type"));
+						headers.getHeaderField("content-type"),0);
 				HtmlParser parser=new HtmlParser(stream,headers.getUrl(),charset);
 				return parser.parse();
 			}
@@ -86,7 +90,7 @@ public final class HtmlDocument {
 			throws IOException {
 		return parseStream(stream,"about:blank");
 	}
-	
+
 	/**
 	 * 
 	 * Parses an HTML document from an input stream, using the given

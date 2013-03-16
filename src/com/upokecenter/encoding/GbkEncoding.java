@@ -280,6 +280,7 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
 			if(b<0 && (gbk1|gbk2|gbk3)==0)
 				return count;
 			else if(b<0){
+				gbk1=gbk2=gbk3=0;
 				int o=error.emitDecoderError(buffer, offset, length);
 				offset+=o;
 				count+=o;

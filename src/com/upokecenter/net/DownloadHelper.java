@@ -1,6 +1,7 @@
 package com.upokecenter.net;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -26,8 +27,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import com.upokecenter.util.DebugUtility;
-import com.upokecenter.util.IStreamObjectSerializer;
+import com.upokecenter.internal.IStreamObjectSerializer;
+import com.upokecenter.util.Base64;
+import com.upokecenter.util.MemoryOutputStream;
 import com.upokecenter.util.Reflection;
 import com.upokecenter.util.StreamUtility;
 
@@ -164,7 +166,7 @@ public final class DownloadHelper {
 					} else if((index=HeaderParser.parseToken(
 							cacheControl,current,"no-store",false))!=current){
 						cc.noStore=true;
-						DebugUtility.log("returning early because it saw no-store");
+						//DebugUtility.log("returning early because it saw no-store");
 						return null; // return immediately, this is not cacheable or storable
 					} else if((index=HeaderParser.parseToken(
 							cacheControl,current,"public",false))!=current){
@@ -295,7 +297,7 @@ public final class DownloadHelper {
 						!"proxy-authenticate".equals(key) &&
 						!"proxy-authorization".equals(key) &&
 						!"te".equals(key) &&
-						!"trailers".equals(key) &&
+						!"trailer".equals(key) && // NOTE: NOT Trailers
 						!"transfer-encoding".equals(key) &&
 						!"upgrade".equals(key)){
 					cc.headers.add(key);
@@ -353,7 +355,7 @@ public final class DownloadHelper {
 					JSONArray arr=obj.getJSONArray("headers");
 					for(int i=0;i<arr.length();i++){
 						String str=arr.getString(i);
-						if(str!=null && i%2==1){
+						if(str!=null && (i%2)!=0){
 							str=str.toLowerCase(Locale.US);
 							if("age".equals(str) ||
 									"connection".equals(str) ||
@@ -450,12 +452,13 @@ public final class DownloadHelper {
 			public String getHeaderField(String name) {
 				if(name==null)return list.get(0);
 				name=name.toLowerCase(Locale.US);
+				String last=null;
 				for(int i=1;i<list.size();i+=2){
 					String key=list.get(i);
 					if(name.equals(key))
-						return list.get(i+1);
+						last=list.get(i+1);
 				}
-				return null;
+				return last;
 			}
 			@Override
 			public String getHeaderField(int index) {
@@ -564,12 +567,13 @@ public final class DownloadHelper {
 		public String getHeaderField(String name) {
 			if(name==null)return list.get(0);
 			name=name.toLowerCase(Locale.US);
+			String last=null;
 			for(int i=1;i<list.size();i+=2){
 				String key=list.get(i);
 				if(name.equals(key))
-					return list.get(i+1);
+					last=list.get(i+1);
 			}
-			return null;
+			return last;
 		}
 		@Override
 		public String getHeaderField(int index) {
@@ -749,9 +753,7 @@ public final class DownloadHelper {
 		public String getUrl() {
 			return urlString;
 		}
-
 	}
-
 
 	private static void recursiveListFiles(File file, List<File> files){
 		for(File f : file.listFiles()){
@@ -783,20 +785,24 @@ public final class DownloadHelper {
 			}
 			if(count<=1||!exceeded)return;
 			long threshold=oldest+Math.abs(oldest-new Date().getTime())/2;
+			count=0;
 			for(File file : files){
 				if(file.lastModified()<threshold){
 					if(file.isDirectory()){
-						file.delete();
+						if(file.delete())count++;
 					} else {
 						length-=file.length();
-						file.delete();
+						if(file.delete())count++;
 						if(length<maximumSize)
 							return;
 					}
 				}
 			}
+			if(count==0)return;
 		}
 	}
+
+
 
 	private static class CacheResponseInfo {
 		LegacyHttpCacheResponse cr=null;
@@ -948,7 +954,7 @@ public final class DownloadHelper {
 						fresh=(timeDiff<=maxAgeMillis);
 						headers=new FileBasedHeaders(urlString,cacheFile.length());
 					}
-					DebugUtility.log("fresh=%s",fresh);
+					//DebugUtility.log("fresh=%s",fresh);
 					if(!fresh){
 						// Too old, download again
 						trueCachedFile=cacheFile;
@@ -994,12 +1000,229 @@ public final class DownloadHelper {
 		return crinfo;
 	}
 
+	private static class DataURLHeaders implements IHttpHeaders {
+
+		long date,length;
+		String urlString;
+		String contentType;
+
+		public DataURLHeaders(String urlString, long length, String contentType){
+			date=new Date().getTime();
+			this.length=length;
+			this.urlString=urlString;
+			this.contentType=contentType;
+
+		}
+
+		@Override
+		public String getRequestMethod() {
+			return "GET";
+		}
+
+		@Override
+		public String getHeaderField(String name) {
+			if(name==null)return "HTTP/1.1 200 OK";
+			if("date".equals(name.toLowerCase(Locale.US)))
+				return HeaderParser.formatHttpDate(date);
+			if("content-length".equals(name.toLowerCase(Locale.US)))
+				return Long.toString(length);
+			if("content-type".equals(name.toLowerCase(Locale.US)))
+				return contentType;
+			return null;
+		}
+
+		@Override
+		public String getHeaderField(int name) {
+			if(name==0)
+				return getHeaderField("date");
+			if(name==1)
+				return getHeaderField("content-length");
+			if(name==2)
+				return getHeaderField("content-type");
+			return null;
+		}
+
+		@Override
+		public String getHeaderFieldKey(int name) {
+			if(name==0)
+				return "date";
+			if(name==1)
+				return "content-length";
+			if(name==2)
+				return "content-type";
+			return null;
+		}
+
+
+
+		@Override
+		public int getResponseCode() {
+			return 200;
+		}
+
+		@Override
+		public long getHeaderFieldDate(String field, long defaultValue) {
+			if(field!=null && "date".equals(field.toLowerCase(Locale.US)))
+				return date;
+			return defaultValue;
+		}
+
+		private List<String> asReadOnlyList(String[] a){
+			return Collections.unmodifiableList(Arrays.asList(a));
+		}
+
+		@Override
+		public Map<String, List<String>> getHeaderFields() {
+			Map<String, List<String>> map=new HashMap<String, List<String>>();
+			map.put(null,asReadOnlyList(new String[]{getHeaderField(null)}));
+			map.put("date",asReadOnlyList(new String[]{getHeaderField("date")}));
+			map.put("content-length",asReadOnlyList(new String[]{getHeaderField("content-length")}));
+			map.put("content-type",asReadOnlyList(new String[]{getHeaderField("content-type")}));
+			return Collections.unmodifiableMap(map);
+		}
+
+		@Override
+		public String getUrl() {
+			return urlString;
+		}
+	}
+
+	private static String getDataURLContentType(String data){
+		int index=HeaderParser.skipContentType(data, 0);
+		String ctype=null;
+		if(index==0)
+			return "text/plain;charset=US-ASCII";
+		else if(data.charAt(0)==';'){
+			ctype="text/plain"+data.substring(0,index);
+		} else {
+			ctype=data.substring(0,index);
+		}
+		if(ctype.indexOf('%')<0)
+			return ctype;
+		ctype=HeaderParser.unescapeContentType(ctype,0);
+		if(ctype==null || ctype.length()==0)
+			return "text/plain;charset=US-ASCII";
+		return ctype;
+	}
+
+
+	private static byte[] getDataURLBytes(String data){
+		int index=HeaderParser.skipContentType(data, 0);
+		if(data.startsWith(";base64,",index)){
+			index+=8;
+			byte[] databytes=new byte[data.length()-index];
+			try {
+				for(int j=data.length()-1;j>=index;j--){
+					int c=data.charAt(j);
+					if(c>=0x80)return null;
+					databytes[j-index]=(byte)(c&0xFF);
+				}
+				return Base64.decode(databytes,0,databytes.length,0);
+			} catch (IOException e) {
+				return null;
+			}
+		} else if(data.startsWith(",",index)){
+			index++;
+			MemoryOutputStream mos=new MemoryOutputStream();
+			try {
+				int len=data.length();
+				for(int j=index;j<len;j++){
+					int c=data.charAt(j);
+					if("-_.!~*'()".indexOf(c)<0 &&
+							!(c>='A' && c<='Z') &&
+							!(c>='a' && c<='z') &&
+							!(c>='0' && c<='9'))
+						return null;
+					if(c=='%'){
+						if(index+2<len){
+							int a=HeaderParser.toHexNumber(data.charAt(index+1));
+							int b=HeaderParser.toHexNumber(data.charAt(index+2));
+							if(a>=0 && b>=0){
+								mos.write(a*16+b);
+								index+=2;
+								continue;
+							}
+						}
+					}
+					mos.write(c&0xFF);
+				}
+				return mos.toByteArray();
+			} catch(IOException e){
+				return null;
+			} finally {
+				if(mos!=null) {
+					try { mos.close(); } catch (IOException e) {}
+				}
+			}
+		} else
+			return null;
+	}
+
+
+
+	/**
+	 * 
+	 * Connects to a URL to download data from that URL.
+	 * 
+	 * @param urlString a URL string.  All schemes (protocols)
+	 * supported by Java's URLConnection are supported.  Data
+	 * URLs are also supported.
+	 * @param callback an object to call back on, particularly
+	 * when the data is ready to be downloaded. Can be null.  If the
+	 * object also implements IDownloadEventListener, it will also
+	 * have its onConnecting and onConnected methods called.
+	 * @return the object returned by the callback's processResponse
+	 * method.
+	 * @throws IOException if an I/O error occurs, particularly
+	 * network errors.
+	 * @throws NullPointerException if urlString is null.
+	 */
 	public static <T> T downloadUrl(
 			String urlString,
 			final IResponseListener<T> callback
 			) throws IOException{
 		if(urlString==null)throw new NullPointerException();
 		final boolean isEventHandler=(callback!=null && callback instanceof IDownloadEventListener);
+		//
+		// Data URLs
+		//
+		if(urlString.startsWith("data:")){
+			URI uri=null;
+			try {
+				if(isEventHandler && callback!=null) {
+					((IDownloadEventListener<T>)callback).onConnecting(urlString);
+				}
+				uri=new URI(urlString);
+			} catch (URISyntaxException e) {
+				throw new IllegalArgumentException(e);
+			}
+			String ssp=uri.getRawSchemeSpecificPart();
+			byte[] bytes=getDataURLBytes(ssp);
+			if(bytes==null)
+				throw new IOException();
+			String contentType=getDataURLContentType(ssp);
+			InputStream stream=null;
+			try {
+				stream = new BufferedInputStream(
+						new ByteArrayInputStream(bytes),
+						Math.max(32,Math.min(8192, bytes.length)));
+				if(isEventHandler && callback!=null) {
+					((IDownloadEventListener<T>)callback).onConnected(urlString);
+				}
+				T ret=(callback==null) ? null : callback.processResponse(urlString,stream,
+						new DataURLHeaders(urlString,bytes.length,contentType));
+				return ret;
+			} finally {
+				if(stream!=null){
+					try {
+						stream.close();
+					} catch (IOException e) {}
+				}
+			}
+		}
+		//
+		// Other URLs
+		//
 		if(!"false".equals(System.getProperty("http.keepAlive"))){
 			int androidVersion=(Integer)Reflection.getStaticFieldByName(
 					Reflection.getClassForName("android.os.Build$VERSION"),"SDK_INT",-1);
@@ -1048,28 +1271,28 @@ public final class DownloadHelper {
 			}
 			throw new NoConnectionException();
 		}
-		HttpURLConnection connection=null;
+		URLConnection connection=null;
 		try {
 			url=new URL(urlString);
 			if(isEventHandler && callback!=null && !calledConnecting){
 				((IDownloadEventListener<T>)callback).onConnecting(urlString);
 				calledConnecting=true;
 			}
-			connection = (HttpURLConnection)url.openConnection();
+			connection = (URLConnection)url.openConnection();
 			connection.setUseCaches(true);
 			connection.setDoInput(true);
 			connection.setReadTimeout(10000);
 			connection.setConnectTimeout(20000);
-			connection.setRequestMethod(requestMethod);
+			if(connection instanceof HttpURLConnection){
+				((HttpURLConnection)connection).setRequestMethod(requestMethod);
+			}
 			connection.connect();
 			stream = new BufferedInputStream(connection.getInputStream(),8192);
 			if(isEventHandler && callback!=null) {
 				((IDownloadEventListener<T>)callback).onConnected(urlString);
 			}
-			//DebugUtility.log(connection.getHeaderFields());
 			T ret=(callback==null) ? null : callback.processResponse(urlString,stream,
 					new HttpHeaders(connection));
-			stream.close();
 			return ret;
 		} finally {
 			if(stream!=null){
@@ -1077,8 +1300,8 @@ public final class DownloadHelper {
 					stream.close();
 				} catch (IOException e) {}
 			}
-			if(connection!=null){
-				connection.disconnect();
+			if(connection!=null && connection instanceof HttpURLConnection){
+				((HttpURLConnection)connection).disconnect();
 			}
 		}
 	}

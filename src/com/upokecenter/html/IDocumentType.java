@@ -2,7 +2,7 @@ package com.upokecenter.html;
 
 /**
  * 
- * Represents the HTML <!DOCTYPE> tag.
+ * Represents the HTML "!DOCTYPE" tag.
  * 
  * @author Peter
  *

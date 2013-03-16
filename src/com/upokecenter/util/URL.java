@@ -13,6 +13,83 @@ import com.upokecenter.encoding.TextEncoding;
 
 public final class URL {
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((fragment == null) ? 0 : fragment.hashCode());
+		result = prime * result + ((host == null) ? 0 : host.hashCode());
+		result = prime * result
+				+ ((password == null) ? 0 : password.hashCode());
+		result = prime * result + ((path == null) ? 0 : path.hashCode());
+		result = prime * result + ((port == null) ? 0 : port.hashCode());
+		result = prime * result + ((query == null) ? 0 : query.hashCode());
+		result = prime * result + ((scheme == null) ? 0 : scheme.hashCode());
+		result = prime * result
+				+ ((schemeData == null) ? 0 : schemeData.hashCode());
+		result = prime * result
+				+ ((username == null) ? 0 : username.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		URL other = (URL) obj;
+		if (fragment == null) {
+			if (other.fragment != null)
+				return false;
+		} else if (!fragment.equals(other.fragment))
+			return false;
+		if (host == null) {
+			if (other.host != null)
+				return false;
+		} else if (!host.equals(other.host))
+			return false;
+		if (password == null) {
+			if (other.password != null)
+				return false;
+		} else if (!password.equals(other.password))
+			return false;
+		if (path == null) {
+			if (other.path != null)
+				return false;
+		} else if (!path.equals(other.path))
+			return false;
+		if (port == null) {
+			if (other.port != null)
+				return false;
+		} else if (!port.equals(other.port))
+			return false;
+		if (query == null) {
+			if (other.query != null)
+				return false;
+		} else if (!query.equals(other.query))
+			return false;
+		if (scheme == null) {
+			if (other.scheme != null)
+				return false;
+		} else if (!scheme.equals(other.scheme))
+			return false;
+		if (schemeData == null) {
+			if (other.schemeData != null)
+				return false;
+		} else if (!schemeData.equals(other.schemeData))
+			return false;
+		if (username == null) {
+			if (other.username != null)
+				return false;
+		} else if (!username.equals(other.username))
+			return false;
+		return true;
+	}
+
 	private String scheme="";
 	private String schemeData="";
 	private String username="";
@@ -240,23 +317,42 @@ public final class URL {
 			}
 		}
 	}
-
-	private static void percentDecode(String str, OutputStream output) throws IOException{
+	private static String percentDecode(String str, String encoding)
+			throws IOException{
 		int len=str.length();
+		boolean percent=false;
 		for(int i=0;i<len;i++){
-			int c=str.charAt(i);
-			if(c=='%'){
-				if(i+2<len){
-					int a=toHexNumber(str.charAt(i+1));
-					int b=toHexNumber(str.charAt(i+2));
-					if(a>=0 && b>=0){
-						output.write(a*16+b);
-						i+=2;
-						continue;
+			char c=str.charAt(i);
+			if(c=='%') {
+				percent=true;
+			} else if(c>=0x80) // Non-ASCII characters not allowed
+				return null;
+		}
+		if(!percent)return str;
+		ITextDecoder decoder=TextEncoding.getDecoder(encoding);
+		MemoryOutputStream mos=new MemoryOutputStream();
+		try {
+			for(int i=0;i<len;i++){
+				int c=str.charAt(i);
+				if(c=='%'){
+					if(i+2<len){
+						int a=toHexNumber(str.charAt(i+1));
+						int b=toHexNumber(str.charAt(i+2));
+						if(a>=0 && b>=0){
+							mos.write(a*16+b);
+							i+=2;
+							continue;
+						}
 					}
 				}
+				mos.write(c&0xFF);
 			}
-			output.write(c&0xFF);
+			return TextEncoding.decodeString(mos.toInputStream(),
+					decoder, TextEncoding.ENCODING_ERROR_REPLACE);
+		} finally {
+			if(mos!=null) {
+				mos.close();
+			}
 		}
 	}
 
@@ -331,18 +427,10 @@ public final class URL {
 			}
 			pairs.add(new String[]{name,value});
 		}
-		MemoryOutputStream mos=new MemoryOutputStream();
-		ITextDecoder decoder=TextEncoding.getDecoder(encoding);
 		try {
 			for(String[] pair : pairs){
-				mos.reset();
-				percentDecode(pair[0],mos);
-				pair[0]=TextEncoding.decodeString(mos.toInputStream(),
-						decoder, TextEncoding.ENCODING_ERROR_REPLACE);
-				mos.reset();
-				percentDecode(pair[1],mos);
-				pair[1]=TextEncoding.decodeString(mos.toInputStream(),
-						decoder, TextEncoding.ENCODING_ERROR_REPLACE);
+				pair[0]=percentDecode(pair[0],encoding);
+				pair[1]=percentDecode(pair[1],encoding);
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -464,7 +552,7 @@ public final class URL {
 			case Scheme:
 				if(c>='A' && c<='Z'){
 					buffer.append(c+0x20);
-				} else if((c>='a' && c<='z') || c=='.' || c=='=' || c=='+'){
+				} else if((c>='a' && c<='z') || c=='.' || c=='-' || c=='+'){
 					buffer.append(c);
 				} else if(c==':'){
 					url.scheme=buffer.toString();
@@ -580,11 +668,9 @@ public final class URL {
 					url.host=baseurl.host;
 					url.port=baseurl.port;
 					path=pathList(baseurl.path);
-					DebugUtility.log(path);
 					if(path.size()>0) { // Pop path
 						path.remove(path.size()-1);
 					}
-					DebugUtility.log(path);
 					state=ParseState.RelativePath;
 					index=oldindex;
 				}
@@ -669,6 +755,8 @@ public final class URL {
 							result.append(cp);
 						}
 					}
+					//DebugUtility.log("username=%s",username);
+					//DebugUtility.log("password=%s",password);
 					buffer.clear();
 					hostStart=index;
 				} else if(c<0 || "/\\?#".indexOf(c)>=0){
@@ -707,14 +795,14 @@ public final class URL {
 				if(c==':' && !bracketflag){
 					String host=hostParse(buffer.toString());
 					if(host==null)
-						throw new IllegalArgumentException();
+						return null;
 					url.host=host;
 					buffer.clear();
 					state=ParseState.Port;
 				} else if(c<0 || "/\\?#".indexOf(c)>=0){
 					String host=hostParse(buffer.toString());
 					if(host==null)
-						throw new IllegalArgumentException();
+						return null;
 					url.host=host;
 					buffer.clear();
 					index=oldindex;
@@ -1063,14 +1151,12 @@ public final class URL {
 					return null;
 			}
 		}
-		MemoryOutputStream mos=new MemoryOutputStream();
 		try {
-			percentDecode(string,mos);
-			string=TextEncoding.decodeString(mos.toInputStream(),
-					TextEncoding.getDecoder("utf-8"),
-					TextEncoding.ENCODING_ERROR_REPLACE);
+			//DebugUtility.log("was: %s",string);
+			string=percentDecode(string,"utf-8");
+			//DebugUtility.log("now: %s",string);
 		} catch (IOException e) {
-			throw new RuntimeException(e);
+			return null;
 		}
 		return string;
 	}

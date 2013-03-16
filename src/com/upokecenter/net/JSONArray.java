@@ -252,7 +252,8 @@ class JSONArray {
 	 */
 	public boolean isNull(int index) {
 		Object o = opt(index);
-		return o == null || o.equals(null);
+		// Peter O. 3/15/2013: Replaced equals(null) with equals(JSONObject.NULL)
+		return o == null || o.equals(JSONObject.NULL);
 	}
 
 

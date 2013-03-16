@@ -281,6 +281,29 @@ public final class HeaderParser {
 		return index;
 	}
 
+	private static int skipQuotedStringNoLws(String v, int index){
+		// assumes index points to quotation mark
+		index++;
+		int length=v.length();
+		char c=0;
+		while(index<length){
+			c=v.charAt(index);
+			if(c=='\\'){
+				if(index+1>=length)
+					return length;
+				else {
+					index++;
+				}
+			} else if(c=='"')
+				return index+1;
+			else if(c==127 || (c<32))
+				// ill-formed
+				return length;
+			index++;
+		}
+		return index;
+	}
+
 	private static int getPositiveNumber(String v, int index){
 		int length=v.length();
 		char c=0;
@@ -562,120 +585,307 @@ public final class HeaderParser {
 		return "";
 	}
 
-	public static String getCharset(String contentType){
-		if(contentType==null)
+	static int skipMimeToken(String str, int index){
+		int i=index;
+		// type
+		while(i<str.length()){
+			char c=str.charAt(i);
+			if(c<=0x20 || c>=0x7F || "()<>@,;:\\\"/[]?=".indexOf(c)>=0) {
+				break;
+			}
+			i++;
+		}
+		return i;
+
+	}
+	 static String getMimeToken(String str, int index){
+		int i=skipMimeToken(str,index);
+		return str.substring(index,i);
+
+	}
+	public static String getMediaType(String str, int index){
+		int i=skipMimeToken(str,index);
+		if(i>=str.length() || str.charAt(i)!='/')
 			return "";
-		int io=contentType.indexOf(";");
-		int length=contentType.length();
-		char c=0;
-		if(io<0)return getDefaultCharset(contentType); // no charset
-		io++;
+		i++;
+		i=skipMimeToken(str,i);
+		return str.substring(index,i);
+	}
+
+	public static int skipContentType(String data, int index){
+		String mediaType=getMediaType(data,index);
+		// NOTE: Media type can be omitted
+		index+=mediaType.length();
 		while(true){
-			io=skipLinearWhitespace(contentType,io);
-			if(io+8>length)
-				return getDefaultCharset(contentType);
-			// Find out if it's CHARSET
-			int startio=io;
-			boolean ischarset=true;
-			c=contentType.charAt(io++);
-			if(c!='C' && c!='c') {
-				ischarset=false;
-			}
-			if(ischarset) {
-				c=contentType.charAt(io++);
-			}
-			if(ischarset && c!='H' && c!='h') {
-				ischarset=false;
-			}
-			if(ischarset) {
-				c=contentType.charAt(io++);
-			}
-			if(ischarset && c!='A' && c!='a') {
-				ischarset=false;
-			}
-			if(ischarset) {
-				c=contentType.charAt(io++);
-			}
-			if(ischarset && c!='R' && c!='r') {
-				ischarset=false;
-			}
-			if(ischarset) {
-				c=contentType.charAt(io++);
-			}
-			if(ischarset && c!='S' && c!='s') {
-				ischarset=false;
-			}
-			if(ischarset) {
-				c=contentType.charAt(io++);
-			}
-			if(ischarset && c!='E' && c!='e') {
-				ischarset=false;
-			}
-			if(ischarset) {
-				c=contentType.charAt(io++);
-			}
-			if(ischarset && c!='T' && c!='t') {
-				ischarset=false;
-			}
-			if(!ischarset){
-				io=startio;
-				while(io<length){ // skip non-separator
-					c=contentType.charAt(io);
-					if(c=='=' || c==127 || c<32) {
-						break;
-					}
-					io++;
-				}
-			}
-			if(io>=length || contentType.charAt(io)!='='){
-				// not a charset
-				ischarset=false;
-				while(io<length){ // skip non-separator
-					c=contentType.charAt(io);
-					if(c=='=' || c==127 || c<32) {
-						break;
-					}
-					io++;
-				}
-				if(io>=length || contentType.charAt(io)!='=')
-					// ill-formed
-					return getDefaultCharset(contentType);
-				io++;
+			int oldindex=index;
+			if(index>=data.length() || data.charAt(index)!=';')
+				return oldindex;
+			index++;
+			int index2=skipMimeToken(data,index);
+			if(index==index2)
+				return oldindex;
+			index=index2;
+			if(index>=data.length() || data.charAt(index)!='=')
+				return oldindex;
+			index++;
+			if(index>=data.length() || data.charAt(index)=='\"'){
+				index=skipQuotedStringNoLws(data,index);
 			} else {
-				io++;
+				index2=skipMimeToken(data,index);
+				if(index==index2)
+					return oldindex;
+				index=index2;
 			}
-			if(io<length && contentType.charAt(io)=='"'){
-				if(ischarset){
-					String str=getQuotedString(contentType,io);
-					return (str.length()>0) ? str :  getDefaultCharset(contentType);
-				} else {
-					io=skipQuotedString(contentType,io);
-				}
-			} else {
-				int startIndex=io;
-				while(io<length){ // skip non-semicolon
-					c=contentType.charAt(io);
-					if(c==';' || c==127 || c<32) {
-						break;
-					}
-					io++;
-				}
-				if(ischarset){
-					String str=contentType.substring(startIndex,io);
-					return (str.length()>0) ? str :  getDefaultCharset(contentType);
-				}
-			}
-			io=skipLinearWhitespace(contentType,io);
-			if(io<length){
-				if(contentType.charAt(io)==';'){
-					io++;
-				} else
-					// ill-formed
-					return getDefaultCharset(contentType);
-			}
-			io=skipLinearWhitespace(contentType,io);
 		}
 	}
 
 
+	static int toHexNumber(int c) {
+		if(c>='A' && c<='Z')
+			return 10+c-'A';
+		else if(c>='a' && c<='z')
+			return 10+c-'a';
+		else if (c>='0' && c<='9')
+			return c-'0';
+		return -1;
+	}
+
+	static int skipAndAppendQuoted(
+			String str, int index, StringBuilder builder){
+		int i=index;
+		boolean slash=false;
+		while(i<str.length()){
+			char c=str.charAt(i);
+			//DebugUtility.log(c);
+			if(c=='%' && i+2<str.length()){
+				int hex1=toHexNumber(str.charAt(i+1));
+				int hex2=toHexNumber(str.charAt(i+2));
+				c=(char)(hex1*16+hex2);
+				if(i==index && c!='"')
+					return index;
+				if(!slash){
+					if(i!=index && c=='"'){
+						builder.append('"');
+						return i+1;
+					}
+					if(c<=0x20 || c>=0x7F)
+						return index;
+				}
+				if(c=='\\' && !slash){
+					slash=true;
+				} else if(c=='\\'){
+					slash=false;
+				}
+				builder.append(c);
+				i+=3;
+				continue;
+			}
+			if(c<=0x20 || c>=0x7F)
+				return index;
+			if("-_.!~*'()".indexOf(c)<0 &&
+					!(c>='A' && c<='Z') &&
+					!(c>='a' && c<='z') &&
+					!(c>='0' && c<='9'))
+				return index;
+			// NOTE: Impossible for '"' and '\' to appear
+			// here
+			if(i==index)
+				return index;
+			builder.append(c);
+			i++;
+		}
+		return index;
+	}
+
+	private static boolean appendUnescapedValue(
+			String str, int index, int length, StringBuilder builder){
+		int i=index;
+		int io=str.indexOf('%',index);
+		boolean doquote=true;
+		if(io<0 || io>=index+length){
+			doquote=false;
+		}
+		if(doquote)
+		{
+			builder.append('\"'); // quote the string for convenience
+		}
+		while(i<str.length()){
+			char c=str.charAt(i);
+			//DebugUtility.log(c);
+			if(c=='%' && i+2<str.length()){
+				int hex1=toHexNumber(str.charAt(i+1));
+				int hex2=toHexNumber(str.charAt(i+2));
+				c=(char)(hex1*16+hex2);
+				if(c<=0x20 || c>=0x7F)
+					return false;
+				if(doquote && (c=='\\' || c=='"')) {
+					builder.append('\\');
+				}
+				builder.append(c);
+				i+=3;
+				continue;
+			}
+			if(c<=0x20 || c>=0x7F || "()<>@,;:\\\"/[]?=".indexOf(c)>=0){
+				if(doquote) {
+					builder.append('\"');
+				}
+				return true;
+			}
+			if("-_.!~*'()".indexOf(c)<0 &&
+					!(c>='A' && c<='Z') &&
+					!(c>='a' && c<='z') &&
+					!(c>='0' && c<='9'))
+				return false;
+			builder.append(c);
+			i++;
+		}
+		if(doquote) {
+			builder.append('\"');
+		}
+		return true;
+	}
+
+	private static boolean appendUnescaped(
+			String str, int index, int length, StringBuilder builder){
+		int i=index;
+		// type
+		while(i<str.length()){
+			char c=str.charAt(i);
+			if(c=='%' && i+2<str.length()){
+				int hex1=toHexNumber(str.charAt(i+1));
+				int hex2=toHexNumber(str.charAt(i+2));
+				c=(char)(hex1*16+hex2);
+				builder.append(c);
+				if(c<=0x20 || c>=0x7F || "()<>@,;:\\\"/[]?=".indexOf(c)>=0)
+					return false;
+				i+=3;
+				continue;
+			}
+			if(c<=0x20 || c>=0x7F || "()<>@,;:\\\"/[]?=".indexOf(c)>=0)
+				return true;
+			if("-_.!~*'()".indexOf(c)<0 &&
+					!(c>='A' && c<='Z') &&
+					!(c>='a' && c<='z') &&
+					!(c>='0' && c<='9'))
+				return false;
+			builder.append(c);
+			i++;
+		}
+		return true;
+	}
+
+	public static String unescapeContentType(String data, int index){
+		int index2=skipMimeToken(data,index);
+		int indexlast=-1;
+		StringBuilder builder=new StringBuilder();
+		if(index2<data.length() && data.charAt(index2)=='/'){
+			index2++;
+			indexlast=index2;
+			index2=skipMimeToken(data,index2);
+		} else {
+			index2=index;
+		}
+		if(index!=index2){
+			if(!appendUnescaped(data,index,indexlast-1-index,builder))
+				return "";
+			builder.append('/');
+			if(!appendUnescaped(data,indexlast,index2-indexlast,builder))
+				return "";
+		}
+		index=index2;
+		while(true){
+			if(index>=data.length() || data.charAt(index)!=';')
+				return builder.toString();
+			index++;
+			index2=skipMimeToken(data,index);
+			if(index==index2)
+				return builder.toString();
+			int currentLength=builder.length();
+			builder.append(';');
+			if(!appendUnescaped(data,index,index2-index,builder)){
+				builder.setLength(currentLength);
+				return builder.toString();
+			}
+			index=index2;
+			if(index>=data.length() || data.charAt(index)!='='){
+				builder.setLength(currentLength);
+				return builder.toString();
+			}
+			builder.append('=');
+			index++;
+			if(data.startsWith("%22",index)){
+				index2=skipAndAppendQuoted(data,index,builder);
+				if(index==index2){
+					builder.setLength(currentLength);
+					return builder.toString();
+				}
+			} else {
+				index2=skipMimeToken(data,index);
+				if(index==index2){
+					builder.setLength(currentLength);
+					return builder.toString();
+				}
+				if(!appendUnescapedValue(data,index,index2-index,builder)){
+					builder.setLength(currentLength);
+					return builder.toString();
+				}
+				index=index2;
+			}
+		}
+	}
+
+	public static String getCharset(String data, int index){
+		if(data==null)
+			return "";
+		String mediaType=getMediaType(data,index);
+		// NOTE: if media type is omitted,
+		// text/plain is assumed by default
+		index+=mediaType.length();
+		while(true){
+			// Note that we skip linear whitespace here,
+			// since it doesn't appear to be disallowed
+			// in HTTP/1.1 (unlike whitespace between the
+			// type/subtype and between attribute/value
+			// of a media type)
+			index=skipLinearWhitespace(data,index);
+			if(index>=data.length() || data.charAt(index)!=';')
+				return getDefaultCharset(mediaType);
+			index++;
+			index=skipLinearWhitespace(data,index);
+			String attribute=getMimeToken(data,index);
+			if(attribute.length()==0)
+				return getDefaultCharset(mediaType);
+			index+=attribute.length();
+			if(index>=data.length() || data.charAt(index)!='=')
+				return getDefaultCharset(mediaType);
+			boolean isCharset=(attribute.length()==7 &&
+					(attribute.charAt(0)=='c' || attribute.charAt(0)=='C') ||
+					(attribute.charAt(1)=='h' || attribute.charAt(1)=='H') ||
+					(attribute.charAt(2)=='a' || attribute.charAt(2)=='A') ||
+					(attribute.charAt(3)=='r' || attribute.charAt(3)=='R') ||
+					(attribute.charAt(4)=='s' || attribute.charAt(4)=='S') ||
+					(attribute.charAt(5)=='e' || attribute.charAt(5)=='E') ||
+					(attribute.charAt(6)=='t' || attribute.charAt(6)=='T')
+					);
+			index++;
+			if(index>=data.length() || data.charAt(index)=='\"'){
+				if(isCharset){
+					String str=getQuotedString(data,index);
+					return (str.length()>0) ? str :  getDefaultCharset(mediaType);
+				} else {
+					index=skipQuotedString(data,index);
+				}
+			} else {
+				if(isCharset){
+					String str=getMimeToken(data,index);
+					return (str.length()>0) ? str :  getDefaultCharset(mediaType);
+				} else {
+					int index2=skipMimeToken(data,index);
+					if(index==index2)
+						return getDefaultCharset(mediaType);
+					index=index2;
+				}
+			}
+		}
+	}
 }
