@@ -201,7 +201,7 @@ public final class ConditionalBufferInputStream extends InputStream {
 			return (buffer[pos++]&0xFF);
 		// No room, read next byte and put it in buffer
 		int c=stream.read();
-    if(c<0)return c;
+		if(c<0)return c;
 		if(pos>=buffer.length){
 			byte[] newBuffer=new byte[buffer.length*2];
 			System.arraycopy(buffer,0,newBuffer,0,buffer.length);

@@ -469,7 +469,7 @@ public final class HeaderParser {
 		for(int i=index;i<length && j<token.length();i++,j++){
 			char c=str.charAt(i);
 			char cj=token.charAt(j);
-			if(c!=j && c!=(cj>='a' && cj<='z' ? cj-0x20 : cj))
+			if(c!=cj && c!=(cj>='a' && cj<='z' ? cj-0x20 : cj))
 				return startIndex;
 		}
 		index+=token.length();
@@ -507,7 +507,7 @@ public final class HeaderParser {
 		for(int i=index;i<length && j<token.length();i++,j++){
 			char c=str.charAt(i);
 			char cj=token.charAt(j);
-			if(c!=j && c!=(cj>='a' && cj<='z' ? cj-0x20 : cj))
+			if(c!=cj && c!=(cj>='a' && cj<='z' ? cj-0x20 : cj))
 				return startIndex;
 		}
 		index+=token.length();

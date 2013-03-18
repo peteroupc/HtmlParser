@@ -252,7 +252,7 @@ public final class StackableCharacterInput implements IMarkableCharacterInput {
 			//DebugUtility.log(this);
 			// No room, read next character and put it in buffer
 			int c=readInternal();
-      if(c<0)return c;
+			if(c<0)return c;
 			if(pos>=buffer.length){
 				int[] newBuffer=new int[buffer.length*2];
 				System.arraycopy(buffer,0,newBuffer,0,buffer.length);

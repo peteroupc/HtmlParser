@@ -52,23 +52,22 @@ public final class StringUtility {
 		boolean first=true;
 		ArrayList<String> strings=null;
 		int delimLength=delimiter.length();
-		if(delimLength==0)return new String[]{s};
+		if(delimLength==0)return emptyStringArray;
 		while(true){
 			int index2=s.indexOf(delimiter,index);
 			if(index2<0){
-				if(first)return new String[]{s};
+				if(first)return emptyStringArray;
 				strings.add(s.substring(index));
 				break;
 			} else {
 				if(first) {
 					strings=new ArrayList<String>();
+					first=false;
 				}
 				strings.add(s.substring(index,index2));
 				index=index2+delimLength;
-				first=false;
 			}
 		}
-		if(strings==null)return emptyStringArray;
 		return strings.toArray(emptyStringArray);
 	}
 
