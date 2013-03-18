@@ -35,13 +35,14 @@ final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 			throw new IllegalArgumentException();
 		if(length==0)return 0;
 		int count=0;
+		int o=0;
 		while(length>0){
 			int b=stream.read();
 			if(b<0 && lead==0){
 				break;
 			} else if(b<0){
 				lead=0;
-				int o=error.emitDecoderError(buffer, offset, length);
+				o=error.emitDecoderError(buffer, offset, length);
 				offset+=o;
 				count+=o;
 				length-=o;
@@ -70,7 +71,7 @@ final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 					stream.reset();
 				}
 				if(cp<=0){
-					int o=error.emitDecoderError(buffer, offset, length);
+					o=error.emitDecoderError(buffer, offset, length);
 					offset+=o;
 					count+=o;
 					length-=o;
@@ -93,7 +94,7 @@ final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 				stream.mark(2);
 				continue;
 			}
-			int o=error.emitDecoderError(buffer, offset, length);
+			o=error.emitDecoderError(buffer, offset, length);
 			offset+=o;
 			count+=o;
 			length-=o;

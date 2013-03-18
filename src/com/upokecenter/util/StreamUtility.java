@@ -89,9 +89,9 @@ public final class StreamUtility {
 	}
 
 	public static void stringToFile(String s, File file) throws IOException{
-		Writer writer=null;
+		FileWriter writer=null;
 		try {
-			writer=new FileWriter(file);
+			writer=new FileWriter(file.toString());
 			writer.write(s);
 		} finally {
 			if(writer!=null) {
@@ -102,7 +102,7 @@ public final class StreamUtility {
 
 	public static String fileToString(File file)
 			throws IOException {
-		Reader reader = new FileReader(file);
+		FileReader reader = new FileReader(file.toString());
 		try {
 			StringBuilder builder=new StringBuilder();
 			char[] buffer = new char[4096];

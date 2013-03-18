@@ -4,12 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 class Node implements INode {
-	List<Node> childNodes;
-	Node parentNode=null;
-	IDocument ownerDocument=null;
+	private final List<Node> childNodes;
+	private Node parentNode=null;
+	private IDocument ownerDocument=null;
 
 	@Override
-	public IDocument getOwnerDocument(){
+	public  IDocument getOwnerDocument(){
 		return ownerDocument;
 	}
 
@@ -22,7 +22,7 @@ class Node implements INode {
 		this.nodeType=nodeType;
 		childNodes=new ArrayList<Node>();
 	}
-	String toDebugString() {
+	 String toDebugString() {
 		return null;
 	}
 
@@ -53,7 +53,7 @@ class Node implements INode {
 		childNodes.add(node);
 	}
 
-	List<Node> getChildNodesInternal(){
+	 List<Node> getChildNodesInternal(){
 		return childNodes;
 	}
 
@@ -62,7 +62,7 @@ class Node implements INode {
 		return nodeType;
 	}
 	@Override
-	public Node getParentNode() {
+	public INode getParentNode() {
 		return parentNode;
 	}
 	public void removeChild(Node node){
@@ -74,20 +74,15 @@ class Node implements INode {
 		return new ArrayList<INode>(childNodes);
 	}
 
-	void setData(String string) {
-		// TODO Auto-generated method stub
-
-	}
-
 	@Override
-	public String getBaseURI() {
+	public  String getBaseURI() {
 		IDocument doc=getOwnerDocument();
 		if(doc==null)return "";
 		return doc.getBaseURI();
 	}
 
 	@Override
-	public String getTextContent(){
+	public  String getTextContent(){
 		return null;
 	}
 }

@@ -12,6 +12,17 @@ import com.upokecenter.net.IHttpHeaders;
 import com.upokecenter.net.IResponseListener;
 
 public final class HtmlDocument {
+	private static final class ParseURLListener implements
+	IResponseListener<IDocument> {
+		@Override
+		public IDocument processResponse(String url, InputStream stream,
+				IHttpHeaders headers) throws IOException {
+			String charset=HeaderParser.getCharset(
+					headers.getHeaderField("content-type"),0);
+			HtmlParser parser=new HtmlParser(stream,headers.getUrl(),charset);
+			return parser.parse();
+		}
+	}
 	private HtmlDocument(){};
 
 	/**
@@ -19,7 +30,7 @@ public final class HtmlDocument {
 	 * Gets the absolute URL from an HTML element.
 	 * 
 	 * @param node An IMG, A, AREA, LINK, BASE, FRAME, or SCRIPT element
-	 * @return an absolute URL of the element's SRC or HREF, or an 
+	 * @return an absolute URL of the element's SRC or HREF, or an
 	 * empty string if none exists.
 	 */
 	public static String getHref(IElement node){
@@ -65,16 +76,7 @@ public final class HtmlDocument {
 	 */
 	public static IDocument parseURL(String url) throws IOException {
 		return DownloadHelper.downloadUrl(url,
-				new IResponseListener<IDocument>(){
-			@Override
-			public IDocument processResponse(String url, InputStream stream,
-					IHttpHeaders headers) throws IOException {
-				String charset=HeaderParser.getCharset(
-						headers.getHeaderField("content-type"),0);
-				HtmlParser parser=new HtmlParser(stream,headers.getUrl(),charset);
-				return parser.parse();
-			}
-		});
+				new ParseURLListener(), false);
 	}
 
 	/**
@@ -121,7 +123,7 @@ public final class HtmlDocument {
 			throws IOException {
 		InputStream stream=null;
 		try {
-			String fileURL="file:///"+new File(file).getAbsolutePath().replace("\\", "/");
+			String fileURL=new File(file).toURI().toString();
 			stream=new BufferedInputStream(new FileInputStream(file),8192);
 			HtmlParser parser=new HtmlParser(stream,fileURL,null);
 			return parser.parse();

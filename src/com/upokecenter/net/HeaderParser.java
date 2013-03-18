@@ -1,9 +1,6 @@
 package com.upokecenter.net;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
+import com.upokecenter.util.StringUtility;
 
 
 
@@ -11,64 +8,74 @@ public final class HeaderParser {
 
 	private HeaderParser(){}
 	public static String formatHttpDate(long date){
-		Calendar c=Calendar.getInstance(TimeZone.getTimeZone("GMT"),
-				Locale.US);
-		c.setTime(new Date(date));
-		int dow=c.get(Calendar.DAY_OF_WEEK); // 1 to 7
+		int[] components=DateTimeImpl.getDateComponents(date);
+		int dow=components[7]; // 1 to 7
+		int month=components[1]; // 1 to 12
 		String dayofweek=null;
-		int month=c.get(Calendar.MONTH); // 0 to 11
-		if(dow==Calendar.SUNDAY) {
+		if(dow==1) {
 			dayofweek="Sun, ";
 		}
-		if(dow==Calendar.MONDAY) {
+		else if(dow==2) {
 			dayofweek="Mon, ";
 		}
-		if(dow==Calendar.TUESDAY) {
+		else if(dow==3) {
 			dayofweek="Tue, ";
 		}
-		if(dow==Calendar.WEDNESDAY) {
+		else if(dow==4) {
 			dayofweek="Wed, ";
 		}
-		if(dow==Calendar.THURSDAY) {
+		else if(dow==5) {
 			dayofweek="Thu, ";
 		}
-		if(dow==Calendar.FRIDAY) {
+		else if(dow==6) {
 			dayofweek="Fri, ";
 		}
-		if(dow==Calendar.SATURDAY) {
+		else if(dow==7) {
 			dayofweek="Sat, ";
 		}
 		if(dayofweek==null)return "";
 		String[] months={
-				" Jan "," Feb "," Mar "," Apr ",
+				""," Jan "," Feb "," Mar "," Apr ",
 				" May "," Jun "," Jul "," Aug ",
 				" Sep "," Oct "," Nov "," Dec "
 		};
-		if(month<0||month>=12)return "";
+		if(month<1||month>12)return "";
 		String monthstr=months[month];
-		return String.format(Locale.US,
-				"%s%02d%s%04d %02d:%02d:%02d GMT",
-				dayofweek,c.get(Calendar.DAY_OF_MONTH),
-				monthstr,
-				c.get(Calendar.YEAR),
-				c.get(Calendar.HOUR_OF_DAY),
-				c.get(Calendar.MINUTE),
-				c.get(Calendar.SECOND));
+		StringBuilder builder=new StringBuilder();
+		builder.append(dayofweek);
+		builder.append((char)('0'+((components[2]/10)%10)));
+		builder.append((char)('0'+((components[2])%10)));
+		builder.append(monthstr);
+		builder.append((char)('0'+((components[0]/1000)%10)));
+		builder.append((char)('0'+((components[0]/100)%10)));
+		builder.append((char)('0'+((components[0]/10)%10)));
+		builder.append((char)('0'+((components[0])%10)));
+		builder.append(' ');
+		builder.append((char)('0'+((components[3]/10)%10)));
+		builder.append((char)('0'+((components[3])%10)));
+		builder.append(':');
+		builder.append((char)('0'+((components[4]/10)%10)));
+		builder.append((char)('0'+((components[4])%10)));
+		builder.append(':');
+		builder.append((char)('0'+((components[5]/10)%10)));
+		builder.append((char)('0'+((components[5])%10)));
+		builder.append(" GMT");
+		return builder.toString();
 	}
 
 	private static int parseMonth(String v, int index){
-		if(v.startsWith("Jan",index))return 0;
-		if(v.startsWith("Feb",index))return 1;
-		if(v.startsWith("Mar",index))return 2;
-		if(v.startsWith("Apr",index))return 3;
-		if(v.startsWith("May",index))return 4;
-		if(v.startsWith("Jun",index))return 5;
-		if(v.startsWith("Jul",index))return 6;
-		if(v.startsWith("Aug",index))return 7;
-		if(v.startsWith("Sep",index))return 8;
-		if(v.startsWith("Oct",index))return 9;
-		if(v.startsWith("Nov",index))return 10;
-		if(v.startsWith("Dec",index))return 11;
+		if(v.startsWith("Jan",index))return 1;
+		if(v.startsWith("Feb",index))return 2;
+		if(v.startsWith("Mar",index))return 3;
+		if(v.startsWith("Apr",index))return 4;
+		if(v.startsWith("May",index))return 5;
+		if(v.startsWith("Jun",index))return 6;
+		if(v.startsWith("Jul",index))return 7;
+		if(v.startsWith("Aug",index))return 8;
+		if(v.startsWith("Sep",index))return 9;
+		if(v.startsWith("Oct",index))return 10;
+		if(v.startsWith("Nov",index))return 11;
+		if(v.startsWith("Dec",index))return 12;
 		return -1;
 	}
 
@@ -160,8 +167,6 @@ public final class HeaderParser {
 		int length=v.length();
 		int month=0,day=0,year=0;
 		int hour=0,minute=0,second=0;
-		Calendar c=Calendar.getInstance(TimeZone.getTimeZone("GMT"),
-				Locale.US);
 		if(rfc850){
 			day=parse2Digit(v,index);
 			if(day<0)return defaultValue;
@@ -178,14 +183,7 @@ public final class HeaderParser {
 			index+=2;
 			if(index<length && v.charAt(index)!=' ')return defaultValue;
 			index++;
-			c.setTimeInMillis(new Date().getTime());
-			int thisyear=c.get(Calendar.YEAR);
-			int this2digityear=thisyear%100;
-			int actualyear=year+(thisyear-this2digityear);
-			if(year-this2digityear>50){
-				actualyear-=100;
-			}
-			year=actualyear;
+			year=DateTimeImpl.convertYear(year);
 		} else if(v.startsWith(", ",index)){
 			index+=2;
 			day=parse2Digit(v,index);
@@ -241,8 +239,8 @@ public final class HeaderParser {
 			index+=3;
 		}
 		if(index!=length)return defaultValue;
-		c.set(year,month,day,hour,minute,second);
-		return c.getTime().getTime();
+		// NOTE: Month is one-based
+		return DateTimeImpl.toDate(year,month,day,hour,minute,second);
 	}
 
 	private static int skipQuotedString(String v, int index){
@@ -309,12 +307,14 @@ public final class HeaderParser {
 		char c=0;
 		boolean haveNumber=false;
 		int startIndex=index;
+		String number=null;
 		while(index<length){ // skip whitespace
 			c=v.charAt(index);
 			if(c<'0' || c>'9'){
 				if(!haveNumber)return -1;
 				try {
-					return Integer.parseInt(v.substring(startIndex,index),10);
+					number=v.substring(startIndex,index);
+					return Integer.parseInt(number);
 				} catch(NumberFormatException e){
 					return Integer.MAX_VALUE;
 				}
@@ -324,13 +324,14 @@ public final class HeaderParser {
 			index++;
 		}
 		try {
-			return Integer.parseInt(v.substring(startIndex,length),10);
+			number=v.substring(startIndex,length);
+			return Integer.parseInt(number);
 		} catch(NumberFormatException e){
 			return Integer.MAX_VALUE;
 		}
 	}
 
-	static int getResponseCode(String s){
+	 static int getResponseCode(String s){
 		int index=0;
 		int length=s.length();
 		if(s.indexOf("HTTP/",index)!=index)
@@ -424,7 +425,7 @@ public final class HeaderParser {
 	}
 
 
-	static int skipDirective(String str, int io){
+	 static int skipDirective(String str, int io){
 		int length=str.length();
 		char c=0;
 		while(io<length){ // skip non-separator
@@ -460,14 +461,15 @@ public final class HeaderParser {
 		return io;
 	}
 
-	static int parseTokenWithDelta(String str, int index, String token, int[] result){
+	 static int parseTokenWithDelta(String str, int index, String token, int[] result){
 		int length=str.length();
 		int j=0;
 		int startIndex=index;
 		result[0]=-1;
 		for(int i=index;i<length && j<token.length();i++,j++){
 			char c=str.charAt(i);
-			if(c!=token.charAt(j) && c!=Character.toUpperCase(token.charAt(j)))
+			char cj=token.charAt(j);
+			if(c!=j && c!=(cj>='a' && cj<='z' ? cj-0x20 : cj))
 				return startIndex;
 		}
 		index+=token.length();
@@ -498,13 +500,14 @@ public final class HeaderParser {
 		return startIndex;
 	}
 
-	static int parseToken(String str, int index, String token, boolean optionalQuoted){
+	 static int parseToken(String str, int index, String token, boolean optionalQuoted){
 		int length=str.length();
 		int j=0;
 		int startIndex=index;
 		for(int i=index;i<length && j<token.length();i++,j++){
 			char c=str.charAt(i);
-			if(c!=token.charAt(j) && c!=Character.toUpperCase(token.charAt(j)))
+			char cj=token.charAt(j);
+			if(c!=j && c!=(cj>='a' && cj<='z' ? cj-0x20 : cj))
 				return startIndex;
 		}
 		index+=token.length();
@@ -590,7 +593,7 @@ public final class HeaderParser {
 		// type
 		while(i<str.length()){
 			char c=str.charAt(i);
-			if(c<=0x20 || c>=0x7F || "()<>@,;:\\\"/[]?=".indexOf(c)>=0) {
+			if(c<=0x20 || c>=0x7F || StringUtility.isChar(c,"()<>@,;:\\\"/[]?=")) {
 				break;
 			}
 			i++;
@@ -598,7 +601,7 @@ public final class HeaderParser {
 		return i;
 
 	}
-	 static String getMimeToken(String str, int index){
+	static String getMimeToken(String str, int index){
 		int i=skipMimeToken(str,index);
 		return str.substring(index,i);
 
@@ -640,7 +643,7 @@ public final class HeaderParser {
 	}
 
 
-	static int toHexNumber(int c) {
+	 static int toHexNumber(int c) {
 		if(c>='A' && c<='Z')
 			return 10+c-'A';
 		else if(c>='a' && c<='z')
@@ -682,7 +685,7 @@ public final class HeaderParser {
 			}
 			if(c<=0x20 || c>=0x7F)
 				return index;
-			if("-_.!~*'()".indexOf(c)<0 &&
+			if(!StringUtility.isChar(c,"-_.!~*'()") &&
 					!(c>='A' && c<='Z') &&
 					!(c>='a' && c<='z') &&
 					!(c>='0' && c<='9'))
@@ -725,13 +728,13 @@ public final class HeaderParser {
 				i+=3;
 				continue;
 			}
-			if(c<=0x20 || c>=0x7F || "()<>@,;:\\\"/[]?=".indexOf(c)>=0){
+			if(c<=0x20 || c>=0x7F || StringUtility.isChar(c,"()<>@,;:\\\"/[]?=")){
 				if(doquote) {
 					builder.append('\"');
 				}
 				return true;
 			}
-			if("-_.!~*'()".indexOf(c)<0 &&
+			if(!StringUtility.isChar(c,"-_.!~*'()") &&
 					!(c>='A' && c<='Z') &&
 					!(c>='a' && c<='z') &&
 					!(c>='0' && c<='9'))
@@ -756,14 +759,14 @@ public final class HeaderParser {
 				int hex2=toHexNumber(str.charAt(i+2));
 				c=(char)(hex1*16+hex2);
 				builder.append(c);
-				if(c<=0x20 || c>=0x7F || "()<>@,;:\\\"/[]?=".indexOf(c)>=0)
+				if(c<=0x20 || c>=0x7F || StringUtility.isChar(c,"()<>@,;:\\\"/[]?="))
 					return false;
 				i+=3;
 				continue;
 			}
-			if(c<=0x20 || c>=0x7F || "()<>@,;:\\\"/[]?=".indexOf(c)>=0)
+			if(c<=0x20 || c>=0x7F || StringUtility.isChar(c,"()<>@,;:\\\"/[]?="))
 				return true;
-			if("-_.!~*'()".indexOf(c)<0 &&
+			if(!StringUtility.isChar(c,"-_.!~*'()") &&
 					!(c>='A' && c<='Z') &&
 					!(c>='a' && c<='z') &&
 					!(c>='0' && c<='9'))

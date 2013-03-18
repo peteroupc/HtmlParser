@@ -9,10 +9,14 @@ class Text extends Node implements IText {
 	}
 
 	@Override
-	public String toDebugString(){
+	 String toDebugString(){
 		return "\""+text.toString().replace("\n","~~~~")+"\"\n";
 	}
 
+	@Override
+	public  String getTextContent(){
+		return text.toString();
+	}
 
 	@Override
 	public String getData(){

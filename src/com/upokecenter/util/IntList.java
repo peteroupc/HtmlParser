@@ -16,7 +16,7 @@ public final class IntList {
 		buffer[index]=value;
 	}
 
-	public void append(int v){
+	public void appendInt(int v){
 		if(ptr<buffer.length){
 			buffer[ptr++]=v;
 		} else {
@@ -26,27 +26,27 @@ public final class IntList {
 			buffer[ptr++]=v;
 		}
 	}
-	public void append(String str) {
+	public void appendString(String str) {
 		for(int i=0;i<str.length();i++){
 			int c=str.charAt(i);
 			if(c>=0xD800 && c<=0xDBFF && i+1<str.length() &&
 					str.charAt(i+1)>=0xDC00 && str.charAt(i+1)<=0xDFFF){
 				// Append a UTF-16 surrogate pair
 				int cp2=0x10000+(c-0xD800)*0x400+(str.charAt(i+1)-0xDC00);
-				append(cp2);
+				appendInt(cp2);
 				i++;
 			} else if(c>=0xD800 && c<=0xDFFF)
 				// illegal surrogate
 				throw new IllegalArgumentException();
 			else {
-				append(c);
+				appendInt(c);
 			}
 		}
 	}
 	public int[] array(){
 		return buffer;
 	}
-	public void clear(){
+	public void clearAll(){
 		ptr=0;
 	}
 	public int size(){

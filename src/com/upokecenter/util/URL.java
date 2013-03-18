@@ -1,6 +1,5 @@
 package com.upokecenter.util;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -161,40 +160,7 @@ public final class URL {
 			return path;
 	}
 
-	private enum ParseState {
-		SchemeStart,
-		Scheme,
-		SchemeData,
-		NoScheme,
-		RelativeOrAuthority,
-		Relative,
-		RelativeSlash,
-		AuthorityFirstSlash,
-		AuthoritySecondSlash,
-		AuthorityIgnoreSlashes,
-		Authority, Query, Fragment, Host, FileHost,
-		RelativePathStart, RelativePath, HostName, Port
-	}
-
-	private static String hex="0123456789ABCDEF";
-
-	private static IEncodingError encodingError=new IEncodingError(){
-
-		@Override
-		public int emitDecoderError(int[] buffer, int offset, int length)
-				throws IOException {
-			return 0;
-		}
-
-		@Override
-		public void emitEncoderError(OutputStream stream, int codePoint) throws IOException {
-			stream.write('?');
-		}
-
-	};
-
-	private static IEncodingError querySerializerError=new IEncodingError(){
-
+	private static final class QuerySerializerError implements IEncodingError {
 		@Override
 		public int emitDecoderError(int[] buffer, int offset, int length)
 				throws IOException {
@@ -223,20 +189,53 @@ public final class URL {
 			stream.write(data,count,data.length-count);
 			stream.write(0x3B);
 		}
+	}
 
-	};
+	private static final class EncodingError implements IEncodingError {
+		@Override
+		public int emitDecoderError(int[] buffer, int offset, int length)
+				throws IOException {
+			return 0;
+		}
+
+		@Override
+		public void emitEncoderError(OutputStream stream, int codePoint) throws IOException {
+			stream.write('?');
+		}
+	}
+
+	private enum ParseState {
+		SchemeStart,
+		Scheme,
+		SchemeData,
+		NoScheme,
+		RelativeOrAuthority,
+		Relative,
+		RelativeSlash,
+		AuthorityFirstSlash,
+		AuthoritySecondSlash,
+		AuthorityIgnoreSlashes,
+		Authority, Query, Fragment, Host, FileHost,
+		RelativePathStart, RelativePath, HostName, Port
+	}
+
+	private static String hex="0123456789ABCDEF";
+
+	private static IEncodingError encodingError=new EncodingError();
+
+	private static IEncodingError querySerializerError=new QuerySerializerError();
 
 	private static void percentEncode(IntList buffer, int b){
-		buffer.append('%');
-		buffer.append(hex.charAt((b>>4)&0x0F));
-		buffer.append(hex.charAt((b)&0x0F));
+		buffer.appendInt('%');
+		buffer.appendInt(hex.charAt((b>>4)&0x0F));
+		buffer.appendInt(hex.charAt((b)&0x0F));
 	}
 
 	private static void percentEncodeUtf8(IntList buffer, int cp){
 		if(cp<=0x7F){
-			buffer.append('%');
-			buffer.append(hex.charAt((cp>>4)&0x0F));
-			buffer.append(hex.charAt((cp)&0x0F));
+			buffer.appendInt('%');
+			buffer.appendInt(hex.charAt((cp>>4)&0x0F));
+			buffer.appendInt(hex.charAt((cp)&0x0F));
 		} else if(cp<=0x7FF){
 			percentEncode(buffer,(0xC0|((cp>>6)&0x1F)));
 			percentEncode(buffer,(0x80|(cp   &0x3F)));
@@ -299,21 +298,21 @@ public final class URL {
 		return builder.toString();
 	}
 
-	private static void appendOutputBytes(StringBuilder output,
+	private static void appendOutputBytes(StringBuilder builder,
 			MemoryOutputStream baos){
 		for(int i=0;i<baos.length();i++){
 			int c=baos.get(i);
 			if(c==0x20) {
-				output.append((char)0x2b);
+				builder.append((char)0x2b);
 			} else if(c==0x2a || c==0x2d || c==0x2e ||
 					(c>=0x30 && c<=0x39) ||
 					(c>=0x41 && c<=0x5a) ||
 					(c>=0x5f) || (c>=0x61 && c<=0x7a)){
-				output.append((char)c);
+				builder.append((char)c);
 			} else {
-				output.append('%');
-				output.append(hex.charAt((c>>4)&0x0F));
-				output.append(hex.charAt((c)&0x0F));
+				builder.append('%');
+				builder.append(hex.charAt((c>>4)&0x0F));
+				builder.append(hex.charAt((c)&0x0F));
 			}
 		}
 	}
@@ -330,63 +329,53 @@ public final class URL {
 		}
 		if(!percent)return str;
 		ITextDecoder decoder=TextEncoding.getDecoder(encoding);
-		MemoryOutputStream mos=new MemoryOutputStream();
-		try {
-			for(int i=0;i<len;i++){
-				int c=str.charAt(i);
-				if(c=='%'){
-					if(i+2<len){
-						int a=toHexNumber(str.charAt(i+1));
-						int b=toHexNumber(str.charAt(i+2));
-						if(a>=0 && b>=0){
-							mos.write(a*16+b);
-							i+=2;
-							continue;
-						}
+		ByteList mos=new ByteList();
+		for(int i=0;i<len;i++){
+			int c=str.charAt(i);
+			if(c=='%'){
+				if(i+2<len){
+					int a=toHexNumber(str.charAt(i+1));
+					int b=toHexNumber(str.charAt(i+2));
+					if(a>=0 && b>=0){
+						mos.append((byte) (a*16+b));
+						i+=2;
+						continue;
 					}
 				}
-				mos.write(c&0xFF);
 			}
-			return TextEncoding.decodeString(mos.toInputStream(),
-					decoder, TextEncoding.ENCODING_ERROR_REPLACE);
-		} finally {
-			if(mos!=null) {
-				mos.close();
-			}
+			mos.append((byte) (c&0xFF));
 		}
+		return TextEncoding.decodeString(mos.toInputStream(),
+				decoder, TextEncoding.ENCODING_ERROR_REPLACE);
 	}
 
 	public static String toQueryString(List<String[]> pairs,
-			String delimiter, String encoding){
+			String delimiter, String encoding) throws IOException{
 		if(encoding==null) {
 			encoding="utf-8";
 		}
 		ITextEncoder encoder=TextEncoding.getEncoder(encoding);
 		if(encoder==null)
 			throw new IllegalArgumentException();
-		StringBuilder output=new StringBuilder();
+		StringBuilder builder=new StringBuilder();
 		boolean first=true;
 		MemoryOutputStream baos=new MemoryOutputStream();
-		try {
-			for(String[] pair : pairs){
-				if(!first){
-					output.append(delimiter==null ? "&" : delimiter);
-				}
-				first=false;
-				if(pair==null || pair.length<2)
-					throw new IllegalArgumentException();
-				baos.reset();
-				TextEncoding.encodeString(pair[0], baos, encoder, querySerializerError);
-				appendOutputBytes(output,baos);
-				output.append('=');
-				baos.reset();
-				TextEncoding.encodeString(pair[1], baos, encoder, querySerializerError);
-				appendOutputBytes(output,baos);
+		for(String[] pair : pairs){
+			if(!first){
+				builder.append(delimiter==null ? "&" : delimiter);
 			}
-		} catch(IOException e){
-			throw new RuntimeException(e);
+			first=false;
+			if(pair==null || pair.length<2)
+				throw new IllegalArgumentException();
+			baos.reset();
+			TextEncoding.encodeString(pair[0], baos, encoder, querySerializerError);
+			appendOutputBytes(builder,baos);
+			builder.append('=');
+			baos.reset();
+			TextEncoding.encodeString(pair[1], baos, encoder, querySerializerError);
+			appendOutputBytes(builder,baos);
 		}
-		return output.toString();
+		return builder.toString();
 	}
 
 	public static List<String[]> parseQueryString(
@@ -403,7 +392,7 @@ public final class URL {
 			if(input.charAt(i)>0x7F)
 				throw new IllegalArgumentException();
 		}
-		String[] strings=input.split("&");
+		String[] strings=StringUtility.splitAt(input,delimiter);
 		List<String[]> pairs=new ArrayList<String[]>();
 		for(String str : strings){
 			if(str.length()==0) {
@@ -425,7 +414,8 @@ public final class URL {
 					encoding=ch;
 				}
 			}
-			pairs.add(new String[]{name,value});
+			String[] pair=new String[]{name,value};
+			pairs.add(pair);
 		}
 		try {
 			for(String[] pair : pairs){
@@ -539,10 +529,10 @@ public final class URL {
 			switch(state){
 			case SchemeStart:
 				if(c>='A' && c<='Z'){
-					buffer.append(c+0x20);
+					buffer.appendInt(c+0x20);
 					state=ParseState.Scheme;
 				} else if(c>='a' && c<='z'){
-					buffer.append(c);
+					buffer.appendInt(c);
 					state=ParseState.Scheme;
 				} else {
 					index=oldindex;
@@ -551,12 +541,12 @@ public final class URL {
 				break;
 			case Scheme:
 				if(c>='A' && c<='Z'){
-					buffer.append(c+0x20);
+					buffer.appendInt(c+0x20);
 				} else if((c>='a' && c<='z') || c=='.' || c=='-' || c=='+'){
-					buffer.append(c);
+					buffer.appendInt(c);
 				} else if(c==':'){
 					url.scheme=buffer.toString();
-					buffer.clear();
+					buffer.clearAll();
 					if(url.scheme.equals("http") ||
 							url.scheme.equals("https") ||
 							url.scheme.equals("ftp") ||
@@ -578,7 +568,7 @@ public final class URL {
 						state=ParseState.SchemeData;
 					}
 				} else {
-					buffer.clear();
+					buffer.clearAll();
 					index=beginning;
 					state=ParseState.NoScheme;
 				}
@@ -603,7 +593,7 @@ public final class URL {
 					if(c<0x20 || c==0x7F){
 						percentEncode(schemeData,c);
 					} else if(c<0x7F){
-						schemeData.append(c);
+						schemeData.appendInt(c);
 					} else {
 						percentEncodeUtf8(schemeData,c);
 					}
@@ -726,9 +716,9 @@ public final class URL {
 					if(atflag){
 						IntList result=(password==null) ? username : password;
 						error=true;
-						result.append('%');
-						result.append('4');
-						result.append('0');
+						result.appendInt('%');
+						result.appendInt('4');
+						result.appendInt('0');
 					}
 					atflag=true;
 					int[] array=buffer.array();
@@ -749,26 +739,26 @@ public final class URL {
 							continue;
 						}
 						IntList result=(password==null) ? username : password;
-						if(cp<=0x20 || cp>=0x7F || "#<>?`\"".indexOf((char)cp)>=0){
+						if(cp<=0x20 || cp>=0x7F || StringUtility.isChar(cp,"#<>?`\"")){
 							percentEncodeUtf8(result,cp);
 						} else {
-							result.append(cp);
+							result.appendInt(cp);
 						}
 					}
 					//DebugUtility.log("username=%s",username);
 					//DebugUtility.log("password=%s",password);
-					buffer.clear();
+					buffer.clearAll();
 					hostStart=index;
-				} else if(c<0 || "/\\?#".indexOf(c)>=0){
-					buffer.clear();
+				} else if(c<0 || StringUtility.isChar(c,"/\\?#")){
+					buffer.clearAll();
 					state=ParseState.Host;
 					index=hostStart;
 				} else {
-					buffer.append(c);
+					buffer.appendInt(c);
 				}
 				break;
 			case FileHost:
-				if(c<0 || "/\\?#".indexOf(c)>=0){
+				if(c<0 || StringUtility.isChar(c,"/\\?#")){
 					index=oldindex;
 					if(buffer.size()==2){
 						int c1=buffer.get(0);
@@ -782,12 +772,12 @@ public final class URL {
 					if(host==null)
 						throw new IllegalArgumentException();
 					url.host=host;
-					buffer.clear();
+					buffer.clearAll();
 					state=ParseState.RelativePathStart;
 				} else if(c==0x09 || c==0x0a || c==0x0d){
 					error=true;
 				} else {
-					buffer.append(c);
+					buffer.appendInt(c);
 				}
 				break;
 			case Host:
@@ -797,14 +787,14 @@ public final class URL {
 					if(host==null)
 						return null;
 					url.host=host;
-					buffer.clear();
+					buffer.clearAll();
 					state=ParseState.Port;
-				} else if(c<0 || "/\\?#".indexOf(c)>=0){
+				} else if(c<0 || StringUtility.isChar(c,"/\\?#")){
 					String host=hostParse(buffer.toString());
 					if(host==null)
 						return null;
 					url.host=host;
-					buffer.clear();
+					buffer.clearAll();
 					index=oldindex;
 					state=ParseState.RelativePathStart;
 				} else if(c==0x09 || c==0x0a || c==0x0d){
@@ -815,7 +805,7 @@ public final class URL {
 					} else if(c==']') {
 						bracketflag=false;
 					}
-					buffer.append(c);
+					buffer.appendInt(c);
 				}
 				break;
 			case Port:
@@ -826,9 +816,9 @@ public final class URL {
 						portstate=1; // have a port number
 					}
 					if(portstate==2) {
-						buffer.append(c);
+						buffer.appendInt(c);
 					}
-				} else if(c<0 || "/\\?#".indexOf(c)>=0){
+				} else if(c<0 || StringUtility.isChar(c,"/\\?#")){
 					String bufport="";
 					if(portstate==1) {
 						bufport="0";
@@ -853,7 +843,7 @@ public final class URL {
 						bufport="";
 					}
 					url.port=bufport;
-					buffer.clear();
+					buffer.clearAll();
 					state=ParseState.RelativePathStart;
 					index=oldindex;
 				} else if(c==0x09 || c==0x0a || c==0x0d){
@@ -876,12 +866,12 @@ public final class URL {
 									ch==0x3c || ch==0x3e || ch==0x60){
 								percentEncodeUtf8(query,ch);
 							} else {
-								query.append(ch);
+								query.appendInt(ch);
 							}
 						}
 					} else {
 						try {
-							ByteArrayOutputStream baos=new ByteArrayOutputStream();
+							MemoryOutputStream baos=new MemoryOutputStream();
 							encoder.encode(baos,buffer.array(),0,buffer.size(),encodingError);
 							byte[] bytes=baos.toByteArray();
 							for (byte ch : bytes) {
@@ -889,7 +879,7 @@ public final class URL {
 										ch==0x3c || ch==0x3e || ch==0x60){
 									percentEncode(query,ch);
 								} else {
-									query.append(ch);
+									query.appendInt(ch);
 								}
 							}
 							baos.close();
@@ -898,7 +888,7 @@ public final class URL {
 						}
 						throw new IllegalStateException();
 					}
-					buffer.clear();
+					buffer.clearAll();
 					if(c=='#'){
 						fragment=new IntList();
 						state=ParseState.Fragment;
@@ -912,7 +902,7 @@ public final class URL {
 									!isHexDigit(s.charAt(index+1))))){
 						error=true;
 					}
-					buffer.append(c);
+					buffer.appendInt(c);
 				}
 				break;
 			case RelativePathStart:
@@ -953,7 +943,7 @@ public final class URL {
 						}
 						path.add(buffer.toString());
 					}
-					buffer.clear();
+					buffer.clearAll();
 					if(c=='?'){
 						query=new IntList();
 						state=ParseState.Query;
@@ -966,7 +956,7 @@ public final class URL {
 						s.charAt(index)=='2' &&
 						(s.charAt(index+1)=='e' || s.charAt(index+1)=='E')){
 					index+=2;
-					buffer.append('.');
+					buffer.appendInt('.');
 				} else if(c==0x09 || c==0x0a || c==0x0d){
 					error=true;
 				} else {
@@ -976,10 +966,10 @@ public final class URL {
 									!isHexDigit(s.charAt(index+1))))){
 						error=true;
 					}
-					if(c<=0x20 || c>=0x7F || "#<>?`\"".indexOf((char)c)>=0){
+					if(c<=0x20 || c>=0x7F || StringUtility.isChar(c,"#<>?`\"")){
 						percentEncodeUtf8(buffer,c);
 					} else {
-						buffer.append(c);
+						buffer.appendInt(c);
 					}
 				}
 				break;
@@ -999,7 +989,7 @@ public final class URL {
 					if(c<0x20 || c==0x7F){
 						percentEncode(fragment,c);
 					} else if(c<0x7F){
-						fragment.append(c);
+						fragment.appendInt(c);
 					} else {
 						percentEncodeUtf8(fragment,c);
 					}
@@ -1180,7 +1170,7 @@ public final class URL {
 			return((c>='a' && c<='z') ||
 					(c>='A' && c<='Z') ||
 					(c>='0' && c<='9') ||
-					"!$&'()*+,-./:;=?@_~".indexOf(c)>=0);
+					StringUtility.isChar(c,"!$&'()*+,-./:;=?@_~"));
 		else if((c&0xFFFE)==0xFFFE)
 			return false;
 		else if((c>=0xa0 && c<=0xd7ff) ||

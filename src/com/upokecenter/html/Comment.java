@@ -10,22 +10,21 @@ class Comment extends Node implements IComment {
 	}
 
 
-	@Override
-	void setData(String data){
+	 void setData(String data){
 		this.data=data;
 	}
 
-	Comment() {
+	 Comment() {
 		super(NodeType.COMMENT_NODE);
 	}
 
-	@Override String toDebugString(){
+	 @Override  String toDebugString(){
 		return "<!-- "+getData().toString()+" -->\n";
 	}
 
 
 	@Override
-	public String getTextContent(){
+	public  String getTextContent(){
 		return null;
 	}
 

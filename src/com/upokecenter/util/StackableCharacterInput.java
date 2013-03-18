@@ -18,11 +18,11 @@ public final class StackableCharacterInput implements IMarkableCharacterInput {
 	private static class InputAndBuffer implements ICharacterInput {
 
 		int[] buffer;
-		ICharacterInput input;
+		ICharacterInput charInput;
 		int pos=0;
 
-		public InputAndBuffer(ICharacterInput input, int[] buffer, int offset, int length){
-			this.input=input;
+		public InputAndBuffer(ICharacterInput charInput, int[] buffer, int offset, int length){
+			this.charInput=charInput;
 			if(length>0){
 				this.buffer=new int[length];
 				System.arraycopy(buffer,offset,this.buffer,0,length);
@@ -39,10 +39,10 @@ public final class StackableCharacterInput implements IMarkableCharacterInput {
 				throw new IndexOutOfBoundsException();
 			if(unitCount==0)return 0;
 			int count=0;
-			if(input!=null){
-				int c=input.read(buf,offset,unitCount);
+			if(charInput!=null){
+				int c=charInput.read(buf,offset,unitCount);
 				if(c<=0){
-					input=null;
+					charInput=null;
 				} else {
 					offset+=c;
 					unitCount-=c;
@@ -65,10 +65,10 @@ public final class StackableCharacterInput implements IMarkableCharacterInput {
 
 		@Override
 		public int read() throws IOException {
-			if(input!=null){
-				int c=input.read();
+			if(charInput!=null){
+				int c=charInput.read();
 				if(c>=0)return c;
-				input=null;
+				charInput=null;
 			}
 			if(buffer!=null){
 				if(pos<buffer.length)
@@ -191,8 +191,9 @@ public final class StackableCharacterInput implements IMarkableCharacterInput {
 			}
 			// End pos is smaller than buffer size, fill
 			// entire buffer if possible
+			int count=0;
 			if(endpos<buffer.length){
-				int count=readInternal(buffer,endpos,buffer.length-endpos);
+				count=readInternal(buffer,endpos,buffer.length-endpos);
 				//DebugUtility.log("%s",this);
 				if(count>0) {
 					endpos+=count;
@@ -211,7 +212,7 @@ public final class StackableCharacterInput implements IMarkableCharacterInput {
 				System.arraycopy(buffer,0,newBuffer,0,buffer.length);
 				buffer=newBuffer;
 			}
-			int count=readInternal(buffer, endpos, Math.min(unitCount,buffer.length-endpos));
+			count=readInternal(buffer, endpos, Math.min(unitCount,buffer.length-endpos));
 			if(count>0) {
 				endpos+=count;
 			}
@@ -251,6 +252,7 @@ public final class StackableCharacterInput implements IMarkableCharacterInput {
 			//DebugUtility.log(this);
 			// No room, read next character and put it in buffer
 			int c=readInternal();
+      if(c<0)return c;
 			if(pos>=buffer.length){
 				int[] newBuffer=new int[buffer.length*2];
 				System.arraycopy(buffer,0,newBuffer,0,buffer.length);

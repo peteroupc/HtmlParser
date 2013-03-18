@@ -1,22 +1,20 @@
 package com.upokecenter.html;
 
-import java.util.Locale;
 
 
 final class DocumentType extends Node implements IDocumentType {
 
-	String publicId;
-	String systemId;
-	String name;
+	 String publicId;
+	 String systemId;
+	 String name;
 
 	public DocumentType() {
 		super(NodeType.DOCUMENT_TYPE_NODE);
 	}
 	@Override
-	String toDebugString(){
+	 String toDebugString(){
 		StringBuilder builder=new StringBuilder();
-		builder.append(String.format(Locale.US,"<!DOCTYPE %s>\n",
-				name));
+		builder.append("<!DOCTYPE "+name+">\n");
 		return builder.toString();
 	}
 	@Override
@@ -34,7 +32,7 @@ final class DocumentType extends Node implements IDocumentType {
 
 
 	@Override
-	public String getTextContent(){
+	public  String getTextContent(){
 		return null;
 	}
 }

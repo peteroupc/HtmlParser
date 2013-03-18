@@ -29,7 +29,7 @@ public final class LightweightCacheService {
 		// HttpResponseCache added in ICS
 		Class<?> clazz=Reflection.getClassForName("android.net.http.HttpResponseCache");
 		if(clazz==null && ResponseCache.getDefault()==null){
-			ResponseCache legacyCache=DownloadHelper.getLegacyResponseCache(cacheDir);
+			ResponseCache legacyCache=(ResponseCache)DownloadHelper.getLegacyResponseCache(cacheDir);
 			ResponseCache.setDefault(legacyCache);
 			return (ResponseCache.getDefault()!=null);
 		}

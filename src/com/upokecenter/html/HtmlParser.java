@@ -16,7 +16,7 @@ import com.upokecenter.util.URL;
 
 final class HtmlParser {
 
-	static class Attribute {
+	 static class Attrib {
 		StringBuilder name;
 		IntList value;
 		String prefix=null;
@@ -30,13 +30,13 @@ final class HtmlParser {
 			return "[Attribute: "+getName()+"="+getValue()+"]";
 		}
 
-		public Attribute(char ch){
+		public Attrib(char ch){
 			name=new StringBuilder();
 			value=new IntList();
 			name.append(ch);
 		}
 
-		public Attribute(int ch){
+		public Attrib(int ch){
 			name=new StringBuilder();
 			value=new IntList();
 			if(ch<0x10000){
@@ -49,7 +49,7 @@ final class HtmlParser {
 				name.append((char)trail);
 			}
 		}
-		public Attribute(Attribute attr){
+		public Attrib(Attrib attr){
 			nameString=attr.getName();
 			valueString=attr.getValue();
 			prefix=attr.prefix;
@@ -57,7 +57,7 @@ final class HtmlParser {
 			namespace=attr.namespace;
 		}
 
-		public Attribute(String name, String value){
+		public Attrib(String name, String value){
 			nameString=name;
 			valueString=value;
 		}
@@ -79,10 +79,10 @@ final class HtmlParser {
 		public void appendToValue(int ch){
 			if(valueString!=null)
 				throw new IllegalStateException();
-			value.append(ch);
+			value.appendInt(ch);
 		}
 
-		void commitValue(){
+		 void commitValue(){
 			if(value==null)
 				throw new IllegalStateException();
 			valueString=value.toString();
@@ -150,7 +150,7 @@ final class HtmlParser {
 		}
 
 		public void append(int ch){
-			value.append(ch);
+			value.appendInt(ch);
 		}
 
 		@Override
@@ -164,10 +164,10 @@ final class HtmlParser {
 
 	}
 	static class DocTypeToken implements IToken {
-		IntList name;
-		IntList publicID;
-		IntList systemID;
-		boolean forceQuirks;
+		public IntList name;
+		public IntList publicID;
+		public IntList systemID;
+		public boolean forceQuirks;
 		@Override
 		public int getType() {
 			return TOKEN_DOCTYPE;
@@ -181,7 +181,7 @@ final class HtmlParser {
 			super(name);
 		}
 		@Override
-		public int getType() {
+		public  int getType() {
 			return TOKEN_END_TAG;
 		}
 	}
@@ -224,11 +224,11 @@ final class HtmlParser {
 		AfterAfterFrameset
 	}
 
-	interface IToken {
+	 interface IToken {
 		public int getType();
 	}
 
-	static class StartTagToken extends TagToken {
+	 static class StartTagToken extends TagToken {
 		public StartTagToken(char c){
 			super(c);
 		}
@@ -236,18 +236,18 @@ final class HtmlParser {
 			super(name);
 		}
 		@Override
-		public int getType() {
+		public  int getType() {
 			return TOKEN_START_TAG;
 		}
 		public void setName(String string) {
-			builder.delete(0,builder.length());
+			builder.setLength(0);
 			builder.append(string);
 		}
 	}
-	static abstract class TagToken implements IToken {
+	 static abstract class TagToken implements IToken {
 
 		protected StringBuilder builder;
-		List<Attribute> attributes=null;
+		List<Attrib> attributes=null;
 		boolean selfClosing=false;
 		boolean selfClosingAck=false;
 		public TagToken(char ch){
@@ -268,20 +268,20 @@ final class HtmlParser {
 			return !selfClosing || selfClosingAck;
 		}
 
-		public Attribute addAttribute(char ch){
+		public Attrib addAttribute(char ch){
 			if(attributes==null){
-				attributes=new ArrayList<Attribute>();
+				attributes=new ArrayList<Attrib>();
 			}
-			Attribute a=new Attribute(ch);
+			Attrib a=new Attrib(ch);
 			attributes.add(a);
 			return a;
 		}
 
-		public Attribute addAttribute(int ch){
+		public Attrib addAttribute(int ch){
 			if(attributes==null){
-				attributes=new ArrayList<Attribute>();
+				attributes=new ArrayList<Attrib>();
 			}
-			Attribute a=new Attribute(ch);
+			Attrib a=new Attrib(ch);
 			attributes.add(a);
 			return a;
 		}
@@ -323,7 +323,7 @@ final class HtmlParser {
 			if(attributes==null)return null;
 			int size=attributes.size();
 			for(int i=0;i<size;i++){
-				Attribute a=attributes.get(i);
+				Attrib a=attributes.get(i);
 				String thisname=a.getName();
 				if(thisname.equals(name))
 					return a.getValue();
@@ -336,16 +336,16 @@ final class HtmlParser {
 			if(attributes==null)return null;
 			int size=attributes.size();
 			for(int i=0;i<size;i++){
-				Attribute a=attributes.get(i);
+				Attrib a=attributes.get(i);
 				if(a.isAttribute(name,namespace))
 					return a.getValue();
 			}
 			return null;
 		}
 
-		public List<Attribute> getAttributes(){
+		public List<Attrib> getAttributes(){
 			if(attributes==null)
-				return Arrays.asList(new Attribute[0]);
+				return Arrays.asList(new Attrib[0]);
 			else
 				return attributes;
 		}
@@ -366,19 +366,19 @@ final class HtmlParser {
 
 		public void setAttribute(String attrname, String value) {
 			if(attributes==null){
-				attributes=new ArrayList<Attribute>();
-				attributes.add(new Attribute(attrname,value));
+				attributes=new ArrayList<Attrib>();
+				attributes.add(new Attrib(attrname,value));
 			} else {
 				int size=attributes.size();
 				for(int i=0;i<size;i++){
-					Attribute a=attributes.get(i);
+					Attrib a=attributes.get(i);
 					String thisname=a.getName();
 					if(thisname.equals(attrname)){
 						a.setValue(value);
 						return;
 					}
 				}
-				attributes.add(new Attribute(attrname,value));
+				attributes.add(new Attrib(attrname,value));
 			}
 		}
 
@@ -485,7 +485,7 @@ final class HtmlParser {
 	static int TOKEN_TYPE_MASK=0xF0000000;
 	static int TOKEN_CHARACTER=0x00000000;
 	static int TOKEN_INDEX_MASK=0x0FFFFFFF;
-	static String HTML_NAMESPACE="http://www.w3.org/1999/xhtml";
+	public static String HTML_NAMESPACE="http://www.w3.org/1999/xhtml";
 
 	private static String[] quirksModePublicIdPrefixes=new String[]{
 		"+//silmaril//dtd html pro v0r11 19970101//",
@@ -546,20 +546,13 @@ final class HtmlParser {
 	};
 
 
-	enum DocumentMode {
-		NoQuirksMode,
-		LimitedQuirksMode,
-		QuirksMode
-	}
-
-
 	private final ConditionalBufferInputStream inputStream;
-	private IMarkableCharacterInput stream=null;
+	private IMarkableCharacterInput charInput=null;
 	private EncodingConfidence encoding=null;
 
 
 	private boolean error=false;
-	private TokenizerState lastState=null;
+	private TokenizerState lastState=TokenizerState.Data;
 	private CommentToken lastComment;
 	private DocTypeToken docTypeToken;
 	private final List<Element> integrationElements=new ArrayList<Element>();
@@ -568,7 +561,7 @@ final class HtmlParser {
 	private Html5Decoder decoder=null;
 	private TagToken currentEndTag=null;
 	private TagToken currentTag=null;
-	private Attribute currentAttribute=null;
+	private Attrib currentAttribute=null;
 	private int bogusCommentCharacter=0;
 	private final IntList tempBuffer=new IntList();
 	private TokenizerState state=TokenizerState.Data;
@@ -601,7 +594,7 @@ final class HtmlParser {
 		error=false;
 		baseurl=null;
 		hasForeignContent=false; // performance optimization
-		lastState=null;
+		lastState=TokenizerState.Data;
 		lastComment=null;
 		docTypeToken=null;
 		tokens.clear();
@@ -610,7 +603,7 @@ final class HtmlParser {
 		currentTag=null;
 		currentAttribute=null;
 		bogusCommentCharacter=0;
-		tempBuffer.clear();
+		tempBuffer.clearAll();
 		state=TokenizerState.Data;
 		framesetOk=true;
 		integrationElements.clear();
@@ -623,7 +616,7 @@ final class HtmlParser {
 		formElement=null;
 		inputElement=null;
 		done=false;
-		pendingTableCharacters.clear();
+		pendingTableCharacters.clearAll();
 	}
 
 	public HtmlParser(InputStream source, String address, String charset) throws IOException{
@@ -639,10 +632,17 @@ final class HtmlParser {
 		encoding=CharsetSniffer.sniffEncoding(inputStream,charset);
 		inputStream.rewind();
 		decoder=new Html5Decoder(TextEncoding.getDecoder(encoding.getEncoding()));
-		stream=new StackableCharacterInput(new DecoderCharacterInput(inputStream,decoder));
+		charInput=new StackableCharacterInput(new DecoderCharacterInput(inputStream,decoder));
 	}
 	public HtmlParser(InputStream s, String string) throws IOException {
 		this(s,string,null);
+	}
+
+
+	private static <T> T removeAtIndex(List<T> array, int index){
+		T ret=array.get(index);
+		array.remove(index);
+		return ret;
 	}
 
 	private boolean isMathMLIntegrationPoint(Element element) {
@@ -708,7 +708,7 @@ final class HtmlParser {
 		for(int i=openElements.size()-1;i>=0;i--){
 			Element e=openElements.get(i);
 			if(e.getLocalName().equals("table")){
-				Node parent=e.getParentNode();
+				Node parent=(Node) e.getParentNode();
 				boolean isElement=(parent!=null && parent.getNodeType()==NodeType.ELEMENT_NODE);
 				if(!isElement){ // the parent is not an element
 					if(i<=1)
@@ -850,14 +850,14 @@ final class HtmlParser {
 	private void insertCharacter(Node node, int ch){
 		Text textNode=getTextNodeToInsert(node);
 		if(textNode!=null) {
-			textNode.text.append(ch);
+			textNode.text.appendInt(ch);
 		}
 	}
 
 	private void insertString(Node node, String str){
 		Text textNode=getTextNodeToInsert(node);
 		if(textNode!=null) {
-			textNode.text.append(str);
+			textNode.text.appendString(str);
 		}
 	}
 
@@ -1460,7 +1460,7 @@ final class HtmlParser {
 					if(textNode==null)
 						throw new IllegalStateException();
 					while(true){
-						textNode.text.append(ch);
+						textNode.text.appendInt(ch);
 						token=parserRead();
 						if((token&TOKEN_TYPE_MASK)!=TOKEN_CHARACTER){
 							tokenQueue.add(0,token);
@@ -1504,7 +1504,7 @@ final class HtmlParser {
 					throw new IllegalStateException();
 				while(true){
 					// Read multiple characters at once
-					textNode.text.append(ch);
+					textNode.text.appendInt(ch);
 					if(framesetOk && token!=0x20 && token!=0x09 &&
 							token!=0x0a && token!=0x0c && token!=0x0d){
 						framesetOk=false;
@@ -1578,7 +1578,7 @@ final class HtmlParser {
 							openElements.size()<=1 ||
 							!openElements.get(1).isHtmlElement("body"))
 						return false;
-					Node parent=openElements.get(1).getParentNode();
+					Node parent=(Node) openElements.get(1).getParentNode();
 					if(parent!=null){
 						parent.removeChild(openElements.get(1));
 					}
@@ -1646,12 +1646,12 @@ final class HtmlParser {
 					// character directly rather than
 					// use the tokenizer
 					//
-					int mark=stream.markIfNeeded();
-					int nextToken=stream.read();
+					int mark=charInput.markIfNeeded();
+					int nextToken=charInput.read();
 					if(nextToken!=0x0a){
 						// ignore the token if it's 0x0A (LF);
 						// otherwise reset the input stream
-						stream.setMarkPosition(mark);
+						charInput.setMarkPosition(mark);
 					}
 
 					framesetOk=false;
@@ -1722,22 +1722,22 @@ final class HtmlParser {
 					return true;
 				} else if("a".equals(name)){
 					while(true){
-						Element aElement=null;
+						Element node=null;
 						for(int i=formattingElements.size()-1; i>=0; i--){
 							FormattingElement fe=formattingElements.get(i);
 							if(fe.isMarker()) {
 								break;
 							}
 							if(fe.element.getLocalName().equals("a")){
-								aElement=fe.element;
+								node=fe.element;
 								break;
 							}
 						}
-						if(aElement!=null){
+						if(node!=null){
 							error=true;
 							applyEndTag("a",insMode);
-							removeFormattingElement(aElement);
-							openElements.remove(aElement);
+							removeFormattingElement(node);
+							openElements.remove(node);
 						} else {
 							break;
 						}
@@ -1820,7 +1820,7 @@ final class HtmlParser {
 					applyStartTag("hr",insMode);
 					applyStartTag("label",insMode);
 					StartTagToken isindex=new StartTagToken("input");
-					for(Attribute attr : tag.getAttributes()){
+					for(Attrib attr : tag.getAttributes()){
 						String attrname=attr.getName();
 						if(!"name".equals(attrname) &&
 								!"action".equals(attrname) &&
@@ -1853,12 +1853,12 @@ final class HtmlParser {
 					// character directly rather than
 					// use the tokenizer
 					//
-					int mark=stream.markIfNeeded();
-					int nextToken=stream.read();
+					int mark=charInput.markIfNeeded();
+					int nextToken=charInput.read();
 					if(nextToken!=0x0a){
 						// ignore the token if it's 0x0A (LF);
 						// otherwise reset the input stream
-						stream.setMarkPosition(mark);
+						charInput.setMarkPosition(mark);
 					}
 
 					state=TokenizerState.RcData;
@@ -2089,27 +2089,27 @@ final class HtmlParser {
 						//	DebugUtility.log("common ancestor: %s",commonAncestor);
 						int bookmark=formattingElements.indexOf(formatting);
 						//	DebugUtility.log("bookmark=%d",bookmark);
-						Element node=furthestBlock;
+						Element myNode=furthestBlock;
 						Element superiorNode=openElements.get(furthestBlockPos-1);
 						Element lastNode=furthestBlock;
 						for(int j=0;j<3;j++){
-							node=superiorNode;
-							FormattingElement nodeFE=getFormattingElement(node);
+							myNode=superiorNode;
+							FormattingElement nodeFE=getFormattingElement(myNode);
 							if(nodeFE==null){
 								//	DebugUtility.log("node not a formatting element");
-								superiorNode=openElements.get(openElements.indexOf(node)-1);
-								openElements.remove(node);
+								superiorNode=openElements.get(openElements.indexOf(myNode)-1);
+								openElements.remove(myNode);
 								continue;
-							} else if(node.equals(formatting.element)){
+							} else if(myNode.equals(formatting.element)){
 								//	DebugUtility.log("node is the formatting element");
 								break;
 							}
 							Element e=Element.fromToken(nodeFE.token);
 							nodeFE.element=e;
-							int io=openElements.indexOf(node);
+							int io=openElements.indexOf(myNode);
 							superiorNode=openElements.get(io-1);
 							openElements.set(io,e);
-							node=e;
+							myNode=e;
 							if(lastNode.equals(furthestBlock)){
 								bookmark=formattingElements.indexOf(nodeFE)+1;
 							}
@@ -2117,10 +2117,10 @@ final class HtmlParser {
 							// element, the foster parenting rule doesn't
 							// apply here
 							if(lastNode.getParentNode()!=null) {
-								lastNode.getParentNode().removeChild(lastNode);
+								((Node) lastNode.getParentNode()).removeChild(lastNode);
 							}
-							node.appendChild(lastNode);
-							lastNode=node;
+							myNode.appendChild(lastNode);
+							lastNode=myNode;
 						}
 						//	DebugUtility.log("node: %s",node);
 						//	DebugUtility.log("lastNode: %s",lastNode);
@@ -2131,38 +2131,39 @@ final class HtmlParser {
 								commonAncestor.getLocalName().equals("tfoot")
 								){
 							if(lastNode.getParentNode()!=null) {
-								lastNode.getParentNode().removeChild(lastNode);
+								((Node) lastNode.getParentNode()).removeChild(lastNode);
 							}
 							fosterParent(lastNode);
 						} else {
 							if(lastNode.getParentNode()!=null) {
-								lastNode.getParentNode().removeChild(lastNode);
+								((Node) lastNode.getParentNode()).removeChild(lastNode);
 							}
 							commonAncestor.appendChild(lastNode);
 						}
-						Element e=Element.fromToken(formatting.token);
+						Element e2=Element.fromToken(formatting.token);
 						for(Node child : new ArrayList<Node>(furthestBlock.getChildNodesInternal())){
 							furthestBlock.removeChild(child);
 							// NOTE: Because 'e' can only be a formatting
 							// element, the foster parenting rule doesn't
 							// apply here
-							e.appendChild(child);
+							e2.appendChild(child);
 						}
 						// NOTE: Because intervening elements, including
 						// formatting elements, are cleared between table
 						// and tbody/thead/tfoot and between those three
 						// elements and tr, the foster parenting rule
 						// doesn't apply here
-						furthestBlock.appendChild(e);
+						furthestBlock.appendChild(e2);
 						FormattingElement newFE=new FormattingElement();
 						newFE.marker=false;
-						newFE.element=e;
+						newFE.element=e2;
 						newFE.token=formatting.token;
 						//	DebugUtility.log("Adding formatting element at %d",bookmark);
 						formattingElements.add(bookmark,newFE);
 						formattingElements.remove(formatting);
 						//	DebugUtility.log("Replacing open element at %d",openElements.indexOf(furthestBlock)+1);
-						openElements.add(openElements.indexOf(furthestBlock)+1,e);
+						int idx=openElements.indexOf(furthestBlock)+1;
+						openElements.add(idx,e2);
 						openElements.remove(formatting.element);
 					}
 				} else if("applet".equals(name) ||
@@ -2408,7 +2409,7 @@ final class HtmlParser {
 						currentNode.getLocalName().equals("thead") ||
 						currentNode.getLocalName().equals("tr")
 						){
-					pendingTableCharacters.clear();
+					pendingTableCharacters.clearAll();
 					originalInsertionMode=insertionMode;
 					insertionMode=InsertionMode.InTableText;
 					return applyInsertionMode(token,null);
@@ -2554,7 +2555,7 @@ final class HtmlParser {
 					error=true;
 					return false;
 				} else {
-					pendingTableCharacters.append(token);
+					pendingTableCharacters.appendInt(token);
 				}
 			} else {
 				boolean nonspace=false;
@@ -3341,12 +3342,12 @@ final class HtmlParser {
 		inputStream.rewind();
 		encoding=new EncodingConfidence(charset,EncodingConfidence.Certain);
 		decoder=new Html5Decoder(TextEncoding.getDecoder(encoding.getEncoding()));
-		stream=new StackableCharacterInput(new DecoderCharacterInput(inputStream,decoder));
+		charInput=new StackableCharacterInput(new DecoderCharacterInput(inputStream,decoder));
 	}
 
 	private void clearFormattingToMarker() {
 		while(formattingElements.size()>0){
-			FormattingElement fe=formattingElements.remove(formattingElements.size()-1);
+			FormattingElement fe=removeAtIndex(formattingElements,formattingElements.size()-1);
 			if(fe.isMarker()) {
 				break;
 			}
@@ -3365,7 +3366,7 @@ final class HtmlParser {
 		for(int i=openElements.size()-1;i>=0;i--){
 			Element e=openElements.get(i);
 			if(e.getLocalName().equals("table")){
-				Node parent=e.getParentNode();
+				Node parent=(Node) e.getParentNode();
 				boolean isElement=(parent!=null && parent.getNodeType()==NodeType.ELEMENT_NODE);
 				if(!isElement){ // the parent is not an element
 					if(i<=1)
@@ -3682,23 +3683,23 @@ final class HtmlParser {
 	}
 
 	private int parseCharacterReference(int allowedCharacter) throws IOException{
-		int markStart=stream.markIfNeeded();
-		int c1=stream.read();
+		int markStart=charInput.markIfNeeded();
+		int c1=charInput.read();
 		if(c1<0 || c1==0x09 || c1==0x0a || c1==0x0c ||
 				c1==0x20 || c1==0x3c || c1==0x26 || (allowedCharacter>=0 && c1==allowedCharacter)){
-			stream.setMarkPosition(markStart);
+			charInput.setMarkPosition(markStart);
 			return 0x26; // emit ampersand
 		} else if(c1==0x23){
-			c1=stream.read();
+			c1=charInput.read();
 			int value=0;
 			boolean haveHex=false;
 			if(c1==0x78 || c1==0x58){
 				// Hex number
 				while(true){ // skip zeros
-					int c=stream.read();
+					int c=charInput.read();
 					if(c!='0'){
 						if(c>=0) {
-							stream.moveBack(1);
+							charInput.moveBack(1);
 						}
 						break;
 					}
@@ -3706,7 +3707,7 @@ final class HtmlParser {
 				}
 				boolean overflow=false;
 				while(true){
-					int number=stream.read();
+					int number=charInput.read();
 					if(number>='0' && number<='9'){
 						if(!overflow) {
 							value=(value<<4)+(number-'0');
@@ -3724,7 +3725,7 @@ final class HtmlParser {
 						haveHex=true;
 					} else {
 						if(number>=0) {
-							stream.moveBack(1);
+							charInput.moveBack(1);
 						}
 						break;
 					}
@@ -3734,14 +3735,14 @@ final class HtmlParser {
 				}
 			} else {
 				if(c1>0) {
-					stream.moveBack(1);
+					charInput.moveBack(1);
 				}
 				// Digits
 				while(true){ // skip zeros
-					int c=stream.read();
+					int c=charInput.read();
 					if(c!='0'){
 						if(c>=0) {
-							stream.moveBack(1);
+							charInput.moveBack(1);
 						}
 						break;
 					}
@@ -3749,7 +3750,7 @@ final class HtmlParser {
 				}
 				boolean overflow=false;
 				while(true){
-					int number=stream.read();
+					int number=charInput.read();
 					if(number>='0' && number<='9'){
 						if(!overflow) {
 							value=(value*10)+(number-'0');
@@ -3757,7 +3758,7 @@ final class HtmlParser {
 						haveHex=true;
 					} else {
 						if(number>=0) {
-							stream.moveBack(1);
+							charInput.moveBack(1);
 						}
 						break;
 					}
@@ -3769,13 +3770,13 @@ final class HtmlParser {
 			if(!haveHex){
 				// No digits: parse error
 				error=true;
-				stream.setMarkPosition(markStart);
+				charInput.setMarkPosition(markStart);
 				return 0x26; // emit ampersand
 			}
-			c1=stream.read();
+			c1=charInput.read();
 			if(c1!=0x3B){ // semicolon
 				error=true;
-				stream.moveBack(1); // parse error
+				charInput.moveBack(1); // parse error
 			}
 			if(value>0x10FFFF || (value>=0xD800 && value<=0xDFFF)){
 				error=true;
@@ -3783,7 +3784,7 @@ final class HtmlParser {
 			} else if(value>=0x80 && value<0xA0){
 				error=true;
 				// parse error
-				int replacements[]={
+				int replacements[]=new int[]{
 						0x20ac,0x81,0x201a,0x192,0x201e,
 						0x2026,0x2020,0x2021,0x2c6,0x2030,
 						0x160,0x2039,0x152,0x8d,0x17d,
@@ -3814,21 +3815,21 @@ final class HtmlParser {
 			int[] data=null;
 			// check for certain well-known entities
 			if(c1=='g'){
-				if(stream.read()=='t' && stream.read()==';')
+				if(charInput.read()=='t' && charInput.read()==';')
 					return '>';
-				stream.setMarkPosition(markStart+1);
+				charInput.setMarkPosition(markStart+1);
 			} else if(c1=='l'){
-				if(stream.read()=='t' && stream.read()==';')
+				if(charInput.read()=='t' && charInput.read()==';')
 					return '<';
-				stream.setMarkPosition(markStart+1);
+				charInput.setMarkPosition(markStart+1);
 			} else if(c1=='a'){
-				if(stream.read()=='m' && stream.read()=='p' && stream.read()==';')
+				if(charInput.read()=='m' && charInput.read()=='p' && charInput.read()==';')
 					return '&';
-				stream.setMarkPosition(markStart+1);
+				charInput.setMarkPosition(markStart+1);
 			} else if(c1=='n'){
-				if(stream.read()=='b' && stream.read()=='s' && stream.read()=='p' && stream.read()==';')
+				if(charInput.read()=='b' && charInput.read()=='s' && charInput.read()=='p' && charInput.read()==';')
 					return 0xa0;
-				stream.setMarkPosition(markStart+1);
+				charInput.setMarkPosition(markStart+1);
 			}
 			int count=0;
 			for(int index=0;index<entities.length;index++){
@@ -3840,7 +3841,7 @@ final class HtmlParser {
 						// we get the maximum length possible starting
 						// with the first matching character)
 						data=new int[entity.length()-1];
-						count=stream.read(data,0,data.length);
+						count=charInput.read(data,0,data.length);
 						//DebugUtility.log("markposch=%c",(char)data[0]);
 					}
 					// if fewer bytes were read than the
@@ -3863,22 +3864,22 @@ final class HtmlParser {
 						// Move back the difference between the
 						// number of bytes actually read and
 						// this entity's length
-						stream.moveBack(count-(entity.length()-1));
+						charInput.moveBack(count-(entity.length()-1));
 						//DebugUtility.log("lastchar=%c",entity.charAt(entity.length()-1));
 						if(allowedCharacter>=0 &&
 								entity.charAt(entity.length()-1)!=';'){
 							// Get the next character after the entity
-							int ch2=stream.read();
+							int ch2=charInput.read();
 							if(ch2=='=' || (ch2>='A' && ch2<='Z') ||
 									(ch2>='a' && ch2<='z') ||
 									(ch2>='0' && ch2<='9')){
 								if(ch2=='=') {
 									error=true;
 								}
-								stream.setMarkPosition(markStart);
+								charInput.setMarkPosition(markStart);
 								return 0x26; // return ampersand rather than entity
 							} else {
-								stream.moveBack(1);
+								charInput.moveBack(1);
 								if(entity.charAt(entity.length()-1)!=';'){
 									error=true;
 								}
@@ -3893,9 +3894,9 @@ final class HtmlParser {
 				}
 			}
 			// no match
-			stream.setMarkPosition(markStart);
+			charInput.setMarkPosition(markStart);
 			while(true){
-				int ch2=stream.read();
+				int ch2=charInput.read();
 				if(ch2==';'){
 					error=true;
 					break;
@@ -3905,19 +3906,19 @@ final class HtmlParser {
 					break;
 				}
 			}
-			stream.setMarkPosition(markStart);
+			charInput.setMarkPosition(markStart);
 			return 0x26;
 		} else {
 			// not a character reference
-			stream.setMarkPosition(markStart);
+			charInput.setMarkPosition(markStart);
 			return 0x26; // emit ampersand
 		}
 	}
 
 
 	private void adjustSvgAttributes(StartTagToken token){
-		List<Attribute> attributes=token.getAttributes();
-		for(Attribute attr : attributes){
+		List<Attrib> attributes=token.getAttributes();
+		for(Attrib attr : attributes){
 			String name=attr.getName();
 			if(name.equals("attributename")){ attr.setName("attributeName"); }
 			else if(name.equals("attributetype")){ attr.setName("attributeType");  }
@@ -3984,21 +3985,21 @@ final class HtmlParser {
 		}
 	}
 	private void adjustMathMLAttributes(StartTagToken token){
-		List<Attribute> attributes=token.getAttributes();
-		for(Attribute attr : attributes){
+		List<Attrib> attributes=token.getAttributes();
+		for(Attrib attr : attributes){
 			if(attr.getName().equals("definitionurl")){
 				attr.setName("definitionURL");
 			}
 		}
 	}
 
-	static final String XLINK_NAMESPACE="http://www.w3.org/1999/xlink";
-	static final String XML_NAMESPACE="http://www.w3.org/XML/1998/namespace";
+	public static final String XLINK_NAMESPACE="http://www.w3.org/1999/xlink";
+	public static final String XML_NAMESPACE="http://www.w3.org/XML/1998/namespace";
 	private static final String XMLNS_NAMESPACE="http://www.w3.org/2000/xmlns/";
 
 	private void adjustForeignAttributes(StartTagToken token){
-		List<Attribute> attributes=token.getAttributes();
-		for(Attribute attr : attributes){
+		List<Attrib> attributes=token.getAttributes();
+		for(Attrib attr : attributes){
 			String name=attr.getName();
 			if(name.equals("xlink:actuate") ||
 					name.equals("xlink:arcrole") ||
@@ -4051,11 +4052,11 @@ final class HtmlParser {
 	}
 	private int parserReadInternal() throws IOException{
 		if(tokenQueue.size()>0)
-			return tokenQueue.remove(0);
+			return removeAtIndex(tokenQueue,0);
 		while(true){
 			switch(state){
 			case Data:
-				int c=stream.read();
+				int c=charInput.read();
 				if(c==0x26){
 					state=TokenizerState.CharacterRefInData;
 				} else if(c==0x3c){
@@ -4070,13 +4071,13 @@ final class HtmlParser {
 					// Keep reading characters to
 					// reduce the need to re-call
 					// this method
-					int mark=stream.markIfNeeded();
+					int mark=charInput.markIfNeeded();
 					for(int i=0;i<100;i++){
-						c=stream.read();
+						c=charInput.read();
 						if(c>0 && c!=0x26 && c!=0x3c){
 							tokenQueue.add(c);
 						} else {
-							stream.setMarkPosition(mark+i);
+							charInput.setMarkPosition(mark+i);
 							break;
 						}
 					}
@@ -4106,7 +4107,7 @@ final class HtmlParser {
 				return charref;
 			}
 			case RcData:
-				int c1=stream.read();
+				int c1=charInput.read();
 				if(c1==0x26) {
 					state=TokenizerState.CharacterRefInRcData;
 				} else if(c1==0x3c) {
@@ -4122,7 +4123,7 @@ final class HtmlParser {
 				break;
 			case RawText:
 			case ScriptData:{
-				int c11=stream.read();
+				int c11=charInput.read();
 				if(c11==0x3c) {
 					state=(state==TokenizerState.RawText) ?
 							TokenizerState.RawTextLessThan :
@@ -4138,10 +4139,10 @@ final class HtmlParser {
 				break;
 			}
 			case ScriptDataLessThan:{
-				stream.markToEnd();
-				int c11=stream.read();
+				charInput.markToEnd();
+				int c11=charInput.read();
 				if(c11==0x2f){
-					tempBuffer.clear();
+					tempBuffer.clearAll();
 					state=TokenizerState.ScriptDataEndTagOpen;
 				} else if(c11==0x21){
 					state=TokenizerState.ScriptDataEscapeStart;
@@ -4150,7 +4151,7 @@ final class HtmlParser {
 				} else {
 					state=TokenizerState.ScriptData;
 					if(c11>=0) {
-						stream.moveBack(1);
+						charInput.moveBack(1);
 					}
 					return 0x3c;
 				}
@@ -4158,11 +4159,11 @@ final class HtmlParser {
 			}
 			case ScriptDataEndTagOpen:
 			case ScriptDataEscapedEndTagOpen:{
-				stream.markToEnd();
-				int ch=stream.read();
+				charInput.markToEnd();
+				int ch=charInput.read();
 				if(ch>='A' && ch<='Z'){
 					EndTagToken token=new EndTagToken((char) (ch+0x20));
-					tempBuffer.append(ch);
+					tempBuffer.appendInt(ch);
 					currentTag=token;
 					currentEndTag=token;
 					if(state==TokenizerState.ScriptDataEndTagOpen) {
@@ -4172,7 +4173,7 @@ final class HtmlParser {
 					}
 				} else if(ch>='a' && ch<='z'){
 					EndTagToken token=new EndTagToken((char)ch);
-					tempBuffer.append(ch);
+					tempBuffer.appendInt(ch);
 					currentTag=token;
 					currentEndTag=token;
 					if(state==TokenizerState.ScriptDataEndTagOpen) {
@@ -4188,7 +4189,7 @@ final class HtmlParser {
 					}
 					tokenQueue.add(0x2f);
 					if(ch>=0) {
-						stream.moveBack(1);
+						charInput.moveBack(1);
 					}
 					return 0x3c;
 				}
@@ -4196,8 +4197,8 @@ final class HtmlParser {
 			}
 			case ScriptDataEndTagName:
 			case ScriptDataEscapedEndTagName:{
-				stream.markToEnd();
-				int ch=stream.read();
+				charInput.markToEnd();
+				int ch=charInput.read();
 				if((ch==0x09 || ch==0x0a || ch==0x0c || ch==0x20) &&
 						isAppropriateEndTag()){
 					state=TokenizerState.BeforeAttributeName;
@@ -4207,11 +4208,11 @@ final class HtmlParser {
 					state=TokenizerState.Data;
 					return emitCurrentTag();
 				} else if(ch>='A' && ch<='Z'){
-					currentTag.append((char) (ch+0x20));
-					tempBuffer.append(ch);
+					currentTag.appendChar((char) (ch+0x20));
+					tempBuffer.appendInt(ch);
 				} else if(ch>='a' && ch<='z'){
-					currentTag.append((char)ch);
-					tempBuffer.append(ch);
+					currentTag.appendChar((char)ch);
+					tempBuffer.appendInt(ch);
 				} else {
 					if(state==TokenizerState.ScriptDataEndTagName) {
 						state=TokenizerState.ScriptData;
@@ -4224,15 +4225,15 @@ final class HtmlParser {
 						tokenQueue.add(array[i]);
 					}
 					if(ch>=0) {
-						stream.moveBack(1);
+						charInput.moveBack(1);
 					}
 					return '<';
 				}
 				break;
 			}
 			case ScriptDataDoubleEscapeStart:{
-				stream.markToEnd();
-				int ch=stream.read();
+				charInput.markToEnd();
+				int ch=charInput.read();
 				if(ch==0x09 || ch==0x0a || ch==0x0c || ch==0x20 ||
 						ch==0x2f || ch==0x3e){
 					String bufferString=tempBuffer.toString();
@@ -4243,22 +4244,22 @@ final class HtmlParser {
 					}
 					return ch;
 				} else if(ch>='A' && ch<='Z'){
-					tempBuffer.append(ch+0x20);
+					tempBuffer.appendInt(ch+0x20);
 					return ch;
 				} else if(ch>='a' && ch<='z'){
-					tempBuffer.append(ch);
+					tempBuffer.appendInt(ch);
 					return ch;
 				} else {
 					state=TokenizerState.ScriptDataEscaped;
 					if(ch>=0) {
-						stream.moveBack(1);
+						charInput.moveBack(1);
 					}
 				}
 				break;
 			}
 			case ScriptDataDoubleEscapeEnd:{
-				stream.markToEnd();
-				int ch=stream.read();
+				charInput.markToEnd();
+				int ch=charInput.read();
 				if(ch==0x09 || ch==0x0a || ch==0x0c || ch==0x20 ||
 						ch==0x2f || ch==0x3e){
 					String bufferString=tempBuffer.toString();
@@ -4269,23 +4270,23 @@ final class HtmlParser {
 					}
 					return ch;
 				} else if(ch>='A' && ch<='Z'){
-					tempBuffer.append(ch+0x20);
+					tempBuffer.appendInt(ch+0x20);
 					return ch;
 				} else if(ch>='a' && ch<='z'){
-					tempBuffer.append(ch);
+					tempBuffer.appendInt(ch);
 					return ch;
 				} else {
 					state=TokenizerState.ScriptDataDoubleEscaped;
 					if(ch>=0) {
-						stream.moveBack(1);
+						charInput.moveBack(1);
 					}
 				}
 				break;
 			}
 			case ScriptDataEscapeStart:
 			case ScriptDataEscapeStartDash:{
-				stream.markToEnd();
-				int ch=stream.read();
+				charInput.markToEnd();
+				int ch=charInput.read();
 				if(ch==0x2d){
 					if(state==TokenizerState.ScriptDataEscapeStart) {
 						state=TokenizerState.ScriptDataEscapeStartDash;
@@ -4295,14 +4296,14 @@ final class HtmlParser {
 					return '-';
 				} else {
 					if(ch>=0) {
-						stream.moveBack(1);
+						charInput.moveBack(1);
 					}
 					state=TokenizerState.ScriptData;
 				}
 				break;
 			}
 			case ScriptDataEscaped:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==0x2d){
 					state=TokenizerState.ScriptDataEscapedDash;
 					return '-';
@@ -4319,7 +4320,7 @@ final class HtmlParser {
 				break;
 			}
 			case ScriptDataDoubleEscaped:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==0x2d){
 					state=TokenizerState.ScriptDataDoubleEscapedDash;
 					return '-';
@@ -4337,7 +4338,7 @@ final class HtmlParser {
 				break;
 			}
 			case ScriptDataEscapedDash:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==0x2d){
 					state=TokenizerState.ScriptDataEscapedDashDash;
 					return '-';
@@ -4357,7 +4358,7 @@ final class HtmlParser {
 				break;
 			}
 			case ScriptDataDoubleEscapedDash:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==0x2d){
 					state=TokenizerState.ScriptDataDoubleEscapedDashDash;
 					return '-';
@@ -4378,7 +4379,7 @@ final class HtmlParser {
 				break;
 			}
 			case ScriptDataEscapedDashDash:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==0x2d)
 					return '-';
 				else if(ch==0x3c){
@@ -4400,7 +4401,7 @@ final class HtmlParser {
 				break;
 			}
 			case ScriptDataDoubleEscapedDashDash:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==0x2d)
 					return '-';
 				else if(ch==0x3c){
@@ -4423,48 +4424,48 @@ final class HtmlParser {
 				break;
 			}
 			case ScriptDataDoubleEscapedLessThan:{
-				stream.markToEnd();
-				int ch=stream.read();
+				charInput.markToEnd();
+				int ch=charInput.read();
 				if(ch==0x2f){
-					tempBuffer.clear();
+					tempBuffer.clearAll();
 					state=TokenizerState.ScriptDataDoubleEscapeEnd;
 				} else {
 					state=TokenizerState.ScriptDataDoubleEscaped;
 					if(ch>=0) {
-						stream.moveBack(1);
+						charInput.moveBack(1);
 					}
 				}
 				break;
 			}
 			case ScriptDataEscapedLessThan:{
-				stream.markToEnd();
-				int ch=stream.read();
+				charInput.markToEnd();
+				int ch=charInput.read();
 				if(ch==0x2f){
-					tempBuffer.clear();
+					tempBuffer.clearAll();
 					state=TokenizerState.ScriptDataEscapedEndTagOpen;
 				} else if(ch>='A' && ch<='Z'){
-					tempBuffer.clear();
-					tempBuffer.append(ch+0x20);
+					tempBuffer.clearAll();
+					tempBuffer.appendInt(ch+0x20);
 					state=TokenizerState.ScriptDataDoubleEscapeStart;
 					tokenQueue.add(ch);
 					return 0x3c;
 				} else if(ch>='a' && ch<='z'){
-					tempBuffer.clear();
-					tempBuffer.append(ch);
+					tempBuffer.clearAll();
+					tempBuffer.appendInt(ch);
 					state=TokenizerState.ScriptDataDoubleEscapeStart;
 					tokenQueue.add(ch);
 					return 0x3c;
 				} else {
 					state=TokenizerState.ScriptDataEscaped;
 					if(ch>=0) {
-						stream.moveBack(1);
+						charInput.moveBack(1);
 					}
 					return 0x3c;
 				}
 				break;
 			}
 			case PlainText:{
-				int c11=stream.read();
+				int c11=charInput.read();
 				if(c11==0){
 					error=true;
 					return 0xFFFD;
@@ -4475,8 +4476,8 @@ final class HtmlParser {
 					return c11;
 			}
 			case TagOpen:{
-				stream.markToEnd();
-				int c11=stream.read();
+				charInput.markToEnd();
+				int c11=charInput.read();
 				if(c11==0x21) {
 					state=TokenizerState.MarkupDeclarationOpen;
 				} else if(c11==0x2F) {
@@ -4499,14 +4500,14 @@ final class HtmlParser {
 					error=true;
 					state=TokenizerState.Data;
 					if(c11>=0) {
-						stream.moveBack(1);
+						charInput.moveBack(1);
 					}
 					return '<';
 				}
 				break;
 			}
 			case EndTagOpen:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch>='A' && ch<='Z'){
 					TagToken token=new EndTagToken((char) (ch+0x20));
 					currentEndTag=token;
@@ -4538,11 +4539,11 @@ final class HtmlParser {
 			}
 			case RcDataEndTagOpen:
 			case RawTextEndTagOpen:{
-				stream.markToEnd();
-				int ch=stream.read();
+				charInput.markToEnd();
+				int ch=charInput.read();
 				if(ch>='A' && ch<='Z'){
 					TagToken token=new EndTagToken((char) (ch+0x20));
-					tempBuffer.append(ch);
+					tempBuffer.appendInt(ch);
 					currentEndTag=token;
 					currentTag=token;
 					state=(state==TokenizerState.RcDataEndTagOpen) ?
@@ -4551,7 +4552,7 @@ final class HtmlParser {
 				}
 				else if(ch>='a' && ch<='z'){
 					TagToken token=new EndTagToken((char) (ch));
-					tempBuffer.append(ch);
+					tempBuffer.appendInt(ch);
 					currentEndTag=token;
 					currentTag=token;
 					state=(state==TokenizerState.RcDataEndTagOpen) ?
@@ -4560,7 +4561,7 @@ final class HtmlParser {
 				}
 				else {
 					if(ch>=0) {
-						stream.moveBack(1);
+						charInput.moveBack(1);
 					}
 					state=TokenizerState.RcData;
 					tokenQueue.add(0x2F); // solidus
@@ -4570,8 +4571,8 @@ final class HtmlParser {
 			}
 			case RcDataEndTagName:
 			case RawTextEndTagName:{
-				stream.markToEnd();
-				int ch=stream.read();
+				charInput.markToEnd();
+				int ch=charInput.read();
 				if((ch==0x09 || ch==0x0a || ch==0x0c || ch==0x20) && isAppropriateEndTag()){
 					state=TokenizerState.BeforeAttributeName;
 				} else if(ch==0x2f && isAppropriateEndTag()){
@@ -4581,13 +4582,13 @@ final class HtmlParser {
 					return emitCurrentTag();
 				} else if(ch>='A' && ch<='Z'){
 					currentTag.append(ch+0x20);
-					tempBuffer.append(ch+0x20);
+					tempBuffer.appendInt(ch+0x20);
 				} else if(ch>='a' && ch<='z'){
 					currentTag.append(ch);
-					tempBuffer.append(ch);
+					tempBuffer.appendInt(ch);
 				} else {
 					if(ch>=0) {
-						stream.moveBack(1);
+						charInput.moveBack(1);
 					}
 					state=(state==TokenizerState.RcDataEndTagName) ?
 							TokenizerState.RcData :
@@ -4602,7 +4603,7 @@ final class HtmlParser {
 				break;
 			}
 			case BeforeAttributeName:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==0x09 || ch==0x0a || ch==0x0c || ch==0x20){
 					// ignored
 				} else if(ch==0x2f){
@@ -4630,7 +4631,7 @@ final class HtmlParser {
 				break;
 			}
 			case AttributeName:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==0x09 || ch==0x0a || ch==0x0c || ch==0x20){
 					if(!currentTag.checkAttributeName()) {
 						error=true;
@@ -4673,9 +4674,9 @@ final class HtmlParser {
 				break;
 			}
 			case AfterAttributeName:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				while(ch==0x09 || ch==0x0a || ch==0x0c || ch==0x20){
-					ch=stream.read();
+					ch=charInput.read();
 				}
 				if(ch==0x2f){
 					state=TokenizerState.SelfClosingStartTag;
@@ -4705,15 +4706,15 @@ final class HtmlParser {
 				break;
 			}
 			case BeforeAttributeValue:{
-				stream.markToEnd();
-				int ch=stream.read();
+				charInput.markToEnd();
+				int ch=charInput.read();
 				while(ch==0x09 || ch==0x0a || ch==0x0c || ch==0x20){
-					ch=stream.read();
+					ch=charInput.read();
 				}
 				if(ch==0x22){
 					state=TokenizerState.AttributeValueDoubleQuoted;
 				} else if(ch==0x26){
-					stream.moveBack(1);
+					charInput.moveBack(1);
 					state=TokenizerState.AttributeValueUnquoted;
 				} else if(ch==0x27){
 					state=TokenizerState.AttributeValueSingleQuoted;
@@ -4739,7 +4740,7 @@ final class HtmlParser {
 				break;
 			}
 			case AttributeValueDoubleQuoted:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==0x22){
 					currentAttribute.commitValue();
 					state=TokenizerState.AfterAttributeValueQuoted;
@@ -4757,9 +4758,9 @@ final class HtmlParser {
 					// Keep reading characters to
 					// reduce the need to re-call
 					// this method
-					int mark=stream.markIfNeeded();
+					int mark=charInput.markIfNeeded();
 					for(int i=0;i<100;i++){
-						ch=stream.read();
+						ch=charInput.read();
 						if(ch>0 && ch!=0x26 && ch!=0x22){
 							currentAttribute.appendToValue(ch);
 						} else if(ch==0x22){
@@ -4767,7 +4768,7 @@ final class HtmlParser {
 							state=TokenizerState.AfterAttributeValueQuoted;
 							break;
 						} else {
-							stream.setMarkPosition(mark+i);
+							charInput.setMarkPosition(mark+i);
 							break;
 						}
 					}
@@ -4775,7 +4776,7 @@ final class HtmlParser {
 				break;
 			}
 			case AttributeValueSingleQuoted:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==0x27){
 					currentAttribute.commitValue();
 					state=TokenizerState.AfterAttributeValueQuoted;
@@ -4793,9 +4794,9 @@ final class HtmlParser {
 					// Keep reading characters to
 					// reduce the need to re-call
 					// this method
-					int mark=stream.markIfNeeded();
+					int mark=charInput.markIfNeeded();
 					for(int i=0;i<100;i++){
-						ch=stream.read();
+						ch=charInput.read();
 						if(ch>0 && ch!=0x26 && ch!=0x27){
 							currentAttribute.appendToValue(ch);
 						} else if(ch==0x27){
@@ -4803,7 +4804,7 @@ final class HtmlParser {
 							state=TokenizerState.AfterAttributeValueQuoted;
 							break;
 						} else {
-							stream.setMarkPosition(mark+i);
+							charInput.setMarkPosition(mark+i);
 							break;
 						}
 					}
@@ -4811,7 +4812,7 @@ final class HtmlParser {
 				break;
 			}
 			case AttributeValueUnquoted:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==0x09 || ch==0x0a || ch==0x0c || ch==0x20){
 					currentAttribute.commitValue();
 					state=TokenizerState.BeforeAttributeName;
@@ -4838,8 +4839,8 @@ final class HtmlParser {
 				break;
 			}
 			case AfterAttributeValueQuoted:{
-				int mark=stream.markIfNeeded();
-				int ch=stream.read();
+				int mark=charInput.markIfNeeded();
+				int ch=charInput.read();
 				if(ch==0x09 || ch==0x0a || ch==0x0c || ch==0x20){
 					state=TokenizerState.BeforeAttributeName;
 				} else if(ch==0x2f){
@@ -4854,13 +4855,13 @@ final class HtmlParser {
 				} else {
 					error=true;
 					state=TokenizerState.BeforeAttributeName;
-					stream.setMarkPosition(mark);
+					charInput.setMarkPosition(mark);
 				}
 				break;
 			}
 			case SelfClosingStartTag:{
-				int mark=stream.markIfNeeded();
-				int ch=stream.read();
+				int mark=charInput.markIfNeeded();
+				int ch=charInput.read();
 				if(ch==0x3e){
 					currentTag.setSelfClosing(true);
 					state=TokenizerState.Data;
@@ -4871,35 +4872,35 @@ final class HtmlParser {
 				} else {
 					error=true;
 					state=TokenizerState.BeforeAttributeName;
-					stream.setMarkPosition(mark);
+					charInput.setMarkPosition(mark);
 				}
 				break;
 			}
 			case MarkupDeclarationOpen:{
-				int mark=stream.markIfNeeded();
-				int ch=stream.read();
-				if(ch=='-' && stream.read()=='-'){
+				int mark=charInput.markIfNeeded();
+				int ch=charInput.read();
+				if(ch=='-' && charInput.read()=='-'){
 					CommentToken token=new CommentToken();
 					lastComment=token;
 					state=TokenizerState.CommentStart;
 					break;
 				} else if(ch=='D' || ch=='d'){
-					if(((ch=stream.read())=='o' || ch=='O') &&
-							((ch=stream.read())=='c' || ch=='C') &&
-							((ch=stream.read())=='t' || ch=='T') &&
-							((ch=stream.read())=='y' || ch=='Y') &&
-							((ch=stream.read())=='p' || ch=='P') &&
-							((ch=stream.read())=='e' || ch=='E')){
+					if(((ch=charInput.read())=='o' || ch=='O') &&
+							((ch=charInput.read())=='c' || ch=='C') &&
+							((ch=charInput.read())=='t' || ch=='T') &&
+							((ch=charInput.read())=='y' || ch=='Y') &&
+							((ch=charInput.read())=='p' || ch=='P') &&
+							((ch=charInput.read())=='e' || ch=='E')){
 						state=TokenizerState.DocType;
 						break;
 					}
 				} else if(ch=='[' && true){
-					if(stream.read()=='C' &&
-							stream.read()=='D' &&
-							stream.read()=='A' &&
-							stream.read()=='T' &&
-							stream.read()=='A' &&
-							stream.read()=='[' &&
+					if(charInput.read()=='C' &&
+							charInput.read()=='D' &&
+							charInput.read()=='A' &&
+							charInput.read()=='T' &&
+							charInput.read()=='A' &&
+							charInput.read()=='[' &&
 							getCurrentNode()!=null &&
 							HTML_NAMESPACE.equals(getCurrentNode().getNamespaceURI())
 							){
@@ -4908,13 +4909,13 @@ final class HtmlParser {
 					}
 				}
 				error=true;
-				stream.setMarkPosition(mark);
+				charInput.setMarkPosition(mark);
 				bogusCommentCharacter=-1;
 				state=TokenizerState.BogusComment;
 				break;
 			}
 			case CommentStart:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch=='-'){
 					state=TokenizerState.CommentStartDash;
 				} else if(ch==0){
@@ -4934,7 +4935,7 @@ final class HtmlParser {
 				break;
 			}
 			case CommentStartDash:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch=='-'){
 					state=TokenizerState.CommentEnd;
 				} else if(ch==0){
@@ -4956,7 +4957,7 @@ final class HtmlParser {
 				break;
 			}
 			case Comment:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch=='-'){
 					state=TokenizerState.CommentEndDash;
 				} else if(ch==0){
@@ -4974,7 +4975,7 @@ final class HtmlParser {
 				break;
 			}
 			case CommentEndDash:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch=='-'){
 					state=TokenizerState.CommentEnd;
 				} else if(ch==0){
@@ -4996,7 +4997,7 @@ final class HtmlParser {
 				break;
 			}
 			case CommentEnd:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==0x3e){
 					state=TokenizerState.Data;
 					int ret=tokens.size()|lastComment.getType();
@@ -5030,7 +5031,7 @@ final class HtmlParser {
 				break;
 			}
 			case CommentEndBang:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==0x3e){
 					state=TokenizerState.Data;
 					int ret=tokens.size()|lastComment.getType();
@@ -5085,7 +5086,7 @@ final class HtmlParser {
 				break;
 			}
 			case TagName:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==0x09 || ch==0x0a || ch==0x0c || ch==0x20){
 					state=TokenizerState.BeforeAttributeName;
 				} else if(ch==0x2f){
@@ -5108,15 +5109,15 @@ final class HtmlParser {
 				break;
 			}
 			case RawTextLessThan:{
-				stream.markToEnd();
-				int ch=stream.read();
+				charInput.markToEnd();
+				int ch=charInput.read();
 				if(ch==0x2f){
-					tempBuffer.clear();
+					tempBuffer.clearAll();
 					state=TokenizerState.RawTextEndTagOpen;
 				} else {
 					state=TokenizerState.RawText;
 					if(ch>=0) {
-						stream.moveBack(1);
+						charInput.moveBack(1);
 					}
 					return 0x3c;
 				}
@@ -5128,7 +5129,7 @@ final class HtmlParser {
 					comment.append(bogusCommentCharacter==0 ? 0xFFFD : bogusCommentCharacter);
 				}
 				while(true){
-					int ch=stream.read();
+					int ch=charInput.read();
 					if(ch<0 || ch=='>') {
 						break;
 					}
@@ -5143,8 +5144,8 @@ final class HtmlParser {
 				return ret;
 			}
 			case DocType:{
-				stream.markToEnd();
-				int ch=stream.read();
+				charInput.markToEnd();
+				int ch=charInput.read();
 				if(ch==0x09||ch==0x0a||ch==0x0c||ch==0x20){
 					state=TokenizerState.BeforeDocTypeName;
 				} else if(ch<0){
@@ -5157,25 +5158,25 @@ final class HtmlParser {
 					return ret;
 				} else {
 					error=true;
-					stream.moveBack(1);
+					charInput.moveBack(1);
 					state=TokenizerState.BeforeDocTypeName;
 				}
 				break;
 			}
 			case BeforeDocTypeName:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==0x09||ch==0x0a||ch==0x0c||ch==0x20){
 					break;
 				} else if(ch>='A' && ch<='Z'){
 					docTypeToken=new DocTypeToken();
 					docTypeToken.name=new IntList();
-					docTypeToken.name.append(ch+0x20);
+					docTypeToken.name.appendInt(ch+0x20);
 					state=TokenizerState.DocTypeName;
 				} else if(ch==0){
 					error=true;
 					docTypeToken=new DocTypeToken();
 					docTypeToken.name=new IntList();
-					docTypeToken.name.append(0xFFFD);
+					docTypeToken.name.appendInt(0xFFFD);
 					state=TokenizerState.DocTypeName;
 				} else if(ch==0x3e || ch<0){
 					error=true;
@@ -5188,13 +5189,13 @@ final class HtmlParser {
 				} else {
 					docTypeToken=new DocTypeToken();
 					docTypeToken.name=new IntList();
-					docTypeToken.name.append(ch);
+					docTypeToken.name.appendInt(ch);
 					state=TokenizerState.DocTypeName;
 				}
 				break;
 			}
 			case DocTypeName:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==0x09||ch==0x0a||ch==0x0c||ch==0x20){
 					state=TokenizerState.AfterDocTypeName;
 				} else if(ch==0x3e){
@@ -5203,10 +5204,10 @@ final class HtmlParser {
 					tokens.add(docTypeToken);
 					return ret;
 				} else if(ch>='A' && ch<='Z'){
-					docTypeToken.name.append(ch+0x20);
+					docTypeToken.name.appendInt(ch+0x20);
 				} else if(ch==0){
 					error=true;
-					docTypeToken.name.append(0xfffd);
+					docTypeToken.name.appendInt(0xfffd);
 				} else if(ch<0){
 					error=true;
 					docTypeToken.forceQuirks=true;
@@ -5215,12 +5216,12 @@ final class HtmlParser {
 					tokens.add(docTypeToken);
 					return ret;
 				} else {
-					docTypeToken.name.append(ch);
+					docTypeToken.name.appendInt(ch);
 				}
 				break;
 			}
 			case AfterDocTypeName:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==0x09||ch==0x0a||ch==0x0c||ch==0x20){
 					break;
 				} else if(ch==0x3e){
@@ -5237,38 +5238,38 @@ final class HtmlParser {
 					return ret;
 				} else {
 					int ch2=0;
-					int pos=stream.markIfNeeded();
+					int pos=charInput.markIfNeeded();
 					if(ch=='P' || ch=='p'){
-						if(((ch2=stream.read())=='u' || ch2=='U') &&
-								((ch2=stream.read())=='b' || ch2=='B') &&
-								((ch2=stream.read())=='l' || ch2=='L') &&
-								((ch2=stream.read())=='i' || ch2=='I') &&
-								((ch2=stream.read())=='c' || ch2=='C')
+						if(((ch2=charInput.read())=='u' || ch2=='U') &&
+								((ch2=charInput.read())=='b' || ch2=='B') &&
+								((ch2=charInput.read())=='l' || ch2=='L') &&
+								((ch2=charInput.read())=='i' || ch2=='I') &&
+								((ch2=charInput.read())=='c' || ch2=='C')
 								){
 							state=TokenizerState.AfterDocTypePublic;
 						} else {
 							error=true;
-							stream.setMarkPosition(pos);
+							charInput.setMarkPosition(pos);
 							docTypeToken.forceQuirks=true;
 							state=TokenizerState.BogusDocType;
 						}
 					} else if(ch=='S' || ch=='s'){
-						if(((ch2=stream.read())=='y' || ch2=='Y') &&
-								((ch2=stream.read())=='s' || ch2=='S') &&
-								((ch2=stream.read())=='t' || ch2=='T') &&
-								((ch2=stream.read())=='e' || ch2=='E') &&
-								((ch2=stream.read())=='m' || ch2=='M')
+						if(((ch2=charInput.read())=='y' || ch2=='Y') &&
+								((ch2=charInput.read())=='s' || ch2=='S') &&
+								((ch2=charInput.read())=='t' || ch2=='T') &&
+								((ch2=charInput.read())=='e' || ch2=='E') &&
+								((ch2=charInput.read())=='m' || ch2=='M')
 								){
 							state=TokenizerState.AfterDocTypeSystem;
 						} else {
 							error=true;
-							stream.setMarkPosition(pos);
+							charInput.setMarkPosition(pos);
 							docTypeToken.forceQuirks=true;
 							state=TokenizerState.BogusDocType;
 						}
 					} else {
 						error=true;
-						stream.setMarkPosition(pos);
+						charInput.setMarkPosition(pos);
 						docTypeToken.forceQuirks=true;
 						state=TokenizerState.BogusDocType;
 					}
@@ -5277,7 +5278,7 @@ final class HtmlParser {
 			}
 			case AfterDocTypePublic:
 			case BeforeDocTypePublicID:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==0x09||ch==0x0a||ch==0x0c||ch==0x20){
 					if(state==TokenizerState.AfterDocTypePublic) {
 						state=TokenizerState.BeforeDocTypePublicID;
@@ -5310,7 +5311,7 @@ final class HtmlParser {
 			}
 			case AfterDocTypeSystem:
 			case BeforeDocTypeSystemID:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==0x09||ch==0x0a||ch==0x0c||ch==0x20){
 					if(state==TokenizerState.AfterDocTypeSystem) {
 						state=TokenizerState.BeforeDocTypeSystemID;
@@ -5343,12 +5344,12 @@ final class HtmlParser {
 			}
 			case DocTypePublicIDDoubleQuoted:
 			case DocTypePublicIDSingleQuoted:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==(state==TokenizerState.DocTypePublicIDDoubleQuoted ? 0x22 : 0x27)){
 					state=TokenizerState.AfterDocTypePublicID;
 				} else if(ch==0){
 					error=true;
-					docTypeToken.publicID.append(0xFFFD);
+					docTypeToken.publicID.appendInt(0xFFFD);
 				} else if(ch==0x3e || ch<0){
 					error=true;
 					docTypeToken.forceQuirks=true;
@@ -5357,18 +5358,18 @@ final class HtmlParser {
 					tokens.add(docTypeToken);
 					return ret;
 				} else {
-					docTypeToken.publicID.append(ch);
+					docTypeToken.publicID.appendInt(ch);
 				}
 				break;
 			}
 			case DocTypeSystemIDDoubleQuoted:
 			case DocTypeSystemIDSingleQuoted:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==(state==TokenizerState.DocTypeSystemIDDoubleQuoted ? 0x22 : 0x27)){
 					state=TokenizerState.AfterDocTypeSystemID;
 				} else if(ch==0){
 					error=true;
-					docTypeToken.systemID.append(0xFFFD);
+					docTypeToken.systemID.appendInt(0xFFFD);
 				} else if(ch==0x3e || ch<0){
 					error=true;
 					docTypeToken.forceQuirks=true;
@@ -5377,13 +5378,13 @@ final class HtmlParser {
 					tokens.add(docTypeToken);
 					return ret;
 				} else {
-					docTypeToken.systemID.append(ch);
+					docTypeToken.systemID.appendInt(ch);
 				}
 				break;
 			}
 			case AfterDocTypePublicID:
 			case BetweenDocTypePublicAndSystem:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==0x09||ch==0x0a||ch==0x0c||ch==0x20){
 					if(state==TokenizerState.AfterDocTypePublicID) {
 						state=TokenizerState.BetweenDocTypePublicAndSystem;
@@ -5420,7 +5421,7 @@ final class HtmlParser {
 				break;
 			}
 			case AfterDocTypeSystemID:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==0x09||ch==0x0a||ch==0x0c||ch==0x20){
 					break;
 				} else if(ch==0x3e){
@@ -5442,7 +5443,7 @@ final class HtmlParser {
 				break;
 			}
 			case BogusDocType:{
-				int ch=stream.read();
+				int ch=charInput.read();
 				if(ch==0x3e || ch<0){
 					state=TokenizerState.Data;
 					int ret=tokens.size()|docTypeToken.getType();
@@ -5456,11 +5457,11 @@ final class HtmlParser {
 				int phase=0;
 				state=TokenizerState.Data;
 				while(true){
-					int ch=stream.read();
+					int ch=charInput.read();
 					if(ch<0) {
 						break;
 					}
-					buffer.append(ch);
+					buffer.appendInt(ch);
 					if(phase==0){
 						if(ch==']') {
 							phase++;
@@ -5501,15 +5502,15 @@ final class HtmlParser {
 				break;
 			}
 			case RcDataLessThan:{
-				stream.markToEnd();
-				int ch=stream.read();
+				charInput.markToEnd();
+				int ch=charInput.read();
 				if(ch==0x2f){
-					tempBuffer.clear();
+					tempBuffer.clearAll();
 					state=TokenizerState.RcDataEndTagOpen;
 				} else {
 					state=TokenizerState.RcData;
 					if(ch>=0) {
-						stream.moveBack(1);
+						charInput.moveBack(1);
 					}
 					return 0x3c;
 				}
@@ -5538,7 +5539,7 @@ final class HtmlParser {
 
 	private Element popCurrentNode(){
 		if(openElements.size()>0)
-			return openElements.remove(openElements.size()-1);
+			return removeAtIndex(openElements,openElements.size()-1);
 		return null;
 	}
 
@@ -5554,8 +5555,8 @@ final class HtmlParser {
 			}
 			if(fe.element.getLocalName().equals(name) &&
 					fe.element.getNamespaceURI().equals(element.getNamespaceURI())){
-				List<Attribute> attribs=fe.element.getAttributes();
-				List<Attribute> myAttribs=element.getAttributes();
+				List<Attrib> attribs=fe.element.getAttributes();
+				List<Attrib> myAttribs=element.getAttributes();
 				if(attribs.size()==myAttribs.size()){
 					boolean match=true;
 					for(int j=0;j<myAttribs.size();j++){
@@ -5691,7 +5692,7 @@ final class HtmlParser {
 		state=TokenizerState.CData;
 	}
 
-	static String resolveURL(INode node, String url, String base){
+	public static String resolveURL(INode node, String url, String base){
 		String encoding=(node instanceof IDocument) ?
 				((IDocument)node).getCharacterSet() :
 					node.getOwnerDocument().getCharacterSet();
@@ -5732,7 +5733,7 @@ final class HtmlParser {
 		StringBuilder builder=new StringBuilder();
 		for(Node node : nodes){
 			String str=node.toDebugString();
-			String[] strarray=str.split("\n");
+			String[] strarray=StringUtility.splitAt(str,"\n");
 			for(String el : strarray){
 				builder.append("| ");
 				builder.append(el.replace("~~~~","\n"));
@@ -5754,8 +5755,8 @@ final class HtmlParser {
 			throw new IllegalArgumentException();
 		initialize();
 		document=new Document();
-		Node ownerDocument=context;
-		Node lastForm=null;
+		INode ownerDocument=context;
+		INode lastForm=null;
 		while(ownerDocument!=null){
 			if(lastForm==null && ownerDocument.getNodeType()==NodeType.ELEMENT_NODE){
 				String name=((Element)ownerDocument).getLocalName();
@@ -5774,19 +5775,19 @@ final class HtmlParser {
 			ownerDoc=(Document)ownerDocument;
 			document.setMode(ownerDoc.getMode());
 		}
-		String name=context.getLocalName();
+		String name2=context.getLocalName();
 		state=TokenizerState.Data;
-		if(name.equals("title")||name.equals("textarea")){
+		if(name2.equals("title")||name2.equals("textarea")){
 			state=TokenizerState.RcData;
-		} else if(name.equals("style") || name.equals("xmp") ||
-				name.equals("iframe") || name.equals("noembed") ||
-				name.equals("noframes")){
+		} else if(name2.equals("style") || name2.equals("xmp") ||
+				name2.equals("iframe") || name2.equals("noembed") ||
+				name2.equals("noframes")){
 			state=TokenizerState.RawText;
-		} else if(name.equals("script")){
+		} else if(name2.equals("script")){
 			state=TokenizerState.ScriptData;
-		} else if(name.equals("noscript")){
+		} else if(name2.equals("noscript")){
 			state=TokenizerState.Data;
-		} else if(name.equals("plaintext")){
+		} else if(name2.equals("plaintext")){
 			state=TokenizerState.PlainText;
 		}
 		Element element=new Element();

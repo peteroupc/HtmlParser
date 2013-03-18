@@ -3,7 +3,6 @@ package com.upokecenter.html;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.MalformedInputException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -12,11 +11,12 @@ import com.upokecenter.encoding.ITextDecoder;
 import com.upokecenter.encoding.TextEncoding;
 import com.upokecenter.net.HeaderParser;
 import com.upokecenter.net.IHttpHeaders;
+import com.upokecenter.util.StringUtility;
 
 final class CharsetSniffer {
 
 	private CharsetSniffer(){}
-	
+
 	private static final int NoFeed=0;
 	private static final int RSSFeed=1; // application/rss+xml
 	private static final int AtomFeed=2; // application/atom+xml
@@ -58,20 +58,20 @@ final class CharsetSniffer {
 		int index=offset;
 		if(index+3<=endPos && (header[index]&0xFF)==0xef &&
 				(header[index+1]&0xFF)==0xbb &&
-				(header[index+2]&0xFF)==0xbf)
+				(header[index+2]&0xFF)==0xbf) {
 			index+=3;
+		}
 		while(index<endPos){
 			while(index<endPos){
-				if(header[index]!=0x09 && header[index]!=0x0a && 
-						header[index]!=0x0c && header[index]!=0x0d && 
-						header[index]!=0x20){
-					if(header[index]!='<'){
-						return NoFeed;
-					}
+				if(header[index]=='<'){
 					index++;
 					break;
-				}
-				index++;
+				} else if(header[index]==0x09 || header[index]==0x0a ||
+						header[index]==0x0c || header[index]==0x0d ||
+						header[index]==0x20){
+					index++;
+				} else
+					return NoFeed;
 			}
 			while(index<endPos){
 				if(index+3<=endPos &&(header[index]&0xFF)==0x21 &&
@@ -100,7 +100,7 @@ final class CharsetSniffer {
 							break;
 						}
 						index++;
-					}				
+					}
 					break;
 				} else if(index+1<=endPos && (header[index]&0xFF)=='?'){
 					int charCount=0;
@@ -118,16 +118,16 @@ final class CharsetSniffer {
 						index++;
 					}
 					break;
-				} else if(index+3<=endPos && (header[index]&0xFF)==(int)'r' &&
-						(header[index+1]&0xFF)==(int)'s' &&
-						(header[index+2]&0xFF)==(int)'s'){
+				} else if(index+3<=endPos && (header[index]&0xFF)=='r' &&
+						(header[index+1]&0xFF)=='s' &&
+						(header[index+2]&0xFF)=='s')
 					return RSSFeed;
-				} else if(index+4<=endPos && (header[index]&0xFF)=='f' &&
+				else if(index+4<=endPos && (header[index]&0xFF)=='f' &&
 						(header[index+1]&0xFF)=='e' &&
 						(header[index+2]&0xFF)=='e' &&
-						(header[index+3]&0xFF)=='d'){
+						(header[index+3]&0xFF)=='d')
 					return AtomFeed;
-				} else if(index+7<=endPos && (header[index]&0xFF)=='r' &&
+				else if(index+7<=endPos && (header[index]&0xFF)=='r' &&
 						(header[index+1]&0xFF)=='d' &&
 						(header[index+2]&0xFF)=='f' &&
 						(header[index+3]&0xFF)==':' &&
@@ -136,14 +136,12 @@ final class CharsetSniffer {
 						(header[index+6]&0xFF)=='F'){
 					index+=7;
 					if(indexOfBytes(header,index,endPos-index,rdfNamespace)>=0 &&
-							indexOfBytes(header,index,endPos-index,rssNamespace)>=0){
+							indexOfBytes(header,index,endPos-index,rssNamespace)>=0)
 						return RSSFeed;
-					} else {
+					else
 						return NoFeed;
-					}
-				} else {
+				} else
 					return NoFeed;
-				}
 			}
 		}
 		return NoFeed;
@@ -259,22 +257,19 @@ final class CharsetSniffer {
 			if(index<count && header[index]==0x3c){
 				for(int i=0;i<patternsHtml.length;i+=2){
 					if(matchesPatternAndTagTerminator(patternsHtml,
-							i,header,index,count)){
+							i,header,index,count))
 						return "text/html";
-					}
 				}
 				for(int i=0;i<patternsXml.length;i+=2){
 					if(matchesPattern(patternsXml,
-							i,header,index,count)){
+							i,header,index,count))
 						return "text/xml";
-					}
 				}
 			}
 			for(int i=0;i<patternsPdf.length;i+=2){
 				if(matchesPattern(patternsPdf,
-						i,header,0,count)){
+						i,header,0,count))
 					return "text/xml";
-				}
 			}
 		}
 		if(matchesPattern(patternsPs,0,header,0,count))
@@ -330,10 +325,10 @@ final class CharsetSniffer {
 			boxSize|=(header[2]&0xFF)<<8;
 			boxSize|=(header[3]&0xFF);
 			if((boxSize&3)==0 && boxSize>=0 && count>=boxSize &&
-				header[4]==(byte)'f' &&
-				header[5]==(byte)'t' &&
-				header[6]==(byte)'y' &&
-				header[7]==(byte)'p'){
+					header[4]==(byte)'f' &&
+					header[5]==(byte)'t' &&
+					header[6]==(byte)'y' &&
+					header[7]==(byte)'p'){
 				if(header[8]==(byte)'m' &&
 						header[9]==(byte)'p' &&
 						header[10]==(byte)'4')
@@ -366,26 +361,25 @@ final class CharsetSniffer {
 		if(!binary)return "text/plain";
 		return "application/octet-stream";
 	}
-	
+
 	public static String sniffContentType(InputStream input, IHttpHeaders headers)
-	throws IOException {
+			throws IOException {
 		String contentType=headers.getHeaderField("content-type");
-		if(contentType!=null && (contentType.equals("text/plain") || 
+		if(contentType!=null && (contentType.equals("text/plain") ||
 				contentType.equals("text/plain; charset=ISO-8859-1") ||
 				contentType.equals("text/plain; charset=iso-8859-1") ||
 				contentType.equals("text/plain; charset=UTF-8"))){
 			String url=headers.getUrl();
-			if(url!=null && url.length()>=5 && 
+			if(url!=null && url.length()>=5 &&
 					(url.charAt(0)=='h' || url.charAt(0)=='H') &&
 					(url.charAt(1)=='t' || url.charAt(0)=='T') &&
 					(url.charAt(2)=='t' || url.charAt(0)=='T') &&
 					(url.charAt(3)=='p' || url.charAt(0)=='P') &&
-					(url.charAt(4)==':')){
+					(url.charAt(4)==':'))
 				return sniffTextOrBinary(input);
-			}
 		}
 		return sniffContentType(input,contentType);
-		
+
 	}
 
 	public static String sniffContentType(InputStream input, String mediaType) throws IOException{
@@ -393,13 +387,11 @@ final class CharsetSniffer {
 				HeaderParser.skipContentType(mediaType, 0)==mediaType.length()){
 			String type=HeaderParser.getMediaType(mediaType,0);
 			if(type.equals("text/xml") || type.equals("application/xml") ||
-					type.endsWith("+xml")){
+					type.endsWith("+xml"))
 				return mediaType;
-			}
 			if(type.equals("*/*") || type.equals("unknown/unknown") ||
-					type.equals("application/unknown")){
+					type.equals("application/unknown"))
 				return sniffUnknownContentType(input,true);
-			}
 			if(type.equals("text/html")){
 				byte[] header=new byte[512];
 				input.mark(514);
@@ -415,9 +407,8 @@ final class CharsetSniffer {
 				else if(feed==2)return "application/atom+xml";
 			}
 			return mediaType;
-		} else {
+		} else
 			return sniffUnknownContentType(input,true);
-		}
 	}
 
 	private static String sniffTextOrBinary(InputStream input) throws IOException {
@@ -430,12 +421,12 @@ final class CharsetSniffer {
 			input.reset();
 		}
 		if(count>=4 && header[0]==(byte)0xfe && header[1]==(byte)0xff)
-			return "text/plain;charset=utf-16be";
+			return "text/plain";
 		if(count>=4 && header[0]==(byte)0xff && header[1]==(byte)0xfe)
-			return "text/plain;charset=utf-16le";
+			return "text/plain";
 		if(count>=4 && header[0]==(byte)0xef && header[1]==(byte)0xbb &&
 				header[2]==(byte)0xbf)
-			return "text/plain;charset=utf-8";
+			return "text/plain";
 		boolean binary=false;
 		for(int i=0;i<count;i++){
 			int b=(header[i]&0xFF);
@@ -447,11 +438,12 @@ final class CharsetSniffer {
 		if(!binary)return "text/plain";
 		return sniffUnknownContentType(input,false);
 	}
-	
-	
+
+
 	public static EncodingConfidence sniffEncoding(InputStream stream, String encoding)
 			throws IOException{
 		stream.mark(3);
+		int b=0;
 		try {
 			int b1=stream.read();
 			int b2=stream.read();
@@ -605,8 +597,8 @@ final class CharsetSniffer {
 		int maybeUtf8=0;
 		// Check for UTF-8
 		position=0;
-		while(position<count){			
-			int b=(data[position]&0xFF);
+		while(position<count){
+			b=(data[position]&0xFF);
 			if(b<0x80){
 				position++;
 				continue;
@@ -637,7 +629,7 @@ final class CharsetSniffer {
 				int startbyte=(b==0xF0) ? 0x90 : 0x80;
 				int endbyte=(b==0xF4) ? 0x8F : 0xBF;
 				//DebugUtility.log("%02X %02X %02X %02X",data[position],data[position+1],data[position+2],
-					//	data[position+3]);
+				//	data[position+3]);
 				if((data[position+1]&0xFF)<startbyte || (data[position+1]&0xFF)>endbyte){
 					maybeUtf8=-1;
 					break;
@@ -665,7 +657,7 @@ final class CharsetSniffer {
 		int maybeIso2022=0;
 		position=0;
 		while(position<count){
-			int b=(data[position]&0xFF);
+			b=(data[position]&0xFF);
 			if(b<0x80){
 				if(maybeIso2022==0 && b==0x1b){
 					maybeIso2022=1;
@@ -694,9 +686,8 @@ final class CharsetSniffer {
 			}
 			position++;
 		}
-		if(maybeHz<=0 && maybeIso2022<=0 && !hasHighByte){
+		if(maybeHz<=0 && maybeIso2022<=0 && !hasHighByte)
 			return EncodingConfidence.UTF8_TENTATIVE;
-		}
 		List<String> decoders=new ArrayList<String>();
 		if(hasHighByte && !notKREUC){
 			decoders.add("euc-kr");
@@ -763,21 +754,21 @@ final class CharsetSniffer {
 						nowFailed[i]=false;
 					} catch(IOException e){
 						// Error
-						if(streams[i].available()==0 && e instanceof MalformedInputException){
+						if(streams[i].available()==0){
 							// Reached the end of stream; the error
 							// was probably due to an incomplete
 							// byte sequence
 							//DebugUtility.log("at end of stream");
 						} else {
 							//DebugUtility.log("error %s in %s",
-								//	e.getClass().getName(),decoders.get(i));
+							//	e.getClass().getName(),decoders.get(i));
 							streams[i]=null;
 							nowFailed[i]=true;
 						}
 					}
 				}
 				//if(failedCount>0)
-					//DebugUtility.log("failed: %d",failedCount);
+				//DebugUtility.log("failed: %d",failedCount);
 				for(int i=0;i<streams.length;i++){
 					if(nowFailed[i]){
 						nonascii[i]=0;
@@ -800,15 +791,14 @@ final class CharsetSniffer {
 				if(d!=null){
 					// return this encoding if the ratio of
 					// kana to non-ASCII characters is high
-					if(kana[i]>=nonascii[i]/5 && !"gbk".equals(d)){
+					if(kana[i]>=nonascii[i]/5 && !"gbk".equals(d))
 						return new EncodingConfidence(d);
-					}
 				}
 			}
 		}
 		// Fall back
-		Locale locale=Locale.getDefault();
-		String lang=locale.getLanguage().toLowerCase();
+		String lang=StringUtility.toLowerCaseAscii(Locale.getDefault().getLanguage());
+		String country=StringUtility.toUpperCaseAscii(Locale.getDefault().getCountry());
 		if(lang.equals("be"))
 			return new EncodingConfidence("iso-8859-5");
 		if(lang.equals("bg") || lang.equals("ru") || lang.equals("uk"))
@@ -817,7 +807,7 @@ final class CharsetSniffer {
 			return new EncodingConfidence("iso-8859-2");
 		if(lang.equals("ja"))
 			return new EncodingConfidence("shift_jis");
-		if(lang.equals("zh") && locale.getCountry().toUpperCase().equals("CN"))
+		if(lang.equals("zh") && (country.equals("CN") || country.equals("CHS") || country.equals("HANS")))
 			return new EncodingConfidence("gb18030");
 		else if(lang.equals("zh"))
 			return new EncodingConfidence("big5");
@@ -872,9 +862,12 @@ final class CharsetSniffer {
 			return position;
 		boolean empty=true;
 		boolean tovalue=false;
+		int b=0;
 		// Skip attribute name
 		while(true){
-			int b=(data[position]&0xFF);
+			if(position>=length)
+				return position;
+			b=(data[position]&0xFF);
 			if(b==0x3D && !empty){
 				position++;
 				tovalue=true;
@@ -897,7 +890,7 @@ final class CharsetSniffer {
 		}
 		if(!tovalue){
 			while(position<length){
-				int b=(data[position]&0xFF);
+				b=(data[position]&0xFF);
 				if(b!=0x09 && b!=0x0a && b!=0x0c && b!=0x0d && b!=0x20) {
 					break;
 				}
@@ -908,7 +901,7 @@ final class CharsetSniffer {
 			position++;
 		}
 		while(position<length){
-			int b=(data[position]&0xFF);
+			b=(data[position]&0xFF);
 			if(b!=0x09 && b!=0x0a && b!=0x0c && b!=0x0d && b!=0x20) {
 				break;
 			}
@@ -916,7 +909,7 @@ final class CharsetSniffer {
 		}
 		// Skip value
 		if(position>=length)return position;
-		int b=(data[position]&0xFF);
+		b=(data[position]&0xFF);
 		if(b==0x22 || b==0x27){
 			position++;
 			while(position<length){
@@ -964,18 +957,19 @@ final class CharsetSniffer {
 		}
 	}
 
-	static String extractCharsetFromMeta(String value){
+	 static String extractCharsetFromMeta(String value){
 		if(value==null)return value;
 		// We assume value is lower-case here
 		int index=0;
 		int length=value.length();
+		char c=0;
 		while(true){
 			index=value.indexOf("charset",0);
 			if(index<0)return null;
 			index+=7;
 			// skip whitespace
 			while(index<length){
-				char c=value.charAt(index);
+				c=value.charAt(index);
 				if(c!=0x09 && c!=0x0c && c!=0x0d && c!=0x0a && c!=0x20) {
 					break;
 				}
@@ -989,14 +983,14 @@ final class CharsetSniffer {
 		}
 		// skip whitespace
 		while(index<length){
-			char c=value.charAt(index);
+			c=value.charAt(index);
 			if(c!=0x09 && c!=0x0c && c!=0x0d && c!=0x0a && c!=0x20) {
 				break;
 			}
 			index++;
 		}
 		if(index>=length)return null;
-		char c=value.charAt(index);
+		c=value.charAt(index);
 		if(c=='"' || c=='\''){
 			index++;
 			int nextIndex=index;

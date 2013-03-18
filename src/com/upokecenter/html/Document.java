@@ -3,20 +3,19 @@ package com.upokecenter.html;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.upokecenter.html.HtmlParser.DocumentMode;
 import com.upokecenter.util.StringUtility;
 
 class Document extends Node implements IDocument {
-	DocumentType doctype;
-	String encoding;
-	String baseurl;
+	 DocumentType doctype;
+	 String encoding;
+	 String baseurl;
 	private DocumentMode docmode=DocumentMode.NoQuirksMode;
 
-	Document() {
+	 Document() {
 		super(NodeType.DOCUMENT_NODE);
 	}
 
-	boolean isHtmlDocument(){
+	 boolean isHtmlDocument(){
 		return true;
 	}
 
@@ -26,19 +25,19 @@ class Document extends Node implements IDocument {
 	}
 
 	@Override
-	public IDocument getOwnerDocument(){
+	public  IDocument getOwnerDocument(){
 		return null;
 	}
 
 	@Override
-	String toDebugString(){
+	 String toDebugString(){
 		StringBuilder builder=new StringBuilder();
-		for(Node node : childNodes){
+		for(Node node : getChildNodesInternal()){
 			String str=node.toDebugString();
 			if(str==null) {
 				continue;
 			}
-			String[] strarray=str.split("\n");
+			String[] strarray=StringUtility.splitAt(str,"\n");
 			for(String el : strarray){
 				builder.append("| ");
 				builder.append(el.replace("~~~~","\n"));
@@ -50,15 +49,15 @@ class Document extends Node implements IDocument {
 
 
 	@Override
-	public String getBaseURI() {
+	public  String getBaseURI() {
 		return (baseurl==null) ? "" : baseurl;
 	}
 
-	DocumentMode getMode() {
+	 DocumentMode getMode() {
 		return docmode;
 	}
 
-	void setMode(DocumentMode mode) {
+	 void setMode(DocumentMode mode) {
 		docmode=mode;
 	}
 

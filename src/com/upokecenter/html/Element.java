@@ -4,41 +4,57 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 
-import com.upokecenter.html.HtmlParser.Attribute;
-import com.upokecenter.html.HtmlParser.StartTagToken;
 import com.upokecenter.util.StringUtility;
 
 class Element extends Node implements IElement {
-	static Element fromToken(StartTagToken token){
+	private static final class AttributeNameComparator implements
+	Comparator<HtmlParser.Attrib> {
+		@Override
+		public int compare(HtmlParser.Attrib arg0, HtmlParser.Attrib arg1) {
+			return arg0.getName().compareTo(arg1.getName());
+		}
+	}
+
+
+	 static Element fromToken(HtmlParser.StartTagToken token){
 		return fromToken(token,HtmlParser.HTML_NAMESPACE);
 	}
 
-	static Element fromToken(
-			StartTagToken token, String namespace){
+	 static Element fromToken(
+			HtmlParser.StartTagToken token, String namespace){
 		Element ret=new Element();
 		ret.name=token.getName();
-		ret.attributes=new ArrayList<Attribute>();
-		for(Attribute attribute : token.getAttributes()){
-			ret.attributes.add(new Attribute(attribute));
+		ret.attributes=new ArrayList<HtmlParser.Attrib>();
+		for(HtmlParser.Attrib attribute : token.getAttributes()){
+			ret.attributes.add(new HtmlParser.Attrib(attribute));
 		}
 		ret.namespace=namespace;
 		return ret;
 	}
 
-	String name, namespace, prefix=null;
+	private String name;
 
-	List<Attribute> attributes;
+	private String namespace;
 
-	Element() {
+	private String prefix=null;
+
+	private List<HtmlParser.Attrib> attributes;
+
+	 Element() {
 		super(NodeType.ELEMENT_NODE);
-		attributes=new ArrayList<Attribute>();
+		attributes=new ArrayList<HtmlParser.Attrib>();
+	}
+
+	public Element(String name) {
+		super(NodeType.ELEMENT_NODE);
+		attributes=new ArrayList<HtmlParser.Attrib>();
+		this.name=name;
 	}
 
 	@Override
 	public String getAttribute(String name) {
-		for(Attribute attr : getAttributes()){
+		for(HtmlParser.Attrib attr : getAttributes()){
 			if(attr.getName().equals(name))
 				return attr.getValue();
 		}
@@ -51,13 +67,13 @@ class Element extends Node implements IElement {
 
 	@Override
 	public String getAttributeNS(String namespace, String localName) {
-		for(Attribute attr : getAttributes()){
+		for(HtmlParser.Attrib attr : getAttributes()){
 			if(attr.isAttribute(localName,namespace))
 				return attr.getValue();
 		}
 		return null;
 	}
-	public List<Attribute> getAttributes() {
+	public List<HtmlParser.Attrib> getAttributes() {
 		return attributes;
 	}
 
@@ -71,19 +87,19 @@ class Element extends Node implements IElement {
 		return namespace;
 	}
 
-	boolean isHtmlElement(String name){
+	 boolean isHtmlElement(String name){
 		return name.equals(this.name) && HtmlParser.HTML_NAMESPACE.equals(namespace);
 	}
 
-	boolean isMathMLElement(String name){
+	 boolean isMathMLElement(String name){
 		return name.equals(this.name) && HtmlParser.MATHML_NAMESPACE.equals(namespace);
 	}
 
-	boolean isSvgElement(String name){
+	 boolean isSvgElement(String name){
 		return name.equals(this.name) && HtmlParser.SVG_NAMESPACE.equals(namespace);
 	}
-	void mergeAttributes(StartTagToken token){
-		for(Attribute attr : token.getAttributes()){
+	 void mergeAttributes(HtmlParser.StartTagToken token){
+		for(HtmlParser.Attrib attr : token.getAttributes()){
 			String s=getAttribute(attr.getName());
 			if(s==null){
 				setAttribute(attr.getName(),attr.getValue());
@@ -92,23 +108,23 @@ class Element extends Node implements IElement {
 	}
 
 	public void setAttribute(String string, String value) {
-		for(Attribute attr : getAttributes()){
+		for(HtmlParser.Attrib attr : getAttributes()){
 			if(attr.getName().equals(string)){
 				attr.setValue(value);
 			}
 		}
-		attributes.add(new Attribute(string,value));
+		attributes.add(new HtmlParser.Attrib(string,value));
 	}
-	void setName(String name) {
+	 void setName(String name) {
 		this.name = name;
 	}
 
-	void setNamespace(String namespace) {
+	 void setNamespace(String namespace) {
 		this.namespace = namespace;
 	}
 
 	@Override
-	public String toDebugString(){
+	 String toDebugString(){
 		StringBuilder builder=new StringBuilder();
 		String extra="";
 		if(HtmlParser.MATHML_NAMESPACE.equals(namespace)) {
@@ -117,17 +133,10 @@ class Element extends Node implements IElement {
 		if(HtmlParser.SVG_NAMESPACE.equals(namespace)) {
 			extra="svg ";
 		}
-		builder.append(String.format(Locale.US,"<%s%s>\n",extra,name.toString()));
-		List<Attribute> attribs=new ArrayList<Attribute>(getAttributes());
-		Collections.sort(attribs,new Comparator<Attribute>(){
-
-			@Override
-			public int compare(Attribute arg0, Attribute arg1) {
-				return arg0.getName().compareTo(arg1.getName());
-			}
-
-		});
-		for(Attribute attribute : attribs){
+		builder.append("<"+extra+name.toString()+">\n");
+		ArrayList<HtmlParser.Attrib> attribs=new ArrayList<HtmlParser.Attrib>(getAttributes());
+		Collections.sort(attribs,new AttributeNameComparator());
+		for(HtmlParser.Attrib attribute : attribs){
 			//DebugUtility.log("%s %s",attribute.getNamespace(),attribute.getLocalName());
 			if(attribute.getNamespace()!=null){
 				String extra1="";
@@ -138,19 +147,17 @@ class Element extends Node implements IElement {
 					extra1="xml ";
 				}
 				extra1+=attribute.getLocalName();
-				builder.append(String.format(Locale.US,"  %s=\"%s\"\n",
-						extra1,attribute.getValue().toString()));
+				builder.append("  "+extra1+"=\""+attribute.getValue().toString()+"\"\n");
 			} else {
-				builder.append(String.format(Locale.US,"  %s=\"%s\"\n",
-						attribute.getName().toString(),attribute.getValue().toString()));
+				builder.append("  "+attribute.getName().toString()+"=\""+attribute.getValue().toString()+"\"\n");
 			}
 		}
-		for(Node node : childNodes){
+		for(Node node : getChildNodesInternal()){
 			String str=node.toDebugString();
 			if(str==null) {
 				continue;
 			}
-			String[] strarray=str.split("\n");
+			String[] strarray=StringUtility.splitAt(str,"\n");
 			for(String el : strarray){
 				builder.append("  ");
 				builder.append(el);
@@ -163,15 +170,14 @@ class Element extends Node implements IElement {
 	@Override
 	public String toString(){
 		StringBuilder builder=new StringBuilder();
-		builder.append(String.format(Locale.US,"Element: %s, %s\n",name.toString(),
-				namespace.toString()));
-		for(Attribute attribute : getAttributes()){
-			builder.append(String.format(Locale.US,"Attribute: %s=%s\n",
-					attribute.getName().toString(),attribute.getValue().toString()));
+		builder.append("Element: "+name.toString()+", "+namespace.toString()+"\n");
+		for(HtmlParser.Attrib attribute : getAttributes()){
+			builder.append("Attribute: "+attribute.getName().toString()+"="+
+					attribute.getValue().toString()+"\n");
 		}
-		for(Node node : childNodes){
+		for(Node node : getChildNodesInternal()){
 			String str=node.toString();
-			String[] strarray=str.split("\n");
+			String[] strarray=StringUtility.splitAt(str,"\n");
 			for(String el : strarray){
 				builder.append("  ");
 				builder.append(el);
@@ -241,7 +247,7 @@ class Element extends Node implements IElement {
 
 
 	@Override
-	public String getTextContent(){
+	public  String getTextContent(){
 		StringBuilder builder=new StringBuilder();
 		for(INode node : getChildNodes()){
 			if(node.getNodeType()!=NodeType.COMMENT_NODE){

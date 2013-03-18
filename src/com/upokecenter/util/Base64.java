@@ -681,10 +681,18 @@ public class Base64
 		finally {
 			// Peter O. 3/15/2013: Replace Exception with java.io.IOException,
 			// checks for null
-			try{ if(oos!=null)oos.close();   } catch( java.io.IOException e ){}
-			try{ if(gzos!=null)gzos.close();  } catch( java.io.IOException e ){}
-			try{ if(b64os!=null)b64os.close(); } catch( java.io.IOException e ){}
-			try{ if(baos!=null)baos.close();  } catch( java.io.IOException e ){}
+			try{ if(oos!=null) {
+				oos.close();
+			}   } catch( java.io.IOException e ){}
+			try{ if(gzos!=null) {
+				gzos.close();
+			}  } catch( java.io.IOException e ){}
+			try{ if(b64os!=null) {
+				b64os.close();
+			} } catch( java.io.IOException e ){}
+			try{ if(baos!=null) {
+				baos.close();
+			}  } catch( java.io.IOException e ){}
 		}   // end finally
 
 		// Return value according to relevant encoding.
@@ -921,9 +929,15 @@ public class Base64
 			finally {
 				// Peter O. 3/15/2013: Replace Exception with java.io.IOException,
 				// null checks when appropropriate
-				try{ if(gzos!=null)gzos.close();  } catch( java.io.IOException e ){}
-				try{ if(b64os!=null)b64os.close(); } catch( java.io.IOException e ){}
-				try{ if(baos!=null)baos.close();  } catch( java.io.IOException e ){}
+				try{ if(gzos!=null) {
+					gzos.close();
+				}  } catch( java.io.IOException e ){}
+				try{ if(b64os!=null) {
+					b64os.close();
+				} } catch( java.io.IOException e ){}
+				try{ if(baos!=null) {
+					baos.close();
+				}  } catch( java.io.IOException e ){}
 			}   // end finally
 
 			return baos.toByteArray();
@@ -1263,7 +1277,7 @@ public class Base64
 					}   // end while: reading input
 
 					// No error? Get new bytes.
-							bytes = baos.toByteArray();
+					bytes = baos.toByteArray();
 
 				}   // end try
 				catch( java.io.IOException e ) {
@@ -1273,9 +1287,15 @@ public class Base64
 				finally {
 					// Peter O. 3/15/2013: Replace Exception with java.io.IOException,
 					// null checks when appropropriate
-					try{ if(baos!=null)baos.close(); } catch( java.io.IOException e ){}
-					try{ if(gzis!=null)gzis.close(); } catch( java.io.IOException e ){}
-					try{ if(bais!=null)bais.close(); } catch( java.io.IOException e ){}
+					try{ if(baos!=null) {
+						baos.close();
+					} } catch( java.io.IOException e ){}
+					try{ if(gzis!=null) {
+						gzis.close();
+					} } catch( java.io.IOException e ){}
+					try{ if(bais!=null) {
+						bais.close();
+					} } catch( java.io.IOException e ){}
 				}   // end finally
 
 			}   // end if: gzipped
@@ -1366,8 +1386,12 @@ public class Base64
 		finally {
 			// Peter O. 3/15/2013: Replace Exception with java.io.IOException,
 			// null checks when appropropriate
-			try{ if(bais!=null)bais.close(); } catch( java.io.IOException e ){}
-			try{ if(ois!=null)ois.close();  } catch( java.io.IOException e ){}
+			try{ if(bais!=null) {
+				bais.close();
+			} } catch( java.io.IOException e ){}
+			try{ if(ois!=null) {
+				ois.close();
+			}  } catch( java.io.IOException e ){}
 		}   // end finally
 
 		return obj;
@@ -1722,15 +1746,15 @@ public class Base64
 					int i = 0;
 					for( i = 0; i < 4; i++ ) {
 						// Read four "meaningful" bytes:
-							int b = 0;
-							do{ b = in.read(); }
-							while( b >= 0 && decodabet[ b & 0x7f ] <= WHITE_SPACE_ENC );
+						int b = 0;
+						do{ b = in.read(); }
+						while( b >= 0 && decodabet[ b & 0x7f ] <= WHITE_SPACE_ENC );
 
-							if( b < 0 ) {
-								break; // Reads a -1 if end of stream
-							}   // end if: end of stream
+						if( b < 0 ) {
+							break; // Reads a -1 if end of stream
+						}   // end if: end of stream
 
-							b4[i] = (byte)b;
+						b4[i] = (byte)b;
 					}   // end for: each needed input byte
 
 					if( i == 4 ) {

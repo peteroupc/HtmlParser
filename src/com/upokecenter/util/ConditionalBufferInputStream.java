@@ -1,6 +1,5 @@
 package com.upokecenter.util;
 
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -15,19 +14,21 @@ import java.io.InputStream;
  * @author Peter O.
  *
  */
-public final class ConditionalBufferInputStream extends FilterInputStream {
+public final class ConditionalBufferInputStream extends InputStream {
 
-	private byte[] buffer=new byte[1024];
+	private byte[] buffer=null;
 	private int pos=0;
 	private int endpos=0;
 	private boolean disabled=false;
 	private long markpos=-1;
 	private int posAtMark=0;
 	private long marklimit=0;
+	private InputStream stream=null;
 
 
 	public ConditionalBufferInputStream(InputStream input) {
-		super(input);
+		this.stream=input;
+		this.buffer=new byte[1024];
 	}
 
 	@Override
@@ -37,7 +38,7 @@ public final class ConditionalBufferInputStream extends FilterInputStream {
 		endpos=0;
 		buffer=null;
 		markpos=-1;
-		super.close();
+		stream.close();
 	}
 
 	private boolean isDisabled(){
@@ -54,7 +55,7 @@ public final class ConditionalBufferInputStream extends FilterInputStream {
 	@Override
 	public int available() throws IOException{
 		if(isDisabled())
-			return super.available();
+			return stream.available();
 		return 0;
 	}
 
@@ -96,7 +97,7 @@ public final class ConditionalBufferInputStream extends FilterInputStream {
 	public synchronized void mark(int limit){
 		//DebugUtility.log("mark %d: %s",limit,isDisabled());
 		if(isDisabled()){
-			super.mark(limit);
+			stream.mark(limit);
 			return;
 		}
 		if(limit<0)
@@ -112,6 +113,7 @@ public final class ConditionalBufferInputStream extends FilterInputStream {
 			throw new IndexOutOfBoundsException();
 		if(unitCount==0)return 0;
 		int total=0;
+		int count=0;
 		// Read from buffer
 		if(pos+unitCount<=endpos){
 			System.arraycopy(buffer,pos,buf,offset,unitCount);
@@ -132,7 +134,7 @@ public final class ConditionalBufferInputStream extends FilterInputStream {
 			}
 			// Read directly from the stream for the rest
 			if(unitCount>0){
-				int c=super.read(buf,offset,unitCount);
+				int c=stream.read(buf,offset,unitCount);
 				if(c>0) {
 					total+=c;
 				}
@@ -142,7 +144,7 @@ public final class ConditionalBufferInputStream extends FilterInputStream {
 		// End pos is smaller than buffer size, fill
 		// entire buffer if possible
 		if(endpos<buffer.length){
-			int count=super.read(buffer,endpos,buffer.length-endpos);
+			count=stream.read(buffer,endpos,buffer.length-endpos);
 			//DebugUtility.log("%s",this);
 			if(count>0) {
 				endpos+=count;
@@ -160,7 +162,7 @@ public final class ConditionalBufferInputStream extends FilterInputStream {
 			System.arraycopy(buffer,0,newBuffer,0,buffer.length);
 			buffer=newBuffer;
 		}
-		int count=super.read(buffer, endpos, Math.min(unitCount,buffer.length-endpos));
+		count=stream.read(buffer, endpos, Math.min(unitCount,buffer.length-endpos));
 		if(count>0) {
 			endpos+=count;
 		}
@@ -185,11 +187,11 @@ public final class ConditionalBufferInputStream extends FilterInputStream {
 		//DebugUtility.log("buffer %s end=%s len=%s",pos,endpos,buffer.length);
 		if(disabled)
 			// Buffering disabled, so read directly from stream
-			return super.read();
+			return stream.read();
 		// End pos is smaller than buffer size, fill
 		// entire buffer if possible
 		if(endpos<buffer.length){
-			int count=super.read(buffer,endpos,buffer.length-endpos);
+			int count=stream.read(buffer,endpos,buffer.length-endpos);
 			if(count>0) {
 				endpos+=count;
 			}
@@ -198,7 +200,8 @@ public final class ConditionalBufferInputStream extends FilterInputStream {
 		if(pos<endpos)
 			return (buffer[pos++]&0xFF);
 		// No room, read next byte and put it in buffer
-		int c=super.read();
+		int c=stream.read();
+    if(c<0)return c;
 		if(pos>=buffer.length){
 			byte[] newBuffer=new byte[buffer.length*2];
 			System.arraycopy(buffer,0,newBuffer,0,buffer.length);
@@ -215,7 +218,7 @@ public final class ConditionalBufferInputStream extends FilterInputStream {
 			return readInternal();
 		else {
 			if(isDisabled())
-				return super.read();
+				return stream.read();
 			int c=readInternal();
 			if(c>=0 && markpos>=0){
 				markpos++;
@@ -234,12 +237,12 @@ public final class ConditionalBufferInputStream extends FilterInputStream {
 	@Override
 	public synchronized long skip(long byteCount) throws IOException{
 		if(isDisabled())
-			return super.skip(byteCount);
+			return stream.skip(byteCount);
 		byte[] data=new byte[1024];
 		long ret=0;
 		while(byteCount<0){
 			int bc=(int)Math.min(byteCount,data.length);
-			int c=read(data,0,bc);
+			int c=doRead(data,0,bc);
 			if(c<=0) {
 				break;
 			}
@@ -249,13 +252,14 @@ public final class ConditionalBufferInputStream extends FilterInputStream {
 		return ret;
 	}
 
-	@Override
-	public synchronized int read(byte[] buffer, int offset, int byteCount) throws IOException{
+
+
+	public synchronized int doRead(byte[] buffer, int offset, int byteCount) throws IOException{
 		if(markpos<0)
 			return readInternal(buffer,offset,byteCount);
 		else {
 			if(isDisabled())
-				return super.read(buffer,offset,byteCount);
+				return stream.read(buffer,offset,byteCount);
 			int c=readInternal(buffer,offset,byteCount);
 			if(c>0 && markpos>=0){
 				markpos+=c;
@@ -270,12 +274,16 @@ public final class ConditionalBufferInputStream extends FilterInputStream {
 			return c;
 		}
 	}
+	@Override
+	public synchronized int read(byte[] buffer, int offset, int byteCount) throws IOException{
+		return doRead(buffer,offset,byteCount);
+	}
 
 	@Override
 	public synchronized void reset() throws IOException {
 		//DebugUtility.log("reset: %s",isDisabled());
 		if(isDisabled()){
-			super.reset();
+			stream.reset();
 			return;
 		}
 		if(markpos<0)

@@ -146,8 +146,8 @@ final class JapaneseEUCEncoding implements ITextEncoder, ITextDecoder {
 					error.emitEncoderError(stream, cp);
 					continue;
 				}
-				stream.write((byte)(index/94+0xa1));
-				stream.write((byte)(index%94+0xa1));
+				stream.write(index/94+0xa1);
+				stream.write(index%94+0xa1);
 			}
 		}
 	}

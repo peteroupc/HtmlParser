@@ -6,9 +6,7 @@ released to the public domain by Paul Schlyter, December 1992
 
 package com.upokecenter.util;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.TimeZone;
+import com.upokecenter.net.DateTimeImpl;
 
 public final class SunriseSunset {
 
@@ -25,26 +23,27 @@ public final class SunriseSunset {
 	}
 
 	public static DayState getCurrentDayState(double lat, double lon){
-		Calendar cal=Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+		int[] components=DateTimeImpl.getCurrentDateComponents();
 		double trise[]=new double[1];
 		double tset[]=new double[1];
-		cal.setTimeInMillis(new Date().getTime());
-		double hours=cal.get(Calendar.HOUR_OF_DAY);
-		hours+=cal.get(Calendar.MINUTE)/60.0;
-		hours+=cal.get(Calendar.SECOND)/3600.0;
-		hours+=cal.get(Calendar.MILLISECOND)/3600000.0;
+		double hours=components[3]; // hour
+		hours+=components[4]/60.0; // minute
+		hours+=components[5]/3600.0; // second
+		hours+=components[6]/3600000.0; // millisecond
 		// Get sunrise times
-		int t=__sunriset__(cal.get(Calendar.YEAR),
-				cal.get(Calendar.MONTH)+1,
-				cal.get(Calendar.DAY_OF_MONTH),lon,lat,
+		int t=__sunriset__(components[0], // year
+				components[1], // month
+				components[2], // day
+				lon,lat,
 				-35.0/60.0,true,trise,tset);
 		if(t>0)return DayState.Day;
 		double twirise[]=new double[1];
 		double twiset[]=new double[1];
 		// Get civil twilight times
-		int twi=__sunriset__(cal.get(Calendar.YEAR),
-				cal.get(Calendar.MONTH)+1,
-				cal.get(Calendar.DAY_OF_YEAR),lon,lat,
+		int twi=__sunriset__(components[0], // year
+				components[1], // month
+				components[2], // day
+				lon,lat,
 				-6,false,twirise,twiset);
 		if(twi<0)return DayState.Night;
 		if(hours<twirise[0])return DayState.Night;

@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 
 import com.upokecenter.util.StringUtility;
@@ -23,22 +22,38 @@ import com.upokecenter.util.StringUtility;
  *
  */
 public final class TextEncoding {
+	private static final class EncodingErrorReplace implements IEncodingError {
+		@Override
+		public int emitDecoderError(int[] buffer, int offset, int length) throws IOException {
+			buffer[offset]=0xFFFD;
+			return 1;
+		}
+
+		@Override
+		public void emitEncoderError(OutputStream stream, int codePoint) throws IOException {
+			stream.write(0x3F);
+		}
+	}
+
+	private static final class EncodingErrorThrow implements IEncodingError {
+		@Override
+		public int emitDecoderError(int[] buffer, int offset, int length) throws IOException {
+			throw new MalformedInputException(1);
+		}
+
+		@Override
+		public void emitEncoderError(OutputStream stream, int codePoint) throws IOException {
+			throw new UnmappableCharacterException(1);
+		}
+	}
+
 	/**
 	 * 
 	 * An encoding error handler that throws exceptions
 	 * on decoder and encoder errors.
 	 * 
 	 */
-	public static final IEncodingError ENCODING_ERROR_THROW = new IEncodingError(){
-		@Override
-		public int emitDecoderError(int[] buffer, int offset, int length) throws IOException {
-			throw new MalformedInputException(1);
-		}
-		@Override
-		public void emitEncoderError(OutputStream stream, int codePoint) throws IOException {
-			throw new UnmappableCharacterException(1);
-		}
-	};
+	public static final IEncodingError ENCODING_ERROR_THROW = new EncodingErrorThrow();
 
 	/**
 	 * 
@@ -48,17 +63,7 @@ public final class TextEncoding {
 	 * that can't be converted to bytes with the byte 0x3F.
 	 * 
 	 */
-	public static final IEncodingError ENCODING_ERROR_REPLACE = new IEncodingError(){
-		@Override
-		public int emitDecoderError(int[] buffer, int offset, int length) throws IOException {
-			buffer[offset]=0xFFFD;
-			return 1;
-		}
-		@Override
-		public void emitEncoderError(OutputStream stream, int codePoint) throws IOException {
-			stream.write(0x3F);
-		}
-	};
+	public static final IEncodingError ENCODING_ERROR_REPLACE = new EncodingErrorReplace();
 	private TextEncoding(){};
 
 	private static Map<String,String> encodingMap=new HashMap<String,String>();
@@ -338,7 +343,15 @@ public final class TextEncoding {
 				break;
 			}
 			for(int i=0;i<count;i++){
-				builder.appendCodePoint(data[i]);
+				if(data[i]<=0xFFFF){
+					builder.append((char)data[i]);
+				} else {
+					int ch=data[i]-0x10000;
+					int lead=ch/0x400+0xd800;
+					int trail=ch%0x400+0xdc00;
+					builder.append((char)lead);
+					builder.append((char)trail);
+				}
 			}
 		}
 		return builder.toString();
@@ -421,7 +434,7 @@ public final class TextEncoding {
 	 * by this implementation.
 	 */
 	public static String[] getSupportedEncodings(){
-		List<String> values=new ArrayList<String>(new HashSet<String>(encodingMap.values()));
+		ArrayList<String> values=new ArrayList<String>(new HashSet<String>(encodingMap.values()));
 		Collections.sort(values);
 		return values.toArray(new String[]{});
 	}

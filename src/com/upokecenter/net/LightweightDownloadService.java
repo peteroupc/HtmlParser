@@ -58,7 +58,7 @@ public final class LightweightDownloadService {
 							StreamUtility.skipToEnd(stream);
 							return value;
 						}
-					});
+					}, false);
 			IAction<Runnable> poster=null;
 			synchronized(syncRoot){
 				poster=postResult;
