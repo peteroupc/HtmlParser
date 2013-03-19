@@ -1,5 +1,6 @@
 package com.upokecenter.net;
 
+import com.upokecenter.util.DateTimeImpl;
 import com.upokecenter.util.StringUtility;
 
 
@@ -653,7 +654,7 @@ public final class HeaderParser {
 		return -1;
 	}
 
-	static int skipAndAppendQuoted(
+	private static int skipAndAppendQuoted(
 			String str, int index, StringBuilder builder){
 		int i=index;
 		boolean slash=false;

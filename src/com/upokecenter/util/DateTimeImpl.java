@@ -1,4 +1,4 @@
-package com.upokecenter.net;
+package com.upokecenter.util;
 
 import java.util.Calendar;
 import java.util.Date;

@@ -45,6 +45,16 @@ public final class StringUtility {
 
 	private static final String[] emptyStringArray=new String[0];
 
+	/**
+	 * 
+	 * Splits a string by a delimiter.  If the string ends
+	 * with the delimiter, the trailing string does not
+	 * appear in the result.
+	 * 
+	 * @param s
+	 * @param delimiter
+	 * 
+	 */
 	public static String[] splitAt(String s, String delimiter){
 		if(delimiter==null)throw new IllegalArgumentException();
 		if(s==null || s.length()==0)return emptyStringArray;
@@ -53,18 +63,22 @@ public final class StringUtility {
 		ArrayList<String> strings=null;
 		int delimLength=delimiter.length();
 		if(delimLength==0)return emptyStringArray;
+		int sLength=s.length();
 		while(true){
 			int index2=s.indexOf(delimiter,index);
 			if(index2<0){
 				if(first)return emptyStringArray;
-				strings.add(s.substring(index));
+				if(index!=sLength) {
+					strings.add(s.substring(index));
+				}
 				break;
 			} else {
 				if(first) {
 					strings=new ArrayList<String>();
 					first=false;
 				}
-				strings.add(s.substring(index,index2));
+				String newstr=s.substring(index,index2);
+				strings.add(newstr);
 				index=index2+delimLength;
 			}
 		}

@@ -6,7 +6,6 @@ released to the public domain by Paul Schlyter, December 1992
 
 package com.upokecenter.util;
 
-import com.upokecenter.net.DateTimeImpl;
 
 public final class SunriseSunset {
 
