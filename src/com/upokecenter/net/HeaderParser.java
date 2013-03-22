@@ -1,6 +1,6 @@
 package com.upokecenter.net;
 
-import com.upokecenter.util.DateTimeImpl;
+import com.upokecenter.util.DateTimeUtility;
 import com.upokecenter.util.StringUtility;
 
 
@@ -9,7 +9,7 @@ public final class HeaderParser {
 
 	private HeaderParser(){}
 	public static String formatHttpDate(long date){
-		int[] components=DateTimeImpl.getDateComponents(date);
+		int[] components=DateTimeUtility.getGmtDateComponents(date);
 		int dow=components[7]; // 1 to 7
 		int month=components[1]; // 1 to 12
 		String dayofweek=null;
@@ -184,7 +184,7 @@ public final class HeaderParser {
 			index+=2;
 			if(index<length && v.charAt(index)!=' ')return defaultValue;
 			index++;
-			year=DateTimeImpl.convertYear(year);
+			year=DateTimeUtility.convertYear(year);
 		} else if(v.startsWith(", ",index)){
 			index+=2;
 			day=parse2Digit(v,index);
@@ -241,7 +241,7 @@ public final class HeaderParser {
 		}
 		if(index!=length)return defaultValue;
 		// NOTE: Month is one-based
-		return DateTimeImpl.toDate(year,month,day,hour,minute,second);
+		return DateTimeUtility.toGmtDate(year,month,day,hour,minute,second);
 	}
 
 	private static int skipQuotedString(String v, int index){

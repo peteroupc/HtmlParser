@@ -484,7 +484,7 @@ class JSONArray {
 	 * @return this.
 	 */
 	public JSONArray put(boolean value) {
-		put(new Boolean(value));
+		put(Boolean.valueOf(value));
 		return this;
 	}
 
@@ -496,7 +496,7 @@ class JSONArray {
 	 * @return this.
 	 */
 	public JSONArray put(double value) {
-		put(new Double(value));
+		put(Double.valueOf(value));
 		return this;
 	}
 
@@ -508,7 +508,7 @@ class JSONArray {
 	 * @return this.
 	 */
 	public JSONArray put(int value) {
-		put(new Integer(value));
+		put(Integer.valueOf(value));
 		return this;
 	}
 
@@ -536,7 +536,7 @@ class JSONArray {
 	 * @exception NoSuchElementException The index must not be negative.
 	 */
 	public JSONArray put(int index, boolean value) {
-		put(index, new Boolean(value));
+		put(index, Boolean.valueOf(value));
 		return this;
 	}
 
@@ -551,7 +551,7 @@ class JSONArray {
 	 * @exception NoSuchElementException The index must not be negative.
 	 */
 	public JSONArray put(int index, double value) {
-		put(index, new Double(value));
+		put(index, Double.valueOf(value));
 		return this;
 	}
 
@@ -566,7 +566,7 @@ class JSONArray {
 	 * @exception NoSuchElementException The index must not be negative.
 	 */
 	public JSONArray put(int index, int value) {
-		put(index, new Integer(value));
+		put(index, Integer.valueOf(value));
 		return this;
 	}
 

@@ -624,7 +624,7 @@ class JSONObject {
 	 * @return this.
 	 */
 	public JSONObject put(String key, boolean value) {
-		put(key, new Boolean(value));
+		put(key, Boolean.valueOf(value));
 		return this;
 	}
 
@@ -637,7 +637,7 @@ class JSONObject {
 	 * @return this.
 	 */
 	public JSONObject put(String key, double value) {
-		put(key, new Double(value));
+		put(key, Double.valueOf(value));
 		return this;
 	}
 
@@ -650,7 +650,7 @@ class JSONObject {
 	 * @return this.
 	 */
 	public JSONObject put(String key, int value) {
-		put(key, new Integer(value));
+		put(key, Integer.valueOf(value));
 		return this;
 	}
 

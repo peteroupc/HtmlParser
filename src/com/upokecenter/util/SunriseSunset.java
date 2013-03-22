@@ -2,7 +2,7 @@
 Based on code from Sunriset.c, which was
 released to the public domain by Paul Schlyter, December 1992
  */
-/* Converted to Java by Peter O., 2013. */
+/* Converted to Java and C# by Peter O., 2013. */
 
 package com.upokecenter.util;
 
@@ -22,7 +22,7 @@ public final class SunriseSunset {
 	}
 
 	public static DayState getCurrentDayState(double lat, double lon){
-		int[] components=DateTimeImpl.getCurrentDateComponents();
+		int[] components=DateTimeUtility.getCurrentGmtDateComponents();
 		double trise[]=new double[1];
 		double tset[]=new double[1];
 		double hours=components[3]; // hour

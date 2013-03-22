@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.upokecenter.util.DateTimeImpl;
+import com.upokecenter.util.DateTimeUtility;
 import com.upokecenter.util.StreamUtility;
 import com.upokecenter.util.StringUtility;
 
@@ -64,7 +64,7 @@ class CacheControl {
 	}
 
 	private long getAge(){
-		long now=DateTimeImpl.getPersistentCurrentDate();
+		long now=DateTimeUtility.getCurrentDate();
 		long age=Math.max(0,Math.max(now-date,this.age));
 		age+=(responseTime-requestTime);
 		age+=(now-responseTime);
@@ -152,7 +152,7 @@ class CacheControl {
 			//DebugUtility.log("returning early because it saw pragma no-cache");
 			return null;
 		}
-		long now=DateTimeImpl.getPersistentCurrentDate();
+		long now=DateTimeUtility.getCurrentDate();
 		cc.code=headers.getResponseCode();
 		cc.date=now;
 		cc.responseTime=now;

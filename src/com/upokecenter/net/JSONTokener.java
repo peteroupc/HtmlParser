@@ -301,11 +301,11 @@ class JSONTokener {
 			return JSONObject.NULL;
 		if ((b >= '0' && b <= '9') || b == '.' || b == '-' || b == '+') {
 			try {
-				return new Integer(s);
+				return Integer.valueOf(s);
 			} catch (Exception e) {
 			}
 			try {
-				return new Double(s);
+				return Double.valueOf(s);
 			} catch (Exception e) {
 			}
 		}

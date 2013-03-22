@@ -15,7 +15,7 @@ import java.util.Map;
 
 import com.upokecenter.util.Base64;
 import com.upokecenter.util.ByteList;
-import com.upokecenter.util.DateTimeImpl;
+import com.upokecenter.util.DateTimeUtility;
 import com.upokecenter.util.StringUtility;
 import com.upokecenter.util.URL;
 
@@ -69,7 +69,7 @@ public final class DownloadHelper {
 		String urlString;
 
 		public FileBasedHeaders(String urlString, long length){
-			date=DateTimeImpl.getPersistentCurrentDate();
+			date=DateTimeUtility.getCurrentDate();
 			this.length=length;
 			this.urlString=urlString;
 		}
@@ -171,7 +171,7 @@ public final class DownloadHelper {
 				}
 			}
 			if(count<=1||!exceeded)return;
-			long threshold=oldest+Math.abs(oldest-DateTimeImpl.getPersistentCurrentDate())/2;
+			long threshold=oldest+Math.abs(oldest-DateTimeUtility.getCurrentDate())/2;
 			count=0;
 			for(File file : files){
 				if(file.lastModified()<threshold){
@@ -265,7 +265,7 @@ public final class DownloadHelper {
 						}
 					} else {
 						long maxAgeMillis=24L*3600L*1000L;
-						long timeDiff=Math.abs(cacheFile.lastModified()-(DateTimeImpl.getPersistentCurrentDate()));
+						long timeDiff=Math.abs(cacheFile.lastModified()-(DateTimeUtility.getCurrentDate()));
 						fresh=(timeDiff<=maxAgeMillis);
 						headers=new FileBasedHeaders(urlString,cacheFile.length());
 					}

@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.upokecenter.net.DownloadHelper.CacheResponseInfo;
-import com.upokecenter.util.DateTimeImpl;
+import com.upokecenter.util.DateTimeUtility;
 import com.upokecenter.util.Reflection;
 import com.upokecenter.util.StringUtility;
 
@@ -154,7 +154,7 @@ final class DownloadHelperImpl {
 			if(cachePath==null)return null;
 			boolean isPrivate=(cachePath==null) ? false : cachePath.toString().startsWith("/data/");
 			final CacheControl cc=CacheControl.getCacheControl(
-					new HttpHeaders(connection),DateTimeImpl.getPersistentCurrentDate());
+					new HttpHeaders(connection),DateTimeUtility.getCurrentDate());
 			//DebugUtility.log("CacheRequest put %s -> %s",uri.toString(),
 			//	connection.getURL().toString());
 			final CacheResponseInfo crinfo=DownloadHelper.getCachedResponse(

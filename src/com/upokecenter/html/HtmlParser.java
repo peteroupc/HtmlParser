@@ -64,7 +64,7 @@ final class HtmlParser {
 
 		public void appendToName(int ch){
 			if(nameString!=null)
-				throw new IllegalStateException();
+				throw new AssertionError();
 			if(ch<0x10000){
 				name.append((char)ch);
 			} else {
