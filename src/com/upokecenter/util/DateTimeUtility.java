@@ -66,7 +66,7 @@ public final class DateTimeUtility {
 		c.set(year,month-1,day,hour,minute,second);
 		return c.getTime().getTime();
 	}
-	
+
 	public static long toGmtDate(int year, int month, int day,
 			int hour, int minute, int second){
 		Calendar c=Calendar.getInstance(TimeZone.getTimeZone("GMT"),
