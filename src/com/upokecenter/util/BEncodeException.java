@@ -8,8 +8,8 @@ public class BEncodeException extends RuntimeException {
 		super(string);
 	}
 
-	public BEncodeException(IOException e) {
-		super(e);
+	public BEncodeException(String s, IOException e) {
+		super(s,e);
 	}
 
 	/**

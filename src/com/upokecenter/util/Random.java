@@ -8,12 +8,12 @@ package com.upokecenter.util;
 /**
  * 
  * A random number generator intended to replace Java's standard
- * generator (java.util.Random).  It's an implementation of the 
- * JKISS algorithm by David Jones at University College London. 
+ * generator (java.util.Random).  It's an implementation of the
+ * JKISS algorithm by David Jones at University College London.
  * According to Jones, it "passes all of the Dieharder tests
  * and the complete BigCrunch [sic] test set in TestU01", both
  * of which are extensive statistical randomness test batteries.
- * See <http://www.cs.ucl.ac.uk/staff/d.jones/GoodPracticeRNG.pdf> 
+ * See <http://www.cs.ucl.ac.uk/staff/d.jones/GoodPracticeRNG.pdf>
  * and the references within that paper.
  * 
  * This class should not be used for cryptographic work.  For
@@ -33,21 +33,29 @@ public final class Random {
 	public Random(){
 		long ct=System.currentTimeMillis();
 		x=123456789^((int)ct&0xFFFFFFFF);
-		if(x==0)x=123456789;
+		if(x==0) {
+			x=123456789;
+		}
 		y=987654321^((int)(ct>>32)&0xFFFFFFFF);
-		if(y==0)y=987654321;
+		if(y==0) {
+			y=987654321;
+		}
 		ct=System.nanoTime();
 		z=43219876^((int)ct&0xFFFFFFFF);
-		if(z==0)z=43219876;
+		if(z==0) {
+			z=43219876;
+		}
 		c=6543217^((int)(ct>>32)&0xFFFFFFFF);
-		if(c==0)c=6543217;
+		if(c==0) {
+			c=6543217;
+		}
 	}
 	// JKISS random number generator by David Jones
 	/**
 	 * Gets a random 32-bit value.
 	 * @return a random integer, with an approximately
 	 * equal chance for each of its 32 bits to be set
-	 * or unset.  The integer may be either positive or 
+	 * or unset.  The integer may be either positive or
 	 * negative.
 	 */
 	public int nextValue(){
@@ -61,7 +69,7 @@ public final class Random {
 		z=((int)(t)&0xFFFFFFFF);
 		return (x+y+z);
 	}
-	
+
 	/**
 	 * Gets a random number within a certain range.
 	 * 
@@ -69,17 +77,17 @@ public final class Random {
 	 * @return a random integer that's at least 0 and less than _maxExclusive_.
 	 */
 	public int nextInt(int maxExclusive) {
-	    if(maxExclusive<=0)throw new IllegalArgumentException();
-	    int v=0;
-	    int mod=(int)(0x7FFFFFFF%maxExclusive);
-	    if(mod==maxExclusive-1){
-	    	v=(nextValue()&0x7FFFFFFF);
-	    } else {
-	    	int limit=0x7FFFFFFF-mod;
-	    	do{
-	    		v=(nextValue()&0x7FFFFFFF);
-	    	} while(v>=limit);
-	    }
-	    return v%maxExclusive;
+		if(maxExclusive<=0)throw new IllegalArgumentException();
+		int v=0;
+		int mod=0x7FFFFFFF%maxExclusive;
+		if(mod==maxExclusive-1){
+			v=(nextValue()&0x7FFFFFFF);
+		} else {
+			int limit=0x7FFFFFFF-mod;
+			do{
+				v=(nextValue()&0x7FFFFFFF);
+			} while(v>=limit);
+		}
+		return v%maxExclusive;
 	}
 }

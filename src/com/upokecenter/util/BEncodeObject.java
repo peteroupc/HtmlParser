@@ -1,14 +1,13 @@
 
-/* 
+/*
 Written by Peter Occil in 2013. Placed in the public domain by Peter Occil.
-Public domain dedication: http://creativecommons.org/publicdomain/zero/ 
+Public domain dedication: http://creativecommons.org/publicdomain/zero/
  */
 
 package com.upokecenter.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -18,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * An object represented in BEncode, a serialization 
+ * An object represented in BEncode, a serialization
  * format used in the BitTorrent protocol.
  * For more information, see:
  * https://wiki.theory.org/BitTorrentSpecification#bencoding
@@ -29,7 +28,7 @@ import java.util.Map;
 public final class BEncodeObject {
 
 	private Object obj=null;
-	
+
 	public static final int TYPE_INTEGER=0;
 	public static final int TYPE_STRING=1;
 	public static final int TYPE_LIST=2;
@@ -40,44 +39,47 @@ public final class BEncodeObject {
 		try {
 			write(os);
 		} catch (IOException e) {
-			throw new BEncodeException(e);
+			throw new BEncodeException("Internal error",e);
 		}
 		return os.toByteArray();
 	}
-	
+
 	@SuppressWarnings("unchecked")
-	public void write(OutputStream os) throws IOException{
+	public void write(OutputStream stream) throws IOException{
 		if(obj instanceof Long){
-			os.write((byte)'i');
-			writeInteger((Long)obj,os);
-			os.write((byte)'e');
+			stream.write((byte)'i');
+			writeInteger((Long)obj,stream);
+			stream.write((byte)'e');
 		} else if(obj instanceof String){
 			String s=(String)obj;
-			int length=getUtf8Length(s);
-			writeInteger(length,os);
-			os.write((byte)':');
-			writeUtf8(s,os);
-		} else if(obj instanceof Map<?,?>){
-			os.write((byte)'d');
+			long length=getUtf8Length(s);
+			if(length<0)
+				throw new BEncodeException("invalid string");
+			writeInteger(length,stream);
+			stream.write((byte)':');
+			writeUtf8(s,stream);
+		} else if(obj instanceof Map/*<String,BEncodeObject>*/<?,?>){
+			stream.write((byte)'d');
 			Map<String,BEncodeObject> map=(Map<String,BEncodeObject>)obj;
 			for(String key : map.keySet()){
-				int length=getUtf8Length(key);
-				writeInteger(length,os);
-				os.write((byte)':');
-				writeUtf8(key,os);
-				map.get(key).write(os);
+				long length=getUtf8Length(key);
+				if(length<0)
+					throw new BEncodeException("invalid string");
+				writeInteger(length,stream);
+				stream.write((byte)':');
+				writeUtf8(key,stream);
+				map.get(key).write(stream);
 			}
-			os.write((byte)'e');
-		} else if(obj instanceof List<?>){
-			os.write((byte)'l');
+			stream.write((byte)'e');
+		} else if(obj instanceof List/*<BEncodeObject>*/<?>){
+			stream.write((byte)'l');
 			List<BEncodeObject> list=(List<BEncodeObject>)obj;
 			for(BEncodeObject value : list){
-				value.write(os);
-			}      
-			os.write((byte)'e');
-		} else {
+				value.write(stream);
+			}
+			stream.write((byte)'e');
+		} else
 			throw new BEncodeException("unexpected object type");
-		}
 	}
 
 	private static void writeInteger(long value, OutputStream stream) throws IOException {
@@ -107,7 +109,9 @@ public final class BEncodeObject {
 					throw new BEncodeException("Premature end of stream");
 				break; // end of stream
 			}
-			pointer++;
+			if(byteLength>0) {
+				pointer++;
+			}
 			if(bytesNeeded==0){
 				if(b<0x80){
 					builder.append((char)b);
@@ -131,9 +135,8 @@ public final class BEncodeObject {
 					upper=(b==0xf4) ? 0x8f : 0xbf;
 					bytesNeeded=3;
 					cp=b-0xf0;
-				} else {
+				} else
 					throw new BEncodeException("Invalid UTF-8");
-				}
 				cp<<=(6*bytesNeeded);
 				continue;
 			}
@@ -181,14 +184,13 @@ public final class BEncodeObject {
 				stream.write((0xC0|((c>>6)&0x1F)));
 				stream.write((0x80|(c   &0x3F)));
 				continue;
-			} else if(c>=0xD800 && c<=0xDBFF){ // UTF-16 low surrogate
+			} else if(c>=0xD800 && c<=0xDBFF){ // UTF-16 lead surrogate
 				i++;
 				if(i>=s.length() || s.charAt(i)<0xDC00 || s.charAt(i)>0xDFFF)
 					throw new BEncodeException("invalid surrogate");
 				c=0x10000+(c-0xD800)*0x400+(s.charAt(i)-0xDC00);
-			} else if(c>=0xDC00 && c<=0xDFFF){ // UTF-16 high surrogate
+			} else if(c>=0xDC00 && c<=0xDFFF)
 				throw new BEncodeException("invalid surrogate");
-			}
 			if(c<=0xFFFF){
 				stream.write((0xE0|((c>>12)&0x0F)));
 				stream.write((0x80|((c>>6 )&0x3F)));
@@ -202,24 +204,24 @@ public final class BEncodeObject {
 		}
 	}
 
-	static int getUtf8Length(String s){
+	static long getUtf8Length(String s){
 		if(s==null)throw new NullPointerException();
-		int size=0;
+		long size=0;
 		for(int i=0;i<s.length();i++){
 			int c=s.charAt(i);
-			if(c<=0x7F)size++;
-			else if(c<=0x7FF)size+=2;
-			else if(c<=0xD7FF)size+=3;
-			else if(c<=0xDBFF){ // UTF-16 low surrogate
+			if(c<=0x7F) {
+				size++;
+			} else if(c<=0x7FF) {
+				size+=2;
+			} else if(c<=0xD7FF || c>=0xE000) {
+				size+=3;
+			} else if(c<=0xDBFF){ // UTF-16 low surrogate
 				i++;
 				if(i>=s.length() || s.charAt(i)<0xDC00 || s.charAt(i)>0xDFFF)
-					throw new BEncodeException("invalid surrogate");
+					return -1;
 				size+=4;
-			} else if(c<=0xDFFF){ // UTF-16 high surrogate
-				throw new BEncodeException("invalid surrogate");
-			} else size+=3;
-			// check overflow
-			if(size<0)throw new BEncodeException("string too long");
+			} else
+				return -1;
 		}
 		return size;
 	}
@@ -245,19 +247,19 @@ public final class BEncodeObject {
 	public static BEncodeObject fromByteArray(byte[] buf){
 		return fromByteArray(buf,0,buf.length);
 	}
-	
+
 	public int getObjectType(){
 		if(obj instanceof Long)
 			return TYPE_INTEGER;
 		if(obj instanceof String)
 			return TYPE_STRING;
-		if(obj instanceof Map<?,?>)
+		if(obj instanceof Map/*<String,BEncodeObject>*/<?,?>)
 			return TYPE_DICTIONARY;
-		if(obj instanceof List<?>)
+		if(obj instanceof List/*<BEncodeObject>*/<?>)
 			return TYPE_LIST;
 		throw new AssertionError();
 	}
-	
+
 	/**
 	 * Creates a shallow copy of this object.
 	 * For lists and dictionaries, the values of
@@ -274,15 +276,15 @@ public final class BEncodeObject {
 		BEncodeObject beo=this;
 		if(beo.obj instanceof Long || beo.obj instanceof String)
 			return beo; // integer and string objects are immutable
-		if(beo.obj instanceof Map<?,?>){
+		if(beo.obj instanceof Map/*<String,BEncodeObject>*/<?,?>){
 			BEncodeObject newbeo=BEncodeObject.newDictionary();
 			for(String key : ((Map<String,BEncodeObject>)beo.obj).keySet()){
-				((Map<String,BEncodeObject>)newbeo.obj).put(key, 
+				((Map<String,BEncodeObject>)newbeo.obj).put(key,
 						((Map<String,BEncodeObject>)beo.obj).get(key));
 			}
 			return newbeo;
 		}
-		if(beo.obj instanceof List<?>){
+		if(beo.obj instanceof List/*<BEncodeObject>*/<?>){
 			BEncodeObject newbeo=BEncodeObject.newList();
 			for(BEncodeObject value : ((List<BEncodeObject>)beo.obj)){
 				((List<BEncodeObject>)newbeo.obj).add(value);
@@ -306,7 +308,7 @@ public final class BEncodeObject {
 		try {
 			return read(new ByteArrayInputStream(buf,off,len));
 		} catch (IOException e) {
-			throw new BEncodeException(e);
+			throw new BEncodeException("Internal error",e);
 		}
 	}
 	/**
@@ -340,14 +342,14 @@ public final class BEncodeObject {
 		return (Map<String,BEncodeObject>)obj;
 	}
 	public int size(){
-		if(obj instanceof Map<?,?>)
-			return ((Map<?,?>)obj).size();
-		else if(obj instanceof List<?>)
-			return ((List<?>)obj).size();      
+		if(obj instanceof Map/*<String,BEncodeObject>*/<?,?>)
+			return ((Map/*<String,BEncodeObject>*/<?,?>)obj).size();
+		else if(obj instanceof List/*<BEncodeObject>*/<?>)
+			return ((List/*<BEncodeObject>*/<?>)obj).size();
 		return 0;
 	}
 	public BEncodeObject get(String key){
-		return getDictionary().get(key);   
+		return getDictionary().get(key);
 	}
 	public void put(String key,int value){
 		put(key,BEncodeObject.valueOf(value));
@@ -377,28 +379,28 @@ public final class BEncodeObject {
 		set(key,BEncodeObject.valueOf(value));
 	}
 	public void put(String key,BEncodeObject value){
-		getDictionary().put(key,value);   
+		getDictionary().put(key,value);
 	}
 	public BEncodeObject get(int key){
 		return getList().get(key);
 	}
 	public void add(int key,BEncodeObject value){
-		getList().add(key,value);   
+		getList().add(key,value);
 	}
 	public void set(int key,BEncodeObject value){
-		getList().set(key,value);   
+		getList().set(key,value);
 	}
 	public void add(int value){
-		getList().add(BEncodeObject.valueOf(value));   
+		getList().add(BEncodeObject.valueOf(value));
 	}
 	public void add(long value){
-		getList().add(BEncodeObject.valueOf(value));   
+		getList().add(BEncodeObject.valueOf(value));
 	}
 	public void add(String value){
-		getList().add(BEncodeObject.valueOf(value));   
+		getList().add(BEncodeObject.valueOf(value));
 	}
 	public void add(BEncodeObject value){
-		getList().add(value);   
+		getList().add(value);
 	}
 	public String getString(){
 		return (String)obj;
@@ -410,7 +412,7 @@ public final class BEncodeObject {
 	 * @param value A 32-bit integer.
 	 */
 	public static BEncodeObject valueOf(int value){
-		return new BEncodeObject((long)value);    
+		return new BEncodeObject((long)value);
 	}
 	/**
 	 * 
@@ -419,7 +421,7 @@ public final class BEncodeObject {
 	 * @param value A 64-bit integer.
 	 */
 	public static BEncodeObject valueOf(long value){
-		return new BEncodeObject(value);        
+		return new BEncodeObject(value);
 	}
 	/**
 	 * Gets a BEncoded object with the value of the given string.
@@ -427,7 +429,7 @@ public final class BEncodeObject {
 	 * @param value A string.  Cannot be null.
 	 */
 	public static BEncodeObject valueOf(String value){
-		return new BEncodeObject(value);        
+		return new BEncodeObject(value);
 	}
 	/**
 	 *  Creates a new BEncoded object as an empty list.
@@ -442,11 +444,10 @@ public final class BEncodeObject {
 		return new BEncodeObject(new HashMap<String,BEncodeObject>());
 	}
 	private static String readString(InputStream stream) throws IOException {
-			int length=readPositiveInteger(stream);
-			if(stream.read()!=':'){
-				throw new BEncodeException("Colon expected");
-			}
-			return readUtf8(stream,length);
+		int length=readPositiveInteger(stream);
+		if(stream.read()!=':')
+			throw new BEncodeException("Colon expected");
+		return readUtf8(stream,length);
 	}
 
 
@@ -455,7 +456,9 @@ public final class BEncodeObject {
 		while(true){
 			stream.mark(2);
 			int c=stream.read();
-			if(c=='e')break;
+			if(c=='e') {
+				break;
+			}
 			stream.reset();
 			Object o=readObject(stream);
 			list.add(new BEncodeObject(o));
@@ -468,7 +471,9 @@ public final class BEncodeObject {
 		while(true){
 			stream.mark(2);
 			int c=stream.read();
-			if(c=='e')break;
+			if(c=='e') {
+				break;
+			}
 			stream.reset();
 			String s=readString(stream);
 			Object o=readObject(stream);
@@ -480,17 +485,19 @@ public final class BEncodeObject {
 	private static Object readObject(InputStream stream) throws IOException{
 		stream.mark(2);
 		int c=stream.read();
-		if(c=='d'){
-			return readDictionary(stream);      
-		} else if(c=='l'){
-			return readList(stream);            
-		} else if(c=='i'){
-			return readInteger(stream);            
-		} else if(c>='0' && c<='9'){
+		if(c=='d')
+			return readDictionary(stream);
+		else if(c=='l')
+			return readList(stream);
+		else if(c=='i')
+			return readInteger(stream);
+		else if(c>='0' && c<='9'){
 			stream.reset();
-			return readString(stream);            
+			return readString(stream);
 		} else {
-			if(c>=0)stream.reset();
+			if(c>=0) {
+				stream.reset();
+			}
 			throw new BEncodeException("Object expected");
 		}
 	}
@@ -505,7 +512,7 @@ public final class BEncodeObject {
 			buffer[bufOffset++]='-';
 			negative=true;
 		} else {
-		stream.reset();
+			stream.reset();
 		}
 		while(true){ // skip zeros
 			stream.mark(2);
@@ -537,11 +544,11 @@ public final class BEncodeObject {
 		}
 		if(!haveHex)
 			throw new BEncodeException("Positive integer expected");
-		if(bufOffset==(negative ? 1 : 0)){
+		if(bufOffset==(negative ? 1 : 0))
 			return 0;
-		}
 		try {
-			return Long.parseLong(new String(buffer,0,bufOffset));      
+			String retstr=new String(buffer,0,bufOffset);
+			return Long.parseLong(retstr);
 		} catch(NumberFormatException e){
 			throw new BEncodeException(negative ? "Integer too small" : "Integer too big");
 		}
@@ -573,9 +580,8 @@ public final class BEncodeObject {
 				}
 				break;
 			}
-			if(value>Integer.MAX_VALUE){
+			if(value>Integer.MAX_VALUE)
 				throw new BEncodeException("Integer too big");
-			}
 		}
 		if(!haveHex)
 			throw new BEncodeException("Positive integer expected");
