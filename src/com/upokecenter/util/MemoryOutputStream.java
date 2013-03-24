@@ -22,8 +22,10 @@ public final class MemoryOutputStream extends OutputStream {
 
 	@Override
 	public void write(byte[] buf, int off, int len){
-		if(off<0 || len<0 || off+len>buf.length)
-			throw new IndexOutOfBoundsException();
+    if((buf)==null)throw new NullPointerException("buf");
+if((off)<0)throw new IndexOutOfBoundsException("off not greater or equal to 0 ("+Integer.toString(off)+")");
+if((len)<0)throw new IndexOutOfBoundsException("len not greater or equal to 0 ("+Integer.toString(len)+")");
+if((off+len)>buf.length)throw new IndexOutOfBoundsException("off+len not less or equal to "+Integer.toString(buf.length)+" ("+Integer.toString(off+len)+")");
 		if(pos+len>buffer.length){
 			byte[] newbuffer=new byte[Math.max(pos+len+1024, buffer.length*2)];
 			System.arraycopy(buffer,0,newbuffer,0,buffer.length);

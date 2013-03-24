@@ -96,8 +96,7 @@ public final class StackableCharacterInput implements IMarkableCharacterInput {
 	}
 
 	public void pushInput(ICharacterInput input){
-		if(input==null)
-			throw new IllegalArgumentException();
+    if((input)==null)throw new NullPointerException("input");
 		// Move unread characters in buffer, since this new
 		// input sits on top of the existing input
 		stack.add(new InputAndBuffer(input,buffer,pos,endpos-pos));
@@ -143,6 +142,10 @@ public final class StackableCharacterInput implements IMarkableCharacterInput {
 
 	private int readInternal(int[] buf, int offset, int unitCount) throws IOException {
 		if(this.stack.size()==0)return -1;
+    assert ((buf)!=null) : "buf";
+assert ((offset)>=0) : ("offset not greater or equal to 0 ("+Integer.toString(offset)+")");
+assert ((unitCount)>=0) : ("unitCount not greater or equal to 0 ("+Integer.toString(unitCount)+")");
+assert ((offset+unitCount)<=buf.length) : ("offset+unitCount not less or equal to "+Integer.toString(buf.length)+" ("+Integer.toString(offset+unitCount)+")");
 		if(unitCount==0)return 0;
 		int count=0;
 		while(this.stack.size()>0 && unitCount>0){
@@ -179,9 +182,10 @@ public final class StackableCharacterInput implements IMarkableCharacterInput {
 	@Override
 	public int read(int[] buf, int offset, int unitCount) throws IOException {
 		if(haveMark){
-			if(buf==null)throw new IllegalArgumentException();
-			if(offset<0 || unitCount<0 || offset+unitCount>buf.length)
-				throw new IndexOutOfBoundsException();
+      if((buf)==null)throw new NullPointerException("buf");
+if((offset)<0)throw new IndexOutOfBoundsException("offset not greater or equal to 0 ("+Integer.toString(offset)+")");
+if((unitCount)<0)throw new IndexOutOfBoundsException("unitCount not greater or equal to 0 ("+Integer.toString(unitCount)+")");
+if((offset+unitCount)>buf.length)throw new IndexOutOfBoundsException("offset+unitCount not less or equal to "+Integer.toString(buf.length)+" ("+Integer.toString(offset+unitCount)+")");
 			if(unitCount==0)return 0;
 			// Read from buffer
 			if(pos+unitCount<=endpos){
@@ -268,6 +272,7 @@ public final class StackableCharacterInput implements IMarkableCharacterInput {
 
 	@Override
 	public void moveBack(int count) throws IOException {
+    if((count)<0)throw new IndexOutOfBoundsException("count not greater or equal to 0 ("+Integer.toString(count)+")");
 		if(haveMark && pos>=count){
 			pos-=count;
 			return;

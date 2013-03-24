@@ -78,13 +78,13 @@ final class HtmlParser {
 
 		public void appendToValue(int ch){
 			if(valueString!=null)
-				throw new IllegalStateException();
+				throw new AssertionError();
 			value.appendInt(ch);
 		}
 
 		 void commitValue(){
 			if(value==null)
-				throw new IllegalStateException();
+				throw new AssertionError();
 			valueString=value.toString();
 			value=null;
 		}
@@ -713,7 +713,7 @@ final class HtmlParser {
 				if(!isElement){ // the parent is not an element
 					if(i<=1)
 						// This usually won't happen
-						throw new IllegalStateException();
+						throw new AssertionError();
 					// append to the element before this table
 					fosterParent=openElements.get(i-1);
 					break;
@@ -721,7 +721,7 @@ final class HtmlParser {
 					// Parent of the table, insert before the table
 					childNodes=parent.getChildNodesInternal();
 					if(childNodes.size()==0)
-						throw new IllegalStateException();
+						throw new AssertionError();
 					for(int j=0;j<childNodes.size();j++){
 						if(childNodes.get(j).equals(e)){
 							if(j>0 && childNodes.get(j-1).getNodeType()==NodeType.TEXT_NODE)
@@ -733,7 +733,7 @@ final class HtmlParser {
 							}
 						}
 					}
-					throw new IllegalStateException();
+					throw new AssertionError();
 				}
 			}
 		}
@@ -1458,7 +1458,7 @@ final class HtmlParser {
 					Text textNode=getTextNodeToInsert(getCurrentNode());
 					int ch=token;
 					if(textNode==null)
-						throw new IllegalStateException();
+						throw new AssertionError();
 					while(true){
 						textNode.text.appendInt(ch);
 						token=parserRead();
@@ -1501,7 +1501,7 @@ final class HtmlParser {
 				Text textNode=getTextNodeToInsert(getCurrentNode());
 				int ch=token;
 				if(textNode==null)
-					throw new IllegalStateException();
+					throw new AssertionError();
 				while(true){
 					// Read multiple characters at once
 					textNode.text.appendInt(ch);
@@ -3311,7 +3311,7 @@ final class HtmlParser {
 			return true;
 		}
 		default:
-			throw new IllegalStateException();
+			throw new AssertionError();
 		}
 	}
 
@@ -3371,7 +3371,7 @@ final class HtmlParser {
 				if(!isElement){ // the parent is not an element
 					if(i<=1)
 						// This usually won't happen
-						throw new IllegalStateException();
+						throw new AssertionError();
 					// append to the element before this table
 					fosterParent=openElements.get(i-1);
 					break;
@@ -5524,7 +5524,7 @@ final class HtmlParser {
 				break;
 			}
 			default:
-				throw new IllegalStateException();
+				throw new AssertionError();
 			}
 		}
 	}
