@@ -645,7 +645,7 @@ final class HtmlParser {
 		return ret;
 	}
 
-	private boolean isMathMLIntegrationPoint(Element element) {
+	private boolean isMathMLTextIntegrationPoint(Element element) {
 		String name=element.getLocalName();
 		return MATHML_NAMESPACE.equals(element.getNamespaceURI()) && (
 				name.equals("mi") ||
@@ -669,14 +669,15 @@ final class HtmlParser {
 
 	private boolean isForeignContext(int token){
 		if(hasForeignContent && token!=TOKEN_EOF){
-			Element element=getCurrentNode();
+			Element element=(context!=null && openElements.size()==1) ?
+					context : getCurrentNode(); // adjusted current node
 			if(element==null)return false;
 			if(element.getNamespaceURI().equals(HTML_NAMESPACE))
 				return false;
 			if((token&TOKEN_TYPE_MASK)==TOKEN_START_TAG){
 				StartTagToken tag=(StartTagToken)getToken(token);
 				String name=element.getLocalName();
-				if(isMathMLIntegrationPoint(element)){
+				if(isMathMLTextIntegrationPoint(element)){
 					String tokenName=tag.getName();
 					if(!"mglyph".equals(tokenName) &&
 							!"malignmark".equals(tokenName))
@@ -690,7 +691,7 @@ final class HtmlParser {
 					return false;
 				return true;
 			} else if((token&TOKEN_TYPE_MASK)==TOKEN_CHARACTER){
-				if(isMathMLIntegrationPoint(element) ||
+				if(isMathMLTextIntegrationPoint(element) ||
 						isHtmlIntegrationPoint(element))
 					return false;
 				return true;
@@ -894,7 +895,7 @@ final class HtmlParser {
 						popCurrentNode();
 						Element node=getCurrentNode();
 						if(node.getNamespaceURI().equals(HTML_NAMESPACE) ||
-								isMathMLIntegrationPoint(node) ||
+								isMathMLTextIntegrationPoint(node) ||
 								isHtmlIntegrationPoint(node)){
 							break;
 						}
@@ -914,11 +915,17 @@ final class HtmlParser {
 					name.equals("sub") || name.equals("sup") || name.equals("table") || name.equals("tt") ||
 					name.equals("u") || name.equals("ul") || name.equals("var")){
 				error=true;
+				if(!hasNativeElementInScope()){
+					noforeign=true;
+					boolean ret=applyInsertionMode(token,InsertionMode.InBody);
+					noforeign=false;
+					return ret;
+				}
 				while(true){
 					popCurrentNode();
 					Element node=getCurrentNode();
 					if(node.getNamespaceURI().equals(HTML_NAMESPACE) ||
-							isMathMLIntegrationPoint(node) ||
+							isMathMLTextIntegrationPoint(node) ||
 							isHtmlIntegrationPoint(node)){
 						break;
 					}
@@ -1045,7 +1052,10 @@ final class HtmlParser {
 					error=true;
 				}
 				int originalSize=openElements.size();
-				for(int i1=originalSize-1;i1>=0;i1--){
+				for(int i1=originalSize-1;i1>0;i1--){
+					if(i1==0){
+						return true;
+					}
 					Element node=openElements.get(i1);
 					if(i1<originalSize-1 &&
 							HTML_NAMESPACE.equals(node.getNamespaceURI())){
@@ -1068,6 +1078,36 @@ final class HtmlParser {
 		} else if(token==TOKEN_EOF)
 			return applyInsertionMode(token,null);
 		return true;
+	}
+
+	private boolean hasNativeElementInScope() {
+		for(int i=openElements.size()-1;i>=0;i--){
+			Element e=openElements.get(i);
+			if(e.getNamespaceURI().equals(HTML_NAMESPACE) ||
+					isMathMLTextIntegrationPoint(e) ||
+					isHtmlIntegrationPoint(e))
+				return true;
+			if(e.isHtmlElement("applet")||
+					e.isHtmlElement("caption")||
+					e.isHtmlElement("html")||
+					e.isHtmlElement("table")||
+					e.isHtmlElement("td")||
+					e.isHtmlElement("th")||
+					e.isHtmlElement("marquee")||
+					e.isHtmlElement("object")||
+					e.isMathMLElement("mi")||
+					e.isMathMLElement("mo")||
+					e.isMathMLElement("mn")||
+					e.isMathMLElement("ms")||
+					e.isMathMLElement("mtext")||
+					e.isMathMLElement("annotation-xml")||
+					e.isSvgElement("foreignObject")||
+					e.isSvgElement("desc")||
+					e.isSvgElement("title")
+					)
+				return false;
+		}
+		return false;
 	}
 
 	private boolean applyInsertionMode(int token, InsertionMode insMode) throws IOException{
