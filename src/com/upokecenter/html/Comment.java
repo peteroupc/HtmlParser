@@ -19,7 +19,7 @@ class Comment extends Node implements IComment {
 	}
 
 	 @Override  String toDebugString(){
-		return "<!-- "+getData().toString()+" -->\n";
+		return "<!-- "+getData().toString().replace("\n","~~~~")+" -->\n";
 	}
 
 

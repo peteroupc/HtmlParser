@@ -13,7 +13,6 @@ import com.upokecenter.util.IntList;
 import com.upokecenter.util.StackableCharacterInput;
 import com.upokecenter.util.StringUtility;
 import com.upokecenter.util.URL;
-
 final class HtmlParser {
 
 	 static class Attrib {
@@ -915,7 +914,7 @@ final class HtmlParser {
 					name.equals("sub") || name.equals("sup") || name.equals("table") || name.equals("tt") ||
 					name.equals("u") || name.equals("ul") || name.equals("var")){
 				error=true;
-				if(!hasNativeElementInScope()){
+				if(context!=null && !hasNativeElementInScope()){
 					noforeign=true;
 					boolean ret=applyInsertionMode(token,InsertionMode.InBody);
 					noforeign=false;
@@ -1020,7 +1019,7 @@ final class HtmlParser {
 					if(encoding!=null){
 						encoding=StringUtility.toLowerCaseAscii(encoding);
 						if(encoding.equals("text/html") ||
-								encoding.equals("application/xml")){
+								encoding.equals("application/xhtml+xml")){
 							integrationElements.add(e);
 						}
 					}
@@ -1083,6 +1082,7 @@ final class HtmlParser {
 	private boolean hasNativeElementInScope() {
 		for(int i=openElements.size()-1;i>=0;i--){
 			Element e=openElements.get(i);
+			//DebugUtility.log("%s %s",e.getLocalName(),e.getNamespaceURI());
 			if(e.getNamespaceURI().equals(HTML_NAMESPACE) ||
 					isMathMLTextIntegrationPoint(e) ||
 					isHtmlIntegrationPoint(e))
@@ -1109,15 +1109,39 @@ final class HtmlParser {
 		}
 		return false;
 	}
+	
+	private void skipLineFeed() throws IOException {
+		int mark=charInput.markIfNeeded();
+		int nextToken=charInput.read();
+		if(nextToken==0x0a){ // line feed
+			return; // ignore the token if it's 0x0A
+		} else if(nextToken==0x26){ // start of character reference
+			int charref=parseCharacterReference(-1);
+			if(charref<0){
+				// more than one character in this reference
+				int index=Math.abs(charref+1);
+				tokenQueue.add(entityDoubles[index*2]);
+				tokenQueue.add(entityDoubles[index*2+1]);
+			} else if(charref==0x0a){ // line feed
+				return; // ignore the token
+			} else {
+				tokenQueue.add(charref);
+			}
+		} else {
+			// anything else; reset the input stream
+			charInput.setMarkPosition(mark);
+		}
+	}
 
 	private boolean applyInsertionMode(int token, InsertionMode insMode) throws IOException{
+		//DebugUtility.log("[[%08X %s %s %s(%s)",token,getToken(token),insMode==null ? insertionMode : 
+		 //insMode,isForeignContext(token),noforeign);
 		if(!noforeign && isForeignContext(token))
 			return applyForeignContext(token);
 		noforeign=false;
 		if(insMode==null) {
 			insMode=insertionMode;
 		}
-		//	DebugUtility.log("[[%08X %s %s",token,getToken(token),insMode);
 		switch(insMode){
 		case Initial:{
 			if(token==0x09 || token==0x0a ||
@@ -1544,7 +1568,11 @@ final class HtmlParser {
 					throw new AssertionError();
 				while(true){
 					// Read multiple characters at once
-					textNode.text.appendInt(ch);
+					if(ch==0){
+						error=true;
+					} else {
+						textNode.text.appendInt(ch);
+					}
 					if(framesetOk && token!=0x20 && token!=0x09 &&
 							token!=0x0a && token!=0x0c && token!=0x0d){
 						framesetOk=false;
@@ -1681,19 +1709,7 @@ final class HtmlParser {
 						"listing".equals(name)){
 					closeParagraph(insMode);
 					addHtmlElement(tag);
-					//
-					// For convenience, read the next
-					// character directly rather than
-					// use the tokenizer
-					//
-					int mark=charInput.markIfNeeded();
-					int nextToken=charInput.read();
-					if(nextToken!=0x0a){
-						// ignore the token if it's 0x0A (LF);
-						// otherwise reset the input stream
-						charInput.setMarkPosition(mark);
-					}
-
+					skipLineFeed();
 					framesetOk=false;
 					return true;
 				} else if("form".equals(name)){
@@ -1888,19 +1904,8 @@ final class HtmlParser {
 					applyStartTag("hr",insMode);
 					applyEndTag("form",insMode);
 				} else if("textarea".equals(name)){
-					addHtmlElement(tag);					//
-					// For convenience, read the next
-					// character directly rather than
-					// use the tokenizer
-					//
-					int mark=charInput.markIfNeeded();
-					int nextToken=charInput.read();
-					if(nextToken!=0x0a){
-						// ignore the token if it's 0x0A (LF);
-						// otherwise reset the input stream
-						charInput.setMarkPosition(mark);
-					}
-
+					addHtmlElement(tag);
+					skipLineFeed();
 					state=TokenizerState.RcData;
 					originalInsertionMode=insertionMode;
 					framesetOk=false;
@@ -1995,6 +2000,7 @@ final class HtmlParser {
 					error=true;
 					return false;
 				} else {
+					//DebugUtility.log("ordinary: %s",tag);
 					reconstructFormatting();
 					addHtmlElement(tag);
 				}
@@ -2876,8 +2882,8 @@ final class HtmlParser {
 						name.equals("tfoot")||
 						name.equals("thead")||
 						name.equals("tr")){
-					applyEndTag("tr",insMode);
-					return applyInsertionMode(token,null);
+					if(applyEndTag("tr",insMode))
+						return applyInsertionMode(token,null);
 				} else {
 					applyInsertionMode(token,InsertionMode.InTable);
 				}
@@ -4101,6 +4107,7 @@ final class HtmlParser {
 		if(tokenQueue.size()>0)
 			return removeAtIndex(tokenQueue,0);
 		while(true){
+			//DebugUtility.log(state);
 			switch(state){
 			case Data:
 				int c=charInput.read();
@@ -4476,6 +4483,7 @@ final class HtmlParser {
 				if(ch==0x2f){
 					tempBuffer.clearAll();
 					state=TokenizerState.ScriptDataDoubleEscapeEnd;
+					return 0x2f;
 				} else {
 					state=TokenizerState.ScriptDataDoubleEscaped;
 					if(ch>=0) {
@@ -4949,7 +4957,7 @@ final class HtmlParser {
 							charInput.read()=='A' &&
 							charInput.read()=='[' &&
 							getCurrentNode()!=null &&
-							HTML_NAMESPACE.equals(getCurrentNode().getNamespaceURI())
+							!HTML_NAMESPACE.equals(getCurrentNode().getNamespaceURI())
 							){
 						state=TokenizerState.CData;
 						break;

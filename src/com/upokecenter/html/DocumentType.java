@@ -14,7 +14,13 @@ final class DocumentType extends Node implements IDocumentType {
 	@Override
 	 String toDebugString(){
 		StringBuilder builder=new StringBuilder();
-		builder.append("<!DOCTYPE "+name+">\n");
+		builder.append("<!DOCTYPE "+name);
+		if((publicId!=null && publicId.length()>0) ||
+				(systemId!=null && systemId.length()>0)){
+				builder.append(publicId!=null && publicId.length()>0 ? " \""+publicId.replace("\n","~~~~")+"\"" : " \"\"");
+				builder.append(systemId!=null && systemId.length()>0 ? " \""+systemId.replace("\n","~~~~")+"\"" : " \"\"");
+		}
+		builder.append(">\n");
 		return builder.toString();
 	}
 	@Override

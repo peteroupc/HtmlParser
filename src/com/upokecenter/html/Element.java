@@ -147,9 +147,9 @@ class Element extends Node implements IElement {
 					extra1="xml ";
 				}
 				extra1+=attribute.getLocalName();
-				builder.append("  "+extra1+"=\""+attribute.getValue().toString()+"\"\n");
+				builder.append("  "+extra1+"=\""+attribute.getValue().toString().replace("\n","~~~~")+"\"\n");
 			} else {
-				builder.append("  "+attribute.getName().toString()+"=\""+attribute.getValue().toString()+"\"\n");
+				builder.append("  "+attribute.getName().toString()+"=\""+attribute.getValue().toString().replace("\n","~~~~")+"\"\n");
 			}
 		}
 		for(Node node : getChildNodesInternal()){
