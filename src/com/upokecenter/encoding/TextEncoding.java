@@ -348,7 +348,7 @@ public final class TextEncoding {
 				} else {
 					int ch=data[i]-0x10000;
 					int lead=ch/0x400+0xd800;
-					int trail=ch%0x400+0xdc00;
+					int trail=(ch&0x3FF)+0xdc00;
 					builder.append((char)lead);
 					builder.append((char)trail);
 				}

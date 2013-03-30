@@ -15,27 +15,25 @@ final class XUserDefinedEncoding implements ITextEncoder, ITextDecoder {
 	@Override
 	public int decode(InputStream stream, int[] buffer, int offset, int length, IEncodingError error)
 			throws IOException {
-		if(stream==null || buffer==null || offset<0 || length<0 ||
-				offset+length>buffer.length)
-			throw new IllegalArgumentException();
-		byte[] tmp=new byte[1024];
-		int i=length;
+		if((stream)==null)throw new NullPointerException("stream");
+		if((error)==null)throw new NullPointerException("error");
+		if((buffer)==null)throw new NullPointerException("buffer");
+if((offset)<0)throw new IndexOutOfBoundsException("offset"+" not greater or equal to "+"0"+" ("+Integer.toString(offset)+")");
+if((length)<0)throw new IndexOutOfBoundsException("length"+" not greater or equal to "+"0"+" ("+Integer.toString(length)+")");
+if((offset+length)>buffer.length)throw new IndexOutOfBoundsException("offset+length"+" not less or equal to "+Integer.toString(buffer.length)+" ("+Integer.toString(offset+length)+")");
+		if(length==0)return 0;
 		int total=0;
-		while(i>0){
-			int count=stream.read(tmp,0,Math.min(i,tmp.length));
-			if(count<0) {
+		for(int i=0;i<length;i++){
+			int c=stream.read();
+			if(c<0){
 				break;
+			} else if(c<0x80){
+				buffer[offset++]=c;
+				total++;
+			} else {
+				buffer[offset++]=(0xF780+(c&0xFF)-0x80);
+				total++;
 			}
-			total+=count;
-			for(int j=0;j<count;j++){
-				int c=(tmp[j]&0xFF);
-				if(c<0x80){
-					buffer[offset++]=(c);
-				} else {
-					buffer[offset++]=(0xF780+(c&0xFF)-0x80);
-				}
-			}
-			i-=count;
 		}
 		return (total==0) ? -1 : total;
 	}
@@ -43,29 +41,23 @@ final class XUserDefinedEncoding implements ITextEncoder, ITextDecoder {
 	@Override
 	public void encode(OutputStream stream, int[] array, int offset, int length, IEncodingError error)
 			throws IOException {
-		if(stream==null || array==null)throw new IllegalArgumentException();
-		if(offset<0 || length<0 || offset+length>array.length)
-			throw new IndexOutOfBoundsException();
-		byte[] buffer=new byte[1024];
-		int i=length;
-		while(i>0){
-			int count=Math.min(i,buffer.length);
-			for(int j=0;j<count;j++){
-				int c=array[offset++];
-				if(c<0 || c>=0x110000){
-					error.emitEncoderError(stream, c);
-					continue;
-				} else if(c<0x80){
-					buffer[j]=(byte)c;
-				} else if(c>=0xF780 && c<=0xF7FF){
-					buffer[j]=(byte)(c-0xF780+0x80);
-				} else {
-					error.emitEncoderError(stream, c);
-					continue;
-				}
+		if((stream)==null)throw new NullPointerException("stream");
+		if((error)==null)throw new NullPointerException("error");
+		if((array)==null)throw new NullPointerException("array");
+if((offset)<0)throw new IndexOutOfBoundsException("offset"+" not greater or equal to "+"0"+" ("+Integer.toString(offset)+")");
+if((length)<0)throw new IndexOutOfBoundsException("length"+" not greater or equal to "+"0"+" ("+Integer.toString(length)+")");
+if((offset+length)>array.length)throw new IndexOutOfBoundsException("offset+length"+" not less or equal to "+Integer.toString(array.length)+" ("+Integer.toString(offset+length)+")");
+		for(int i=0;i<length;i++){
+			int c=array[offset++];
+			if(c<0 || c>=0x110000){
+				error.emitEncoderError(stream, c);
+			} else if(c<0x80){
+				stream.write((byte)c);
+			} else if(c>=0xF780 && c<=0xF7FF){
+				stream.write((byte)(c-0xF780+0x80));
+			} else {
+				error.emitEncoderError(stream, c);
 			}
-			i-=count;
-			stream.write(buffer,0,count);
 		}
 	}
 

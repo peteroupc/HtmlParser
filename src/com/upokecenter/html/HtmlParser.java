@@ -43,7 +43,7 @@ final class HtmlParser {
 			} else {
 				ch-=0x10000;
 				int lead=ch/0x400+0xd800;
-				int trail=ch%0x400+0xdc00;
+				int trail=(ch&0x3FF)+0xdc00;
 				name.append((char)lead);
 				name.append((char)trail);
 			}
@@ -69,7 +69,7 @@ final class HtmlParser {
 			} else {
 				ch-=0x10000;
 				int lead=ch/0x400+0xd800;
-				int trail=ch%0x400+0xdc00;
+				int trail=(ch&0x3FF)+0xdc00;
 				name.append((char)lead);
 				name.append((char)trail);
 			}
@@ -142,7 +142,7 @@ final class HtmlParser {
 
 	}
 
-	static class CommentToken implements IToken {
+	 static class CommentToken implements IToken {
 		IntList value;
 		public CommentToken(){
 			value=new IntList();
@@ -162,7 +162,7 @@ final class HtmlParser {
 		}
 
 	}
-	static class DocTypeToken implements IToken {
+	 static class DocTypeToken implements IToken {
 		public IntList name;
 		public IntList publicID;
 		public IntList systemID;
@@ -172,7 +172,7 @@ final class HtmlParser {
 			return TOKEN_DOCTYPE;
 		}
 	}
-	static class EndTagToken extends TagToken {
+	 static class EndTagToken extends TagToken {
 		public EndTagToken(char c){
 			super(c);
 		}
@@ -291,7 +291,7 @@ final class HtmlParser {
 			} else {
 				ch-=0x10000;
 				int lead=ch/0x400+0xd800;
-				int trail=ch%0x400+0xdc00;
+				int trail=(ch&0x3FF)+0xdc00;
 				builder.append((char)lead);
 				builder.append((char)trail);
 			}
@@ -472,18 +472,18 @@ final class HtmlParser {
 	public static final String SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
 
-	static int TOKEN_EOF= 0x10000000;
+	 static int TOKEN_EOF= 0x10000000;
 
-	static int TOKEN_START_TAG= 0x20000000;
+	 static int TOKEN_START_TAG= 0x20000000;
 
-	static int TOKEN_END_TAG= 0x30000000;
+	 static int TOKEN_END_TAG= 0x30000000;
 
-	static int TOKEN_COMMENT=0x40000000;
+	 static int TOKEN_COMMENT=0x40000000;
 
-	static int TOKEN_DOCTYPE=0x50000000;
-	static int TOKEN_TYPE_MASK=0xF0000000;
-	static int TOKEN_CHARACTER=0x00000000;
-	static int TOKEN_INDEX_MASK=0x0FFFFFFF;
+	 static int TOKEN_DOCTYPE=0x50000000;
+	 static int TOKEN_TYPE_MASK=0xF0000000;
+	 static int TOKEN_CHARACTER=0x00000000;
+	private static int TOKEN_INDEX_MASK=0x0FFFFFFF;
 	public static String HTML_NAMESPACE="http://www.w3.org/1999/xhtml";
 
 	private static String[] quirksModePublicIdPrefixes=new String[]{
@@ -575,7 +575,7 @@ final class HtmlParser {
 	private Element inputElement=null;
 	private String baseurl=null;
 	private boolean hasForeignContent=false;
-	Document document=null;
+	 Document document=null;
 	private boolean done=false;
 
 	private final IntList pendingTableCharacters=new IntList();
@@ -1052,9 +1052,8 @@ final class HtmlParser {
 				}
 				int originalSize=openElements.size();
 				for(int i1=originalSize-1;i1>=0;i1--){
-					if(i1==0){
+					if(i1==0)
 						return true;
-					}
 					Element node=openElements.get(i1);
 					if(i1<originalSize-1 &&
 							HTML_NAMESPACE.equals(node.getNamespaceURI())){
@@ -1109,22 +1108,22 @@ final class HtmlParser {
 		}
 		return false;
 	}
-	
+
 	private void skipLineFeed() throws IOException {
 		int mark=charInput.markIfNeeded();
 		int nextToken=charInput.read();
-		if(nextToken==0x0a){ // line feed
+		if(nextToken==0x0a)
 			return; // ignore the token if it's 0x0A
-		} else if(nextToken==0x26){ // start of character reference
+		else if(nextToken==0x26){ // start of character reference
 			int charref=parseCharacterReference(-1);
 			if(charref<0){
 				// more than one character in this reference
 				int index=Math.abs(charref+1);
 				tokenQueue.add(entityDoubles[index*2]);
 				tokenQueue.add(entityDoubles[index*2+1]);
-			} else if(charref==0x0a){ // line feed
+			} else if(charref==0x0a)
 				return; // ignore the token
-			} else {
+			else {
 				tokenQueue.add(charref);
 			}
 		} else {
@@ -1134,8 +1133,8 @@ final class HtmlParser {
 	}
 
 	private boolean applyInsertionMode(int token, InsertionMode insMode) throws IOException{
-		//DebugUtility.log("[[%08X %s %s %s(%s)",token,getToken(token),insMode==null ? insertionMode : 
-		 //insMode,isForeignContext(token),noforeign);
+		//DebugUtility.log("[[%08X %s %s %s(%s)",token,getToken(token),insMode==null ? insertionMode :
+		//insMode,isForeignContext(token),noforeign);
 		if(!noforeign && isForeignContext(token))
 			return applyForeignContext(token);
 		noforeign=false;
@@ -3500,7 +3499,7 @@ final class HtmlParser {
 		}
 		return null;
 	}
-	IToken getToken(int token){
+	 IToken getToken(int token){
 		if((token&TOKEN_TYPE_MASK)==TOKEN_CHARACTER ||
 				(token&TOKEN_TYPE_MASK)==TOKEN_EOF)
 			return null;
@@ -4095,7 +4094,7 @@ final class HtmlParser {
 		}
 		return document;
 	}
-	int parserRead() throws IOException{
+	 int parserRead() throws IOException{
 		int token=parserReadInternal();
 		//DebugUtility.log("token=%08X [%c]",token,token&0xFF);
 		if(decoder.isError()) {
@@ -5734,16 +5733,16 @@ final class HtmlParser {
 		}
 	}
 
-	void setRcData(){
+	 void setRcData(){
 		state=TokenizerState.RcData;
 	}
-	void setPlainText(){
+	 void setPlainText(){
 		state=TokenizerState.PlainText;
 	}
-	void setRawText(){
+	 void setRawText(){
 		state=TokenizerState.RawText;
 	}
-	void setCData(){
+	 void setCData(){
 		state=TokenizerState.CData;
 	}
 
@@ -5784,7 +5783,7 @@ final class HtmlParser {
 
 	////////////////////////////////////////////////////
 
-	String nodesToDebugString(List<Node> nodes){
+	 String nodesToDebugString(List<Node> nodes){
 		StringBuilder builder=new StringBuilder();
 		for(Node node : nodes){
 			String str=node.toDebugString();

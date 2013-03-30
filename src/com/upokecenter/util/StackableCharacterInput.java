@@ -35,9 +35,9 @@ public final class StackableCharacterInput implements IMarkableCharacterInput {
 		public int read(int[] buf, int offset, int unitCount)
 				throws IOException {
 			if((buf)==null)throw new NullPointerException("buf");
-if((offset)<0)throw new IndexOutOfBoundsException("offset not greater or equal to 0 ("+Integer.toString(offset)+")");
-if((unitCount)<0)throw new IndexOutOfBoundsException("unitCount not greater or equal to 0 ("+Integer.toString(unitCount)+")");
-if((offset+unitCount)>buf.length)throw new IndexOutOfBoundsException("offset+unitCount not less or equal to "+Integer.toString(buf.length)+" ("+Integer.toString(offset+unitCount)+")");
+			if((offset)<0)throw new IndexOutOfBoundsException("offset not greater or equal to 0 ("+Integer.toString(offset)+")");
+			if((unitCount)<0)throw new IndexOutOfBoundsException("unitCount not greater or equal to 0 ("+Integer.toString(unitCount)+")");
+			if((offset+unitCount)>buf.length)throw new IndexOutOfBoundsException("offset+unitCount not less or equal to "+Integer.toString(buf.length)+" ("+Integer.toString(offset+unitCount)+")");
 			if(unitCount==0)return 0;
 			int count=0;
 			if(charInput!=null){

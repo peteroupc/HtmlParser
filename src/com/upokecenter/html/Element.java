@@ -12,7 +12,9 @@ class Element extends Node implements IElement {
 	Comparator<HtmlParser.Attrib> {
 		@Override
 		public int compare(HtmlParser.Attrib arg0, HtmlParser.Attrib arg1) {
-			return arg0.getName().compareTo(arg1.getName());
+			String a=arg0.getName();
+			String b=arg1.getName();
+			return a.compareTo(b);
 		}
 	}
 
