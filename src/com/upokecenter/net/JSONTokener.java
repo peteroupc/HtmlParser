@@ -174,7 +174,7 @@ class JSONTokener {
 	 */
 	public String nextString(char quote) throws ParseException {
 		char c;
-		StringBuffer sb = new StringBuffer();
+		deprecatedStringBuffer sb = new deprecatedStringBuffer();
 		while (true) {
 			c = next();
 			switch (c) {
@@ -226,7 +226,7 @@ class JSONTokener {
 	 * @return   A string.
 	 */
 	public String nextTo(char d) {
-		StringBuffer sb = new StringBuffer();
+		deprecatedStringBuffer sb = new deprecatedStringBuffer();
 		while (true) {
 			char c = next();
 			if (c == d || c == 0 || c == '\n' || c == '\r') {
@@ -248,7 +248,7 @@ class JSONTokener {
 	 */
 	public String nextTo(String delimiters) {
 		char c;
-		StringBuffer sb = new StringBuffer();
+		deprecatedStringBuffer sb = new deprecatedStringBuffer();
 		while (true) {
 			c = next();
 			if (delimiters.indexOf(c) >= 0 || c == 0 ||
@@ -284,7 +284,7 @@ class JSONTokener {
 			back();
 			return new JSONArray(this);
 		}
-		StringBuffer sb = new StringBuffer();
+		deprecatedStringBuffer sb = new deprecatedStringBuffer();
 		char b = c;
 		while (c >= ' ' && c != ':' && c != ',' && c != ']' && c != '}' &&
 				c != '/') {
@@ -390,7 +390,7 @@ class JSONTokener {
 	 */
 	public static String unescape(String s) {
 		int len = s.length();
-		StringBuffer b = new StringBuffer();
+		deprecatedStringBuffer b = new deprecatedStringBuffer();
 		for (int i = 0; i < len; ++i) {
 			char c = s.charAt(i);
 			if (c == '+') {

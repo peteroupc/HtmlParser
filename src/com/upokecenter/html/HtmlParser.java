@@ -1,3 +1,29 @@
+/*
+
+Licensed under the Expat License.
+
+Copyright (C) 2013 Peter Occil
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+*/
+
 package com.upokecenter.html;
 
 import java.io.IOException;
@@ -7,10 +33,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.upokecenter.encoding.TextEncoding;
-import com.upokecenter.util.ConditionalBufferInputStream;
-import com.upokecenter.util.IMarkableCharacterInput;
+import com.upokecenter.io.ConditionalBufferInputStream;
+import com.upokecenter.io.IMarkableCharacterInput;
+import com.upokecenter.io.StackableCharacterInput;
 import com.upokecenter.util.IntList;
-import com.upokecenter.util.StackableCharacterInput;
 import com.upokecenter.util.StringUtility;
 import com.upokecenter.util.URL;
 final class HtmlParser {
@@ -148,7 +174,7 @@ final class HtmlParser {
 			value=new IntList();
 		}
 
-		public void append(int ch){
+		public void appendChar(int ch){
 			value.appendInt(ch);
 		}
 
@@ -1110,7 +1136,7 @@ final class HtmlParser {
 	}
 
 	private void skipLineFeed() throws IOException {
-		int mark=charInput.markIfNeeded();
+		int mark=charInput.setSoftMark();
 		int nextToken=charInput.read();
 		if(nextToken==0x0a)
 			return; // ignore the token if it's 0x0A
@@ -3728,7 +3754,7 @@ final class HtmlParser {
 	}
 
 	private int parseCharacterReference(int allowedCharacter) throws IOException{
-		int markStart=charInput.markIfNeeded();
+		int markStart=charInput.setSoftMark();
 		int c1=charInput.read();
 		if(c1<0 || c1==0x09 || c1==0x0a || c1==0x0c ||
 				c1==0x20 || c1==0x3c || c1==0x26 || (allowedCharacter>=0 && c1==allowedCharacter)){
@@ -4124,7 +4150,7 @@ final class HtmlParser {
 					// Keep reading characters to
 					// reduce the need to re-call
 					// this method
-					int mark=charInput.markIfNeeded();
+					int mark=charInput.setSoftMark();
 					for(int i=0;i<100;i++){
 						c=charInput.read();
 						if(c>0 && c!=0x26 && c!=0x3c){
@@ -4192,7 +4218,7 @@ final class HtmlParser {
 				break;
 			}
 			case ScriptDataLessThan:{
-				charInput.markToEnd();
+				charInput.setHardMark();
 				int c11=charInput.read();
 				if(c11==0x2f){
 					tempBuffer.clearAll();
@@ -4212,7 +4238,7 @@ final class HtmlParser {
 			}
 			case ScriptDataEndTagOpen:
 			case ScriptDataEscapedEndTagOpen:{
-				charInput.markToEnd();
+				charInput.setHardMark();
 				int ch=charInput.read();
 				if(ch>='A' && ch<='Z'){
 					EndTagToken token=new EndTagToken((char) (ch+0x20));
@@ -4250,7 +4276,7 @@ final class HtmlParser {
 			}
 			case ScriptDataEndTagName:
 			case ScriptDataEscapedEndTagName:{
-				charInput.markToEnd();
+				charInput.setHardMark();
 				int ch=charInput.read();
 				if((ch==0x09 || ch==0x0a || ch==0x0c || ch==0x20) &&
 						isAppropriateEndTag()){
@@ -4285,7 +4311,7 @@ final class HtmlParser {
 				break;
 			}
 			case ScriptDataDoubleEscapeStart:{
-				charInput.markToEnd();
+				charInput.setHardMark();
 				int ch=charInput.read();
 				if(ch==0x09 || ch==0x0a || ch==0x0c || ch==0x20 ||
 						ch==0x2f || ch==0x3e){
@@ -4311,7 +4337,7 @@ final class HtmlParser {
 				break;
 			}
 			case ScriptDataDoubleEscapeEnd:{
-				charInput.markToEnd();
+				charInput.setHardMark();
 				int ch=charInput.read();
 				if(ch==0x09 || ch==0x0a || ch==0x0c || ch==0x20 ||
 						ch==0x2f || ch==0x3e){
@@ -4338,7 +4364,7 @@ final class HtmlParser {
 			}
 			case ScriptDataEscapeStart:
 			case ScriptDataEscapeStartDash:{
-				charInput.markToEnd();
+				charInput.setHardMark();
 				int ch=charInput.read();
 				if(ch==0x2d){
 					if(state==TokenizerState.ScriptDataEscapeStart) {
@@ -4477,7 +4503,7 @@ final class HtmlParser {
 				break;
 			}
 			case ScriptDataDoubleEscapedLessThan:{
-				charInput.markToEnd();
+				charInput.setHardMark();
 				int ch=charInput.read();
 				if(ch==0x2f){
 					tempBuffer.clearAll();
@@ -4492,7 +4518,7 @@ final class HtmlParser {
 				break;
 			}
 			case ScriptDataEscapedLessThan:{
-				charInput.markToEnd();
+				charInput.setHardMark();
 				int ch=charInput.read();
 				if(ch==0x2f){
 					tempBuffer.clearAll();
@@ -4530,7 +4556,7 @@ final class HtmlParser {
 					return c11;
 			}
 			case TagOpen:{
-				charInput.markToEnd();
+				charInput.setHardMark();
 				int c11=charInput.read();
 				if(c11==0x21) {
 					state=TokenizerState.MarkupDeclarationOpen;
@@ -4593,7 +4619,7 @@ final class HtmlParser {
 			}
 			case RcDataEndTagOpen:
 			case RawTextEndTagOpen:{
-				charInput.markToEnd();
+				charInput.setHardMark();
 				int ch=charInput.read();
 				if(ch>='A' && ch<='Z'){
 					TagToken token=new EndTagToken((char) (ch+0x20));
@@ -4625,7 +4651,7 @@ final class HtmlParser {
 			}
 			case RcDataEndTagName:
 			case RawTextEndTagName:{
-				charInput.markToEnd();
+				charInput.setHardMark();
 				int ch=charInput.read();
 				if((ch==0x09 || ch==0x0a || ch==0x0c || ch==0x20) && isAppropriateEndTag()){
 					state=TokenizerState.BeforeAttributeName;
@@ -4760,7 +4786,7 @@ final class HtmlParser {
 				break;
 			}
 			case BeforeAttributeValue:{
-				charInput.markToEnd();
+				charInput.setHardMark();
 				int ch=charInput.read();
 				while(ch==0x09 || ch==0x0a || ch==0x0c || ch==0x20){
 					ch=charInput.read();
@@ -4812,7 +4838,7 @@ final class HtmlParser {
 					// Keep reading characters to
 					// reduce the need to re-call
 					// this method
-					int mark=charInput.markIfNeeded();
+					int mark=charInput.setSoftMark();
 					for(int i=0;i<100;i++){
 						ch=charInput.read();
 						if(ch>0 && ch!=0x26 && ch!=0x22){
@@ -4848,7 +4874,7 @@ final class HtmlParser {
 					// Keep reading characters to
 					// reduce the need to re-call
 					// this method
-					int mark=charInput.markIfNeeded();
+					int mark=charInput.setSoftMark();
 					for(int i=0;i<100;i++){
 						ch=charInput.read();
 						if(ch>0 && ch!=0x26 && ch!=0x27){
@@ -4893,7 +4919,7 @@ final class HtmlParser {
 				break;
 			}
 			case AfterAttributeValueQuoted:{
-				int mark=charInput.markIfNeeded();
+				int mark=charInput.setSoftMark();
 				int ch=charInput.read();
 				if(ch==0x09 || ch==0x0a || ch==0x0c || ch==0x20){
 					state=TokenizerState.BeforeAttributeName;
@@ -4914,7 +4940,7 @@ final class HtmlParser {
 				break;
 			}
 			case SelfClosingStartTag:{
-				int mark=charInput.markIfNeeded();
+				int mark=charInput.setSoftMark();
 				int ch=charInput.read();
 				if(ch==0x3e){
 					currentTag.setSelfClosing(true);
@@ -4931,7 +4957,7 @@ final class HtmlParser {
 				break;
 			}
 			case MarkupDeclarationOpen:{
-				int mark=charInput.markIfNeeded();
+				int mark=charInput.setSoftMark();
 				int ch=charInput.read();
 				if(ch=='-' && charInput.read()=='-'){
 					CommentToken token=new CommentToken();
@@ -4974,7 +5000,7 @@ final class HtmlParser {
 					state=TokenizerState.CommentStartDash;
 				} else if(ch==0){
 					error=true;
-					lastComment.append(0xFFFD);
+					lastComment.appendChar(0xFFFD);
 					state=TokenizerState.Comment;
 				} else if(ch==0x3e || ch<0){
 					error=true;
@@ -4983,7 +5009,7 @@ final class HtmlParser {
 					tokens.add(lastComment);
 					return ret;
 				} else {
-					lastComment.append(ch);
+					lastComment.appendChar(ch);
 					state=TokenizerState.Comment;
 				}
 				break;
@@ -4994,8 +5020,8 @@ final class HtmlParser {
 					state=TokenizerState.CommentEnd;
 				} else if(ch==0){
 					error=true;
-					lastComment.append('-');
-					lastComment.append(0xFFFD);
+					lastComment.appendChar('-');
+					lastComment.appendChar(0xFFFD);
 					state=TokenizerState.Comment;
 				} else if(ch==0x3e || ch<0){
 					error=true;
@@ -5004,8 +5030,8 @@ final class HtmlParser {
 					tokens.add(lastComment);
 					return ret;
 				} else {
-					lastComment.append('-');
-					lastComment.append(ch);
+					lastComment.appendChar('-');
+					lastComment.appendChar(ch);
 					state=TokenizerState.Comment;
 				}
 				break;
@@ -5016,7 +5042,7 @@ final class HtmlParser {
 					state=TokenizerState.CommentEndDash;
 				} else if(ch==0){
 					error=true;
-					lastComment.append(0xFFFD);
+					lastComment.appendChar(0xFFFD);
 				} else if(ch<0){
 					error=true;
 					state=TokenizerState.Data;
@@ -5024,7 +5050,7 @@ final class HtmlParser {
 					tokens.add(lastComment);
 					return ret;
 				} else {
-					lastComment.append(ch);
+					lastComment.appendChar(ch);
 				}
 				break;
 			}
@@ -5034,8 +5060,8 @@ final class HtmlParser {
 					state=TokenizerState.CommentEnd;
 				} else if(ch==0){
 					error=true;
-					lastComment.append('-');
-					lastComment.append(0xFFFD);
+					lastComment.appendChar('-');
+					lastComment.appendChar(0xFFFD);
 					state=TokenizerState.Comment;
 				} else if(ch<0){
 					error=true;
@@ -5044,8 +5070,8 @@ final class HtmlParser {
 					tokens.add(lastComment);
 					return ret;
 				} else {
-					lastComment.append('-');
-					lastComment.append(ch);
+					lastComment.appendChar('-');
+					lastComment.appendChar(ch);
 					state=TokenizerState.Comment;
 				}
 				break;
@@ -5059,16 +5085,16 @@ final class HtmlParser {
 					return ret;
 				} else if(ch==0){
 					error=true;
-					lastComment.append('-');
-					lastComment.append('-');
-					lastComment.append(0xFFFD);
+					lastComment.appendChar('-');
+					lastComment.appendChar('-');
+					lastComment.appendChar(0xFFFD);
 					state=TokenizerState.Comment;
 				} else if(ch==0x21){ // --!>
 					error=true;
 					state=TokenizerState.CommentEndBang;
 				} else if(ch==0x2D){
 					error=true;
-					lastComment.append('-');
+					lastComment.appendChar('-');
 				} else if(ch<0){
 					error=true;
 					state=TokenizerState.Data;
@@ -5077,9 +5103,9 @@ final class HtmlParser {
 					return ret;
 				} else {
 					error=true;
-					lastComment.append('-');
-					lastComment.append('-');
-					lastComment.append(ch);
+					lastComment.appendChar('-');
+					lastComment.appendChar('-');
+					lastComment.appendChar(ch);
 					state=TokenizerState.Comment;
 				}
 				break;
@@ -5093,15 +5119,15 @@ final class HtmlParser {
 					return ret;
 				} else if(ch==0){
 					error=true;
-					lastComment.append('-');
-					lastComment.append('-');
-					lastComment.append('!');
-					lastComment.append(0xFFFD);
+					lastComment.appendChar('-');
+					lastComment.appendChar('-');
+					lastComment.appendChar('!');
+					lastComment.appendChar(0xFFFD);
 					state=TokenizerState.Comment;
 				} else if(ch==0x2D){
-					lastComment.append('-');
-					lastComment.append('-');
-					lastComment.append('!');
+					lastComment.appendChar('-');
+					lastComment.appendChar('-');
+					lastComment.appendChar('!');
 					state=TokenizerState.CommentEndDash;
 				} else if(ch<0){
 					error=true;
@@ -5111,10 +5137,10 @@ final class HtmlParser {
 					return ret;
 				} else {
 					error=true;
-					lastComment.append('-');
-					lastComment.append('-');
-					lastComment.append('!');
-					lastComment.append(ch);
+					lastComment.appendChar('-');
+					lastComment.appendChar('-');
+					lastComment.appendChar('!');
+					lastComment.appendChar(ch);
 					state=TokenizerState.Comment;
 				}
 				break;
@@ -5163,7 +5189,7 @@ final class HtmlParser {
 				break;
 			}
 			case RawTextLessThan:{
-				charInput.markToEnd();
+				charInput.setHardMark();
 				int ch=charInput.read();
 				if(ch==0x2f){
 					tempBuffer.clearAll();
@@ -5180,7 +5206,7 @@ final class HtmlParser {
 			case BogusComment:{
 				CommentToken comment=new CommentToken();
 				if(bogusCommentCharacter>=0) {
-					comment.append(bogusCommentCharacter==0 ? 0xFFFD : bogusCommentCharacter);
+					comment.appendChar(bogusCommentCharacter==0 ? 0xFFFD : bogusCommentCharacter);
 				}
 				while(true){
 					int ch=charInput.read();
@@ -5190,7 +5216,7 @@ final class HtmlParser {
 					if(ch==0) {
 						ch=0xFFFD;
 					}
-					comment.append(ch);
+					comment.appendChar(ch);
 				}
 				int ret=tokens.size()|comment.getType();
 				tokens.add(comment);
@@ -5198,7 +5224,7 @@ final class HtmlParser {
 				return ret;
 			}
 			case DocType:{
-				charInput.markToEnd();
+				charInput.setHardMark();
 				int ch=charInput.read();
 				if(ch==0x09||ch==0x0a||ch==0x0c||ch==0x20){
 					state=TokenizerState.BeforeDocTypeName;
@@ -5292,7 +5318,7 @@ final class HtmlParser {
 					return ret;
 				} else {
 					int ch2=0;
-					int pos=charInput.markIfNeeded();
+					int pos=charInput.setSoftMark();
 					if(ch=='P' || ch=='p'){
 						if(((ch2=charInput.read())=='u' || ch2=='U') &&
 								((ch2=charInput.read())=='b' || ch2=='B') &&
@@ -5556,7 +5582,7 @@ final class HtmlParser {
 				break;
 			}
 			case RcDataLessThan:{
-				charInput.markToEnd();
+				charInput.setHardMark();
 				int ch=charInput.read();
 				if(ch==0x2f){
 					tempBuffer.clearAll();

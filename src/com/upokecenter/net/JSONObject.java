@@ -708,7 +708,7 @@ class JSONObject {
 		char         c;
 		int          i;
 		int          len = string.length();
-		StringBuffer sb = new StringBuffer(len + 4);
+		deprecatedStringBuffer sb = new deprecatedStringBuffer(len + 4);
 		String       t;
 
 		sb.append('"');
@@ -792,7 +792,7 @@ class JSONObject {
 		Iterator<String>     keys = keys();
 		Object       o = null;
 		String       s;
-		StringBuffer sb = new StringBuffer();
+		deprecatedStringBuffer sb = new deprecatedStringBuffer();
 
 		sb.append('{');
 		while (keys.hasNext()) {
@@ -850,7 +850,7 @@ class JSONObject {
 		int          i;
 		Iterator<String>     keys = keys();
 		String       pad = "";
-		StringBuffer sb = new StringBuffer();
+		deprecatedStringBuffer sb = new deprecatedStringBuffer();
 		indent += indentFactor;
 		for (i = 0; i < indent; i += 1) {
 			pad += ' ';

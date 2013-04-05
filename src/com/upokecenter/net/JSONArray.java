@@ -267,7 +267,7 @@ class JSONArray {
 	public String join(String separator) {
 		int i;
 		Object o;
-		StringBuffer sb = new StringBuffer();
+		deprecatedStringBuffer sb = new deprecatedStringBuffer();
 		for (i = 0; i < myArrayList.size(); i += 1) {
 			if (i > 0) {
 				sb.append(separator);
@@ -661,7 +661,7 @@ class JSONArray {
 		int i;
 		Object o;
 		String pad = "";
-		StringBuffer sb = new StringBuffer();
+		deprecatedStringBuffer sb = new deprecatedStringBuffer();
 		indent += indentFactor;
 		for (i = 0; i < indent; i += 1) {
 			pad += ' ';

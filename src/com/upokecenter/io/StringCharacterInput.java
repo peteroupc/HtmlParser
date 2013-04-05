@@ -1,16 +1,26 @@
-package com.upokecenter.util;
+/*
+Written in 2013 by Peter Occil.  Released to the public domain.
+Public domain dedication: http://creativecommons.org/publicdomain/zero/1.0/
+*/
+package com.upokecenter.io;
 
 import java.io.IOException;
+import java.nio.charset.MalformedInputException;
 
 
 public final class StringCharacterInput implements ICharacterInput {
 
 	String str=null;
 	int pos=0;
-	public StringCharacterInput(String str){
+	boolean strict=false;
+	public StringCharacterInput(String str, boolean strict){
 		if(str==null)
 			throw new IllegalArgumentException();
 		this.str=str;
+		this.strict=strict;
+	}
+	public StringCharacterInput(String str){
+		this(str,false);
 	}
 
 	@Override
@@ -26,6 +36,8 @@ public final class StringCharacterInput implements ICharacterInput {
 				// Get the Unicode code point for the surrogate pair
 				c=0x10000+(c-0xD800)*0x400+(str.charAt(pos+1)-0xDC00);
 				pos++;
+			} else if(strict && c>=0xD800 && c<=0xDFFF){
+				throw new MalformedInputException(1);
 			}
 			buf[offset]=c;
 			offset++;
@@ -45,6 +57,8 @@ public final class StringCharacterInput implements ICharacterInput {
 				// Get the Unicode code point for the surrogate pair
 				c=0x10000+(c-0xD800)*0x400+(str.charAt(pos+1)-0xDC00);
 				pos++;
+			} else if(strict && c>=0xD800 && c<=0xDFFF){
+				throw new MalformedInputException(1);
 			}
 			pos++;
 			return c;
