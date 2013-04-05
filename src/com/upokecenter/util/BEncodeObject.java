@@ -57,7 +57,7 @@ public final class BEncodeObject {
 			writeInteger(length,stream);
 			stream.write((byte)':');
 			writeUtf8(s,stream);
-		} else if(obj instanceof Map/*<String,BEncodeObject>*/<?,?>){
+		} else if(obj instanceof Map<?,?>){
 			stream.write((byte)'d');
 			Map<String,BEncodeObject> map=(Map<String,BEncodeObject>)obj;
 			for(String key : map.keySet()){
@@ -70,7 +70,7 @@ public final class BEncodeObject {
 				map.get(key).write(stream);
 			}
 			stream.write((byte)'e');
-		} else if(obj instanceof List/*<BEncodeObject>*/<?>){
+		} else if(obj instanceof List<?>){
 			stream.write((byte)'l');
 			List<BEncodeObject> list=(List<BEncodeObject>)obj;
 			for(BEncodeObject value : list){
@@ -252,9 +252,9 @@ public final class BEncodeObject {
 			return TYPE_INTEGER;
 		if(obj instanceof String)
 			return TYPE_STRING;
-		if(obj instanceof Map/*<String,BEncodeObject>*/<?,?>)
+		if(obj instanceof Map<?,?>)
 			return TYPE_DICTIONARY;
-		if(obj instanceof List/*<BEncodeObject>*/<?>)
+		if(obj instanceof List<?>)
 			return TYPE_LIST;
 		throw new AssertionError();
 	}
@@ -275,7 +275,7 @@ public final class BEncodeObject {
 		BEncodeObject beo=this;
 		if(beo.obj instanceof Long || beo.obj instanceof String)
 			return beo; // integer and string objects are immutable
-		if(beo.obj instanceof Map/*<String,BEncodeObject>*/<?,?>){
+		if(beo.obj instanceof Map<?,?>){
 			BEncodeObject newbeo=BEncodeObject.newDictionary();
 			for(String key : ((Map<String,BEncodeObject>)beo.obj).keySet()){
 				((Map<String,BEncodeObject>)newbeo.obj).put(key,
@@ -283,7 +283,7 @@ public final class BEncodeObject {
 			}
 			return newbeo;
 		}
-		if(beo.obj instanceof List/*<BEncodeObject>*/<?>){
+		if(beo.obj instanceof List<?>){
 			BEncodeObject newbeo=BEncodeObject.newList();
 			for(BEncodeObject value : ((List<BEncodeObject>)beo.obj)){
 				((List<BEncodeObject>)newbeo.obj).add(value);
@@ -341,10 +341,10 @@ public final class BEncodeObject {
 		return (Map<String,BEncodeObject>)obj;
 	}
 	public int size(){
-		if(obj instanceof Map/*<String,BEncodeObject>*/<?,?>)
-			return ((Map/*<String,BEncodeObject>*/<?,?>)obj).size();
-		else if(obj instanceof List/*<BEncodeObject>*/<?>)
-			return ((List/*<BEncodeObject>*/<?>)obj).size();
+		if(obj instanceof Map<?,?>)
+			return ((Map<?,?>)obj).size();
+		else if(obj instanceof List<?>)
+			return ((List<?>)obj).size();
 		return 0;
 	}
 	public BEncodeObject get(String key){
