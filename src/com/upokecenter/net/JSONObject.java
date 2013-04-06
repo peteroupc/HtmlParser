@@ -4,9 +4,10 @@ package com.upokecenter.net;
 
 import java.text.ParseException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+
+import com.upokecenter.util.StringUtility;
 
 
 /**
@@ -44,7 +45,7 @@ import java.util.NoSuchElementException;
  * @author JSON.org
  * @version 0.1
  */
-class JSONObject {
+public class JSONObject {
 
 	/**
 	 * JSONObject.NULL is equivalent to the value that JavaScript calls null,
@@ -56,7 +57,7 @@ class JSONObject {
 		/**
 		 * Make a Null object.
 		 */
-		private Null() {
+		public Null() {
 		}
 
 
@@ -68,6 +69,10 @@ class JSONObject {
 		@Override
 		protected final Object clone() {
 			return this;
+		}
+
+		@Override public int hashCode(){
+			return 0;
 		}
 
 
@@ -133,13 +138,14 @@ class JSONObject {
 		while (true) {
 			c = x.nextClean();
 			switch (c) {
-			case 0:
+			case (char)0:
 				throw x.syntaxError("A JSONObject must end with '}'");
 			case '}':
 				return;
 			default:
 				x.back();
 				key = x.nextValue().toString();
+				break;
 			}
 			if (x.nextClean() != ':')
 				throw x.syntaxError("Expected a ':' after a key");
@@ -276,7 +282,7 @@ class JSONObject {
 	 * Get the HashMap the holds that contents of the JSONObject.
 	 * @return The getHashMap.
 	 */
-	HashMap<String, Object> getHashMap() {
+	 HashMap<String, Object> getHashMap() {
 		return myHashMap;
 	}
 
@@ -366,10 +372,40 @@ class JSONObject {
 	/**
 	 * Get an enumeration of the keys of the JSONObject.
 	 *
+	 * PeterO: Changed to Iterable
+	 *
 	 * @return An iterator of the keys.
 	 */
-	public Iterator<String> keys() {
-		return myHashMap.keySet().iterator();
+	public Iterable<String> keys() {
+		return myHashMap.keySet();
+	}
+
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((myHashMap == null) ? 0 : myHashMap.hashCode());
+		return result;
+	}
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		JSONObject other = (JSONObject) obj;
+		if (myHashMap == null) {
+			if (other.myHashMap != null)
+				return false;
+		} else if (!myHashMap.equals(other.myHashMap))
+			return false;
+		return true;
 	}
 
 
@@ -391,9 +427,8 @@ class JSONObject {
 	 */
 	public JSONArray names() {
 		JSONArray ja = new JSONArray();
-		Iterator<String>  keys = keys();
-		while (keys.hasNext()) {
-			ja.put(keys.next());
+		for(String key : keys()) {
+			ja.put(key);
 		}
 		if (ja.length() == 0)
 			return null;
@@ -407,7 +442,7 @@ class JSONObject {
 	 * @return A String.
 	 * @exception ArithmeticException JSON can only serialize finite numbers.
 	 */
-	static public String numberToString(Number n) throws ArithmeticException {
+	static public String numberToString(Object n) throws ArithmeticException {
 		if (
 				(n instanceof Float &&
 						(((Float)n).isInfinite() || ((Float)n).isNaN())) ||
@@ -418,7 +453,7 @@ class JSONObject {
 
 		// Shave off trailing zeros and decimal point, if possible.
 
-		String s = n.toString().toLowerCase();
+		String s = StringUtility.toLowerCaseAscii(n.toString());
 		if (s.indexOf('e') < 0 && s.indexOf('.') > 0) {
 			while (s.endsWith("0")) {
 				s = s.substring(0, s.length() - 1);
@@ -510,7 +545,7 @@ class JSONObject {
 			try {
 				return Double.parseDouble((String) o);
 			}
-			catch (Exception e) {
+			catch(NumberFormatException e) {
 			}
 		}
 		return defaultValue;
@@ -548,7 +583,7 @@ class JSONObject {
 				return ((Number)o).intValue();
 			try {
 				return Integer.parseInt((String)o);
-			} catch (Exception e) {
+			} catch (NumberFormatException e) {
 			}
 		}
 		return defaultValue;
@@ -708,7 +743,7 @@ class JSONObject {
 		char         c;
 		int          i;
 		int          len = string.length();
-		deprecatedStringBuffer sb = new deprecatedStringBuffer(len + 4);
+		StringBuilder sb = new StringBuilder(len + 4);
 		String       t;
 
 		sb.append('"');
@@ -743,6 +778,7 @@ class JSONObject {
 				} else {
 					sb.append(c);
 				}
+				break;
 			}
 		}
 		sb.append('"');
@@ -789,17 +825,14 @@ class JSONObject {
 	 */
 	@Override
 	public String toString() {
-		Iterator<String>     keys = keys();
 		Object       o = null;
-		String       s;
-		deprecatedStringBuffer sb = new deprecatedStringBuffer();
+		StringBuilder sb = new StringBuilder();
 
 		sb.append('{');
-		while (keys.hasNext()) {
+		for(String s : keys()){
 			if (o != null) {
 				sb.append(',');
 			}
-			s = keys.next().toString();
 			o = myHashMap.get(s);
 			if (o != null) {
 				sb.append(quote(s));
@@ -807,7 +840,7 @@ class JSONObject {
 				if (o instanceof String) {
 					sb.append(quote((String)o));
 				} else if (o instanceof Number) {
-					sb.append(numberToString((Number)o));
+					sb.append(numberToString(o));
 				} else {
 					sb.append(o.toString());
 				}
@@ -846,18 +879,16 @@ class JSONObject {
 	 *  with <code>{</code>&nbsp;<small>(left brace)</small> and ending
 	 *  with <code>}</code>&nbsp;<small>(right brace)</small>.
 	 */
-	String toString(int indentFactor, int indent) {
+	 String toString(int indentFactor, int indent) {
 		int          i;
-		Iterator<String>     keys = keys();
 		String       pad = "";
-		deprecatedStringBuffer sb = new deprecatedStringBuffer();
+		StringBuilder sb = new StringBuilder();
 		indent += indentFactor;
 		for (i = 0; i < indent; i += 1) {
 			pad += ' ';
 		}
 		sb.append("{\n");
-		while (keys.hasNext()) {
-			String s = keys.next().toString();
+		for(String s : keys()) {
 			Object o = myHashMap.get(s);
 			if (o != null) {
 				if (sb.length() > 2) {
@@ -869,7 +900,7 @@ class JSONObject {
 				if (o instanceof String) {
 					sb.append(quote((String)o));
 				} else if (o instanceof Number) {
-					sb.append(numberToString((Number) o));
+					sb.append(numberToString(o));
 				} else if (o instanceof JSONObject) {
 					sb.append(((JSONObject)o).toString(indentFactor, indent));
 				} else if (o instanceof JSONArray) {

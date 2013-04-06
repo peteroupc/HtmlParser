@@ -43,7 +43,7 @@ import java.util.NoSuchElementException;
  * @author JSON.org
  * @version 0.1
  */
-class JSONArray {
+public class JSONArray {
 
 
 	/**
@@ -267,7 +267,7 @@ class JSONArray {
 	public String join(String separator) {
 		int i;
 		Object o;
-		deprecatedStringBuffer sb = new deprecatedStringBuffer();
+		StringBuilder sb = new StringBuilder();
 		for (i = 0; i < myArrayList.size(); i += 1) {
 			if (i > 0) {
 				sb.append(separator);
@@ -278,14 +278,13 @@ class JSONArray {
 			} else if (o instanceof String) {
 				sb.append(JSONObject.quote((String)o));
 			} else if (o instanceof Number) {
-				sb.append(JSONObject.numberToString((Number)o));
+				sb.append(JSONObject.numberToString(o));
 			} else {
 				sb.append(o.toString());
 			}
 		}
 		return sb.toString();
 	}
-
 
 	/**
 	 * Get the length of the JSONArray.
@@ -375,7 +374,7 @@ class JSONArray {
 			try {
 				return Double.parseDouble((String) o);
 			}
-			catch (Exception e) {
+			catch (NumberFormatException e) {
 			}
 		}
 		return defaultValue;
@@ -411,7 +410,7 @@ class JSONArray {
 			try {
 				return Integer.parseInt((String)o);
 			}
-			catch (Exception e) {
+			catch (NumberFormatException e) {
 			}
 		}
 		return defaultValue;
@@ -599,6 +598,29 @@ class JSONArray {
 		return this;
 	}
 
+	public JSONArray add(int index, boolean value) {
+		add(index,Boolean.valueOf(value));
+		return this;
+	}
+	public JSONArray add(int index, double value) {
+		add(index,Double.valueOf(value));
+		return this;
+	}
+	public JSONArray add(int index, int value) {
+		add(index,Integer.valueOf(value));
+		return this;
+	}
+	public JSONArray add(int index, Object value) {
+		if (index < 0)
+			throw new NoSuchElementException("JSONArray[" + index +
+					"] not found.");
+		else if (value == null)
+			throw new NullPointerException();
+		else {
+			myArrayList.add(index, value);
+		}
+		return this;
+	}
 
 	/**
 	 * Produce a JSONObject by combining a JSONArray of names with the values
@@ -657,11 +679,11 @@ class JSONArray {
 	 * @return a printable, displayable, transmittable
 	 *  representation of the array.
 	 */
-	String toString(int indentFactor, int indent) {
+	 String toString(int indentFactor, int indent) {
 		int i;
 		Object o;
 		String pad = "";
-		deprecatedStringBuffer sb = new deprecatedStringBuffer();
+		StringBuilder sb = new StringBuilder();
 		indent += indentFactor;
 		for (i = 0; i < indent; i += 1) {
 			pad += ' ';
@@ -678,7 +700,7 @@ class JSONArray {
 			} else if (o instanceof String) {
 				sb.append(JSONObject.quote((String) o));
 			} else if (o instanceof Number) {
-				sb.append(JSONObject.numberToString((Number) o));
+				sb.append(JSONObject.numberToString(o));
 			} else if (o instanceof JSONObject) {
 				sb.append(((JSONObject)o).toString(indentFactor, indent));
 			} else if (o instanceof JSONArray) {
@@ -690,4 +712,44 @@ class JSONArray {
 		sb.append(']');
 		return sb.toString();
 	}
+
+	/**
+	 * 
+	 * Removes the item at the specified index.
+	 * Added by Peter O. 2013-04-05
+	 * 
+	 */
+	public void removeAt(int index){
+		myArrayList.remove(index);
+	}
+
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((myArrayList == null) ? 0 : myArrayList.hashCode());
+		return result;
+	}
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		JSONArray other = (JSONArray) obj;
+		if (myArrayList == null) {
+			if (other.myArrayList != null)
+				return false;
+		} else if (!myArrayList.equals(other.myArrayList))
+			return false;
+		return true;
+	}
+
+
 }

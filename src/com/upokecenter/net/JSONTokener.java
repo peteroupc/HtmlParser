@@ -13,7 +13,7 @@ import java.text.ParseException;
  * @author JSON.org
  * @version 0.1
  */
-class JSONTokener {
+public class JSONTokener {
 
 	/**
 	 * The index of the next character.
@@ -84,7 +84,7 @@ class JSONTokener {
 	 * @return The next character, or 0 if past the end of the source string.
 	 */
 	public char next() {
-		char c = more() ? mySource.charAt(myIndex) : 0;
+		char c = more() ? mySource.charAt(myIndex) : (char)0;
 		myIndex += 1;
 		return c;
 	}
@@ -174,13 +174,13 @@ class JSONTokener {
 	 */
 	public String nextString(char quote) throws ParseException {
 		char c;
-		deprecatedStringBuffer sb = new deprecatedStringBuffer();
+		StringBuilder sb = new StringBuilder();
 		while (true) {
 			c = next();
 			switch (c) {
-			case 0:
-			case 0x0A:
-			case 0x0D:
+			case (char)0:
+			case (char)0x0A:
+			case (char)0x0D:
 				throw syntaxError("Unterminated string");
 			case '\\':
 				c = next();
@@ -204,16 +204,18 @@ class JSONTokener {
 					sb.append((char)Integer.parseInt(next(4), 16));
 					break;
 				case 'x' :
-					sb.append((char) Integer.parseInt(next(2), 16));
+					sb.append((char)Integer.parseInt(next(2), 16));
 					break;
 				default:
 					sb.append(c);
+					break;
 				}
 				break;
 			default:
 				if (c == quote)
 					return sb.toString();
 				sb.append(c);
+				break;
 			}
 		}
 	}
@@ -226,7 +228,7 @@ class JSONTokener {
 	 * @return   A string.
 	 */
 	public String nextTo(char d) {
-		deprecatedStringBuffer sb = new deprecatedStringBuffer();
+		StringBuilder sb = new StringBuilder();
 		while (true) {
 			char c = next();
 			if (c == d || c == 0 || c == '\n' || c == '\r') {
@@ -248,7 +250,7 @@ class JSONTokener {
 	 */
 	public String nextTo(String delimiters) {
 		char c;
-		deprecatedStringBuffer sb = new deprecatedStringBuffer();
+		StringBuilder sb = new StringBuilder();
 		while (true) {
 			c = next();
 			if (delimiters.indexOf(c) >= 0 || c == 0 ||
@@ -284,7 +286,7 @@ class JSONTokener {
 			back();
 			return new JSONArray(this);
 		}
-		deprecatedStringBuffer sb = new deprecatedStringBuffer();
+		StringBuilder sb = new StringBuilder();
 		char b = c;
 		while (c >= ' ' && c != ':' && c != ',' && c != ']' && c != '}' &&
 				c != '/') {
@@ -302,11 +304,11 @@ class JSONTokener {
 		if ((b >= '0' && b <= '9') || b == '.' || b == '-' || b == '+') {
 			try {
 				return Integer.valueOf(s);
-			} catch (Exception e) {
+			} catch(NumberFormatException e) {
 			}
 			try {
 				return Double.valueOf(s);
-			} catch (Exception e) {
+			} catch(NumberFormatException e) {
 			}
 		}
 		if (s.length() == 0)
@@ -379,7 +381,7 @@ class JSONTokener {
 	 * and convert plus to space. There are Web transport systems that insist on
 	 * doing unnecessary URL encoding. This provides a way to undo it.
 	 */
-	void unescape() {
+	 void unescape() {
 		mySource = unescape(mySource);
 	}
 
@@ -390,7 +392,7 @@ class JSONTokener {
 	 */
 	public static String unescape(String s) {
 		int len = s.length();
-		deprecatedStringBuffer b = new deprecatedStringBuffer();
+		StringBuilder b = new StringBuilder();
 		for (int i = 0; i < len; ++i) {
 			char c = s.charAt(i);
 			if (c == '+') {

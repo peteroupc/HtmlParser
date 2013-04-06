@@ -1,7 +1,7 @@
 /*
 Written in 2013 by Peter Occil.  Released to the public domain.
 Public domain dedication: http://creativecommons.org/publicdomain/zero/1.0/
-*/
+ */
 
 package com.upokecenter.util;
 
@@ -278,7 +278,7 @@ public final class BEncodeObject {
 		if(beo.obj instanceof Map<?,?>){
 			BEncodeObject newbeo=BEncodeObject.newDictionary();
 			for(String key : ((Map<String,BEncodeObject>)beo.obj).keySet()){
-				((Map<String,BEncodeObject>)newbeo.obj).put(key,
+				newbeo.getDictionary().put(key,
 						((Map<String,BEncodeObject>)beo.obj).get(key));
 			}
 			return newbeo;
@@ -286,7 +286,7 @@ public final class BEncodeObject {
 		if(beo.obj instanceof List<?>){
 			BEncodeObject newbeo=BEncodeObject.newList();
 			for(BEncodeObject value : ((List<BEncodeObject>)beo.obj)){
-				((List<BEncodeObject>)newbeo.obj).add(value);
+				newbeo.getList().add(value);
 			}
 			return newbeo;
 		}
@@ -554,7 +554,7 @@ public final class BEncodeObject {
 	}
 
 	private static int readPositiveInteger(InputStream stream) throws IOException{
-		boolean haveHex=false;
+		boolean haveNumber=false;
 		while(true){ // skip zeros
 			stream.mark(2);
 			int c=stream.read();
@@ -564,7 +564,7 @@ public final class BEncodeObject {
 				}
 				break;
 			}
-			haveHex=true;
+			haveNumber=true;
 		}
 		long value=0;
 		while(true){
@@ -572,7 +572,7 @@ public final class BEncodeObject {
 			int number=stream.read();
 			if(number>='0' && number<='9'){
 				value=(value*10)+(number-'0');
-				haveHex=true;
+				haveNumber=true;
 			} else {
 				if(number>=0) {
 					stream.reset();
@@ -582,7 +582,7 @@ public final class BEncodeObject {
 			if(value>Integer.MAX_VALUE)
 				throw new BEncodeException("Integer too big");
 		}
-		if(!haveHex)
+		if(!haveNumber)
 			throw new BEncodeException("Positive integer expected");
 		return (int)value;
 	}

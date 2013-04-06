@@ -1,6 +1,6 @@
 /*
 Modified from the original version by Peter Occil in 2013. Still in the public domain.
-*/
+ */
 package com.upokecenter.util;
 /**
  * <p>Encodes and decodes to and from Base64 notation.</p>

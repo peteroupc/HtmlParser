@@ -22,7 +22,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
-*/
+ */
 package com.upokecenter.encoding;
 
 import java.io.IOException;
@@ -101,9 +101,9 @@ final class SingleByteEncoding implements ITextEncoder, ITextDecoder {
 			} else {
 				int cp=indexes[(c)&0x7F];
 				if(cp==0){
-					if(error.equals(TextEncoding.ENCODING_ERROR_REPLACE))
+					if(error.equals(TextEncoding.ENCODING_ERROR_REPLACE)) {
 						cp=0xFFFD;
-					else {
+					} else {
 						int[] data=new int[1];
 						int o=error.emitDecoderError(data,0,1);
 						if(o>0)return data[0];

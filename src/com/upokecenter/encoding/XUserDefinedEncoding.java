@@ -22,7 +22,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
-*/
+ */
 package com.upokecenter.encoding;
 
 import java.io.IOException;
@@ -43,9 +43,9 @@ final class XUserDefinedEncoding implements ITextEncoder, ITextDecoder {
 		if((stream)==null)throw new NullPointerException("stream");
 		if((error)==null)throw new NullPointerException("error");
 		if((buffer)==null)throw new NullPointerException("buffer");
-if((offset)<0)throw new IndexOutOfBoundsException("offset"+" not greater or equal to "+"0"+" ("+Integer.toString(offset)+")");
-if((length)<0)throw new IndexOutOfBoundsException("length"+" not greater or equal to "+"0"+" ("+Integer.toString(length)+")");
-if((offset+length)>buffer.length)throw new IndexOutOfBoundsException("offset+length"+" not less or equal to "+Integer.toString(buffer.length)+" ("+Integer.toString(offset+length)+")");
+		if((offset)<0)throw new IndexOutOfBoundsException("offset"+" not greater or equal to "+"0"+" ("+Integer.toString(offset)+")");
+		if((length)<0)throw new IndexOutOfBoundsException("length"+" not greater or equal to "+"0"+" ("+Integer.toString(length)+")");
+		if((offset+length)>buffer.length)throw new IndexOutOfBoundsException("offset+length"+" not less or equal to "+Integer.toString(buffer.length)+" ("+Integer.toString(offset+length)+")");
 		if(length==0)return 0;
 		int total=0;
 		for(int i=0;i<length;i++){
@@ -69,9 +69,9 @@ if((offset+length)>buffer.length)throw new IndexOutOfBoundsException("offset+len
 		if((stream)==null)throw new NullPointerException("stream");
 		if((error)==null)throw new NullPointerException("error");
 		if((array)==null)throw new NullPointerException("array");
-if((offset)<0)throw new IndexOutOfBoundsException("offset"+" not greater or equal to "+"0"+" ("+Integer.toString(offset)+")");
-if((length)<0)throw new IndexOutOfBoundsException("length"+" not greater or equal to "+"0"+" ("+Integer.toString(length)+")");
-if((offset+length)>array.length)throw new IndexOutOfBoundsException("offset+length"+" not less or equal to "+Integer.toString(array.length)+" ("+Integer.toString(offset+length)+")");
+		if((offset)<0)throw new IndexOutOfBoundsException("offset"+" not greater or equal to "+"0"+" ("+Integer.toString(offset)+")");
+		if((length)<0)throw new IndexOutOfBoundsException("length"+" not greater or equal to "+"0"+" ("+Integer.toString(length)+")");
+		if((offset+length)>array.length)throw new IndexOutOfBoundsException("offset+length"+" not less or equal to "+Integer.toString(array.length)+" ("+Integer.toString(offset+length)+")");
 		for(int i=0;i<length;i++){
 			int c=array[offset++];
 			if(c<0 || c>=0x110000){
