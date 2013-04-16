@@ -1,6 +1,6 @@
 // Modified by Peter O. to use generics; also
 // moved from org.json.  Still in the public domain.
-package com.upokecenter.net;
+package com.upokecenter.json;
 
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -112,7 +112,7 @@ public class JSONArray {
 	 * Construct a JSONArray from a Collection.
 	 * @param collection     A Collection.
 	 */
-	public JSONArray(Collection<?> collection) {
+	public JSONArray(/*covar*/Collection<?> collection) {
 		myArrayList = new ArrayList<Object>(collection);
 	}
 

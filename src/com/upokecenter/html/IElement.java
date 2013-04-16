@@ -36,32 +36,12 @@ import java.util.List;
  *
  */
 public interface IElement extends INode {
+
+
 	/**
-	 * 
-	 * Gets the name of the element as used on its HTML tags.
-	 * 
-	 * @return the element's tag name.  For HTML elements,
-	 * an uppercase version of the name will be returned.
+	 * Gets a list of all attributes declared on this element.
 	 */
-	String getTagName();
-	/**
-	 * 
-	 * Gets the element's local name.  For elements with no
-	 * namespace, this will equal the element's tag name.
-	 * 
-	 * @return the element's local name. This method doesn't
-	 * convert it to uppercase even for HTML elements, unlike
-	 * getTagName.
-	 */
-	String getLocalName();
-	/**
-	 * 
-	 * Gets the namespace name of this element.  For HTML elements,
-	 * it will equal "http://www.w3.org/1999/xhtml".
-	 * 
-	 * 
-	 */
-	String getNamespaceURI();
+	List<IAttr> getAttributes();
 	/**
 	 * 
 	 * Gets an attribute declared on this element.
@@ -82,7 +62,14 @@ public interface IElement extends INode {
 	 * exist.
 	 */
 	String getAttributeNS(String namespace, String name);
-
+	/**
+	 * Gets all descendents, both direct and indirect, that have
+	 * the specified id, using case-sensitive matching.
+	 * 
+	 * @param id
+	 * 
+	 */
+	IElement getElementById(String id);
 	/**
 	 * 
 	 * Gets all descendents, both direct and indirect, that have
@@ -91,4 +78,40 @@ public interface IElement extends INode {
 	 * @param tagName A tag name.
 	 */
 	List<IElement> getElementsByTagName(String tagName);
+	/**
+	 * Gets the value of the id attribute on this element.
+	 * 
+	 * @return the value of the id attribute, or null if it
+	 * doesn't exist.
+	 */
+	String getId();
+
+	/**
+	 * 
+	 * Gets the element's local name.  For elements with no
+	 * namespace, this will equal the element's tag name.
+	 * 
+	 * @return the element's local name. This method doesn't
+	 * convert it to uppercase even for HTML elements, unlike
+	 * getTagName.
+	 */
+	String getLocalName();
+
+	/**
+	 * 
+	 * Gets the namespace name of this element.  For HTML elements,
+	 * it will equal "http://www.w3.org/1999/xhtml".
+	 * 
+	 * 
+	 */
+	String getNamespaceURI();
+	/**
+	 * 
+	 * Gets the name of the element as used on its HTML tags.
+	 * 
+	 * @return the element's tag name.  For HTML elements,
+	 * an uppercase version of the name will be returned.
+	 */
+	String getTagName();
+	String getPrefix();
 }

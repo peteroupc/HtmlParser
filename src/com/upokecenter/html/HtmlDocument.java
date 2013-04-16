@@ -36,6 +36,7 @@ import com.upokecenter.net.DownloadHelper;
 import com.upokecenter.net.HeaderParser;
 import com.upokecenter.net.IHttpHeaders;
 import com.upokecenter.net.IResponseListener;
+import com.upokecenter.util.URL;
 
 public final class HtmlDocument {
 	private static final class ParseURLListener implements
@@ -49,14 +50,12 @@ public final class HtmlDocument {
 			return parser.parse();
 		}
 	}
-	private HtmlDocument(){};
-
 	/**
 	 * 
 	 * Gets the absolute URL from an HTML element.
 	 * 
-	 * @param node An IMG, A, AREA, LINK, BASE, FRAME, or SCRIPT element
-	 * @return an absolute URL of the element's SRC or HREF, or an
+	 * @param node A HTML element containing a URL
+	 * @return an absolute URL of the element's SRC, DATA, or HREF, or an
 	 * empty string if none exists.
 	 */
 	public static String getHref(IElement node){
@@ -65,81 +64,41 @@ public final class HtmlDocument {
 		if("A".equals(name) || "LINK".equals(name) || "AREA".equals(name) ||
 				"BASE".equals(name)){
 			href=node.getAttribute("href");
-		} else if("IMG".equals(name) || "SCRIPT".equals(name) || "FRAME".equals(name)){
+		} else if("OBJECT".equals(name)){
+			href=node.getAttribute("data");
+		} else if("IMG".equals(name) || "SCRIPT".equals(name) ||
+				"FRAME".equals(name) || "SOURCE".equals(name) ||
+				"TRACK".equals(name) ||
+				"IFRAME".equals(name) ||
+				"AUDIO".equals(name) ||
+				"VIDEO".equals(name) ||
+				"EMBED".equals(name)){
 			href=node.getAttribute("src");
 		} else
 			return "";
 		if(href==null || href.length()==0)
 			return "";
-		return HtmlParser.resolveURL(node,href,null);
+		return HtmlDocument.resolveURL(node,href,null);
 	}
 
 	/**
+	 * Utility method for converting a relative URL to an absolute
+	 * one, using the base URI and the encoding of the given node.
 	 * 
-	 * Resolves a URL relative to an HTML element.
-	 * 
-	 * @param node an HTML element.
-	 * @param href Absolute or relative URL.
-	 * @return an absolute URL corresponding to the HTML element,
-	 * or an empty string if _href_ is null or empty.
+	 * @param node An HTML node, usually an IDocument or IElement
+	 * @param href A relative or absolute URL.
+	 * @return An absolute URL.
 	 */
-	public static String getHref(IElement node, String href){
+	public static String getHref(INode node, String href){
 		if(href==null || href.length()==0)
 			return "";
-		return HtmlParser.resolveURL(node,href,null);
+		return HtmlDocument.resolveURL(node,href,null);
 	}
 
-	/**
-	 * 
-	 * Parses an HTML document from a URL.
-	 * 
-	 * @param url URL of the HTML document. In addition to HTTP
-	 * and other URLs supported by URLConnection, this method also
-	 * supports Data URLs.
-	 * @return a document object from the HTML document
-	 * @throws IOException if an I/O error occurs, such as a network
-	 * error, a download error, and so on.
-	 */
-	public static IDocument parseURL(String url) throws IOException {
-		return DownloadHelper.downloadUrl(url,
-				new ParseURLListener(), false);
-	}
-
-	/**
-	 * 
-	 * Parses an HTML document from an input stream, using "about:blank"
-	 * as its address.
-	 * 
-	 * @param stream an input stream
-	 * 
-	 * @throws IOException if an I/O error occurs.
-	 */
-	public static IDocument parseStream(InputStream stream)
-			throws IOException {
-		return parseStream(stream,"about:blank");
-	}
-
-	/**
-	 * 
-	 * Parses an HTML document from an input stream, using the given
-	 * URL as its address.
-	 * 
-	 * @param stream
-	 * @param address
-	 * 
-	 * @throws IOException
-	 */
-	public static IDocument parseStream(InputStream stream, String address)
-			throws IOException {
-		if(!stream.markSupported()){
-			stream=new BufferedInputStream(stream);
-		}
-		HtmlParser parser=new HtmlParser(stream,address,null);
-		return parser.parse();
-	}
 	/**
 	 * 
 	 * Parses an HTML document from a file on the file system.
+	 * Its address will correspond to that file.
 	 * 
 	 * @param file
 	 * 
@@ -158,5 +117,72 @@ public final class HtmlDocument {
 				stream.close();
 			}
 		}
+	}
+
+	/**
+	 * Parses an HTML document from an input stream, using "about:blank"
+	 * as its address.
+	 * 
+	 * @param stream an input stream
+	 * 
+	 * @throws IOException if an I/O error occurs.
+	 */
+	public static IDocument parseStream(InputStream stream)
+			throws IOException {
+		return parseStream(stream,"about:blank");
+	}
+
+	/**
+	 * 
+	 * Parses an HTML document from an input stream, using the given
+	 * URL as its address.
+	 * 
+	 * @param stream an input stream representing an HTML document.
+	 * @param address an absolute URL representing an address.
+	 * @return an IDocument representing the HTML document.
+	 * @throws IOException if an I/O error occurs
+	 * @throws IllegalArgumentException if the given address
+	 * is not an absolute URL.
+	 */
+	public static IDocument parseStream(InputStream stream, String address)
+			throws IOException {
+		if(!stream.markSupported()){
+			stream=new BufferedInputStream(stream);
+		}
+		HtmlParser parser=new HtmlParser(stream,address,null);
+		return parser.parse();
+	}
+
+	/**
+	 * 
+	 * Parses an HTML document from a URL.
+	 * 
+	 * @param url URL of the HTML document. In addition to HTTP
+	 * and other URLs supported by URLConnection, this method also
+	 * supports Data URLs.
+	 * @return a document object from the HTML document
+	 * @throws IOException if an I/O error occurs, such as a network
+	 * error, a download error, and so on.
+	 */
+	public static IDocument parseURL(String url) throws IOException {
+		return DownloadHelper.downloadUrl(url,
+				new ParseURLListener(), false);
+	}
+	private HtmlDocument(){}
+
+	public static String resolveURL(INode node, String url, String base){
+		String encoding=((node instanceof IDocument) ?
+				((IDocument)node).getCharacterSet() : node.getOwnerDocument().getCharacterSet());
+		if("utf-16be".equals(encoding) ||
+				"utf-16le".equals(encoding)){
+			encoding="utf-8";
+		}
+		if(base==null){
+			base=node.getBaseURI();
+		}
+		URL resolved=URL.parse(url,URL.parse(base),encoding,true);
+		if(resolved==null)
+			return base;
+		return resolved.toString();
 	}
 }

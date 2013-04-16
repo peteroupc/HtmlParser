@@ -34,7 +34,6 @@ package com.upokecenter.html;
  *
  */
 public final class NodeType {
-	private NodeType(){}
 	/**
 	 * A document node.
 	 */
@@ -55,4 +54,6 @@ public final class NodeType {
 	 * A DOCTYPE node.
 	 */
 	public static final int DOCUMENT_TYPE_NODE = 10;
+	public static final int PROCESSING_INSTRUCTION_NODE = 7;
+	private NodeType(){}
 }

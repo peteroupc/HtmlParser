@@ -588,10 +588,10 @@ public final class URL {
 					state=ParseState.Fragment;
 					break;
 				}
-				if(!isUrlCodePoint(c) || (c=='%' &&
+				if((c>=0 && (!isUrlCodePoint(c) && c!='%')  || (c=='%' &&
 						(index+2>ending ||
 								!isHexDigit(s.charAt(index)) ||
-								!isHexDigit(s.charAt(index+1))))){
+								!isHexDigit(s.charAt(index+1)))))){
 					error=true;
 				}
 				if(c>=0 && c!=0x09 && c!=0x0a && c!=0x0d){
@@ -632,10 +632,9 @@ public final class URL {
 				break;
 			case Relative:{
 				relative=true;
-				if(baseurl==null) {
-					baseurl=url;
+				if(!"file".equals(url.scheme)){
+					url.scheme=baseurl.scheme;
 				}
-				url.scheme=baseurl.scheme;
 				if(c<0){
 					url.host=baseurl.host;
 					url.port=baseurl.port;
@@ -733,7 +732,7 @@ public final class URL {
 							error=true;
 							continue;
 						}
-						if(!isUrlCodePoint(cp) || (cp=='%' &&
+						if((!isUrlCodePoint(c) && c!='%')  || (cp=='%' &&
 								(i+3>buffer.size() ||
 										!isHexDigit(array[index+1]) ||
 										!isHexDigit(array[index+2])))){
@@ -744,17 +743,18 @@ public final class URL {
 							continue;
 						}
 						IntList result=(password==null) ? username : password;
-						if(cp<=0x20 || cp>=0x7F || StringUtility.isChar(cp,"#<>?`\"")){
+						if(cp<=0x20 || cp>=0x7F || ((cp&0x7F)==cp && "#<>?`\"".indexOf((char)cp)>=0)){
 							percentEncodeUtf8(result,cp);
 						} else {
 							result.appendInt(cp);
 						}
 					}
+					
 					//DebugUtility.log("username=%s",username);
 					//DebugUtility.log("password=%s",password);
 					buffer.clearAll();
 					hostStart=index;
-				} else if(c<0 || StringUtility.isChar(c,"/\\?#")){
+				} else if(c<0 || ((c&0x7F)==c && "/\\?#".indexOf((char)c)>=0)){
 					buffer.clearAll();
 					state=ParseState.Host;
 					index=hostStart;
@@ -763,7 +763,7 @@ public final class URL {
 				}
 				break;
 			case FileHost:
-				if(c<0 || StringUtility.isChar(c,"/\\?#")){
+				if(c<0 || ((c&0x7F)==c && "/\\?#".indexOf((char)c)>=0)){
 					index=oldindex;
 					if(buffer.size()==2){
 						int c1=buffer.get(0);
@@ -794,7 +794,7 @@ public final class URL {
 					url.host=host;
 					buffer.clearAll();
 					state=ParseState.Port;
-				} else if(c<0 || StringUtility.isChar(c,"/\\?#")){
+				} else if(c<0 || ((c&0x7F)==c && "/\\?#".indexOf((char)c)>=0)){
 					String host=hostParse(buffer.toString());
 					if(host==null)
 						return null;
@@ -823,7 +823,7 @@ public final class URL {
 					if(portstate==2) {
 						buffer.appendInt(c);
 					}
-				} else if(c<0 || StringUtility.isChar(c,"/\\?#")){
+				} else if(c<0 || ((c&0x7F)==c && "/\\?#".indexOf((char)c)>=0)){
 					String bufport="";
 					if(portstate==1) {
 						bufport="0";
@@ -901,7 +901,7 @@ public final class URL {
 				} else if(c==0x09 || c==0x0a || c==0x0d){
 					error=true;
 				} else {
-					if(!isUrlCodePoint(c) || (c=='%' &&
+					if((!isUrlCodePoint(c) && c!='%')  || (c=='%' &&
 							(index+2>ending ||
 									!isHexDigit(s.charAt(index)) ||
 									!isHexDigit(s.charAt(index+1))))){
@@ -965,13 +965,13 @@ public final class URL {
 				} else if(c==0x09 || c==0x0a || c==0x0d){
 					error=true;
 				} else {
-					if(!isUrlCodePoint(c) || (c=='%' &&
+					if((!isUrlCodePoint(c) && c!='%') || (c=='%' &&
 							(index+2>ending ||
 									!isHexDigit(s.charAt(index)) ||
 									!isHexDigit(s.charAt(index+1))))){
 						error=true;
 					}
-					if(c<=0x20 || c>=0x7F || StringUtility.isChar(c,"#<>?`\"")){
+					if(c<=0x20 || c>=0x7F || ((c&0x7F)==c && "#<>?`\"".indexOf((char)c)>=0)){
 						percentEncodeUtf8(buffer,c);
 					} else {
 						buffer.appendInt(c);
@@ -985,7 +985,7 @@ public final class URL {
 				if(c==0x09 || c==0x0a || c==0x0d) {
 					error=true;
 				} else {
-					if(!isUrlCodePoint(c) || (c=='%' &&
+					if((!isUrlCodePoint(c) && c!='%')  || (c=='%' &&
 							(index+2>ending ||
 									!isHexDigit(s.charAt(index)) ||
 									!isHexDigit(s.charAt(index+1))))){
@@ -1075,12 +1075,12 @@ public final class URL {
 					int value=0;
 					int length=0;
 					while(length<4){
-						if(c>='A' && c<='Z'){
+						if(c>='A' && c<='F'){
 							value=value*16+(c-'A')+10;
 							index++;
 							length++;
 							c=(index>=ending) ? -1 : string.charAt(index);
-						} else if(c>='a' && c<='z'){
+						} else if(c>='a' && c<='f'){
 							value=value*16+(c-'a')+10;
 							index++;
 							length++;
@@ -1175,7 +1175,7 @@ public final class URL {
 			return((c>='a' && c<='z') ||
 					(c>='A' && c<='Z') ||
 					(c>='0' && c<='9') ||
-					StringUtility.isChar(c,"!$&'()*+,-./:;=?@_~"));
+					((c&0x7F)==c && "!$&'()*+,-./:;=?@_~".indexOf((char)c)>=0));
 		else if((c&0xFFFE)==0xFFFE)
 			return false;
 		else if((c>=0xa0 && c<=0xd7ff) ||

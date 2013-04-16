@@ -51,13 +51,13 @@ final class DecoderCharacterInput implements ICharacterInput {
 	}
 
 	@Override
-	public int read(int[] buf, int offset, int unitCount) throws IOException {
-		return decoder.decode(input,buf,offset,unitCount,error);
+	public int read() throws IOException {
+		return decoder.decode(input,error);
 	}
 
 	@Override
-	public int read() throws IOException {
-		return decoder.decode(input,error);
+	public int read(int[] buf, int offset, int unitCount) throws IOException {
+		return decoder.decode(input,buf,offset,unitCount,error);
 	}
 
 }

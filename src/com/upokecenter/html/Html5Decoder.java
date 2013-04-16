@@ -44,8 +44,17 @@ class Html5Decoder implements ITextDecoder {
 		this.decoder=decoder;
 	}
 
-	public boolean isError(){
-		return iserror;
+	@Override
+	public int decode(InputStream stream) throws IOException {
+		return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public int decode(InputStream stream, IEncodingError error) throws IOException {
+		int[] value=new int[1];
+		int c=decode(stream,value,0,1, error);
+		if(c<=0)return -1;
+		return value[0];
 	}
 
 	@Override
@@ -104,16 +113,7 @@ class Html5Decoder implements ITextDecoder {
 		return count==0 ? -1 : count;
 	}
 
-	@Override
-	public int decode(InputStream stream) throws IOException {
-		return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
-	}
-
-	@Override
-	public int decode(InputStream stream, IEncodingError error) throws IOException {
-		int[] value=new int[1];
-		int c=decode(stream,value,0,1, error);
-		if(c<=0)return -1;
-		return value[0];
+	public boolean isError(){
+		return iserror;
 	}
 }

@@ -30,28 +30,32 @@ package com.upokecenter.html;
 class Comment extends Node implements IComment {
 	String data;
 
+	 Comment() {
+		super(NodeType.COMMENT_NODE);
+	}
+
+
 	@Override
 	public String getData(){
 		return data;
 	}
 
+	@Override
+	public  String getTextContent(){
+		return null;
+	}
 
 	 void setData(String data){
 		this.data=data;
 	}
 
-	 Comment() {
-		super(NodeType.COMMENT_NODE);
-	}
 
 	 @Override  String toDebugString(){
 		return "<!-- "+getData().toString().replace("\n","~~~~")+" -->\n";
 	}
-
-
 	@Override
-	public  String getTextContent(){
-		return null;
+	public  String getNodeName(){
+		return "#comment";
 	}
 
 }

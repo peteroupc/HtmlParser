@@ -513,7 +513,7 @@ public final class DownloadHelper {
 			int len=data.length();
 			for(int j=index;j<len;j++){
 				int c=data.charAt(j);
-				if(!StringUtility.isChar(c,"-_.!~*'()") &&
+				if(!((c&0x7F)==c && "-_.!~*'()".indexOf((char)c)>=0) &&
 						!(c>='A' && c<='Z') &&
 						!(c>='a' && c<='z') &&
 						!(c>='0' && c<='9'))

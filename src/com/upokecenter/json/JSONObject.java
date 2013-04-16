@@ -1,13 +1,11 @@
 // Modified by Peter O. to use generics; also
 // moved from org.json.  Still in the public domain.
-package com.upokecenter.net;
+package com.upokecenter.json;
 
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
-
-import com.upokecenter.util.StringUtility;
 
 
 /**
@@ -119,7 +117,6 @@ public class JSONObject {
 		myHashMap = new HashMap<String, Object>();
 	}
 
-
 	/**
 	 * Construct a JSONObject from a JSONTokener.
 	 * @param x A JSONTokener object containing the source string.
@@ -127,7 +124,7 @@ public class JSONObject {
 	 */
 	public JSONObject(JSONTokener x) throws ParseException {
 		this();
-		char c;
+		int c;
 		String key;
 		if (x.next() == '%') {
 			x.unescape();
@@ -149,6 +146,7 @@ public class JSONObject {
 			}
 			if (x.nextClean() != ':')
 				throw x.syntaxError("Expected a ':' after a key");
+			// NOTE: Will overwrite existing value. --Peter O.
 			myHashMap.put(key, x.nextValue());
 			switch (x.nextClean()) {
 			case ',':
@@ -453,7 +451,7 @@ public class JSONObject {
 
 		// Shave off trailing zeros and decimal point, if possible.
 
-		String s = StringUtility.toLowerCaseAscii(n.toString());
+		String s = toLowerCaseAscii(n.toString());
 		if (s.indexOf('e') < 0 && s.indexOf('.') > 0) {
 			while (s.endsWith("0")) {
 				s = s.substring(0, s.length() - 1);
@@ -463,6 +461,32 @@ public class JSONObject {
 			}
 		}
 		return s;
+	}
+
+	public static String toLowerCaseAscii(String s){
+		if(s==null)return null;
+		int len=s.length();
+		char c=0;
+		boolean hasUpperCase=false;
+		for(int i=0;i<len;i++){
+			c=s.charAt(i);
+			if(c>='A' && c<='Z'){
+				hasUpperCase=true;
+				break;
+			}
+		}
+		if(!hasUpperCase)
+			return s;
+		StringBuilder builder=new StringBuilder();
+		for(int i=0;i<len;i++){
+			c=s.charAt(i);
+			if(c>='A' && c<='Z'){
+				builder.append((char)(c+0x20));
+			} else {
+				builder.append(c);
+			}
+		}
+		return builder.toString();
 	}
 
 
@@ -732,7 +756,7 @@ public class JSONObject {
 
 	/**
 	 * Produce a string in double quotes with backslash sequences in all the
-	 * right places.
+	 * right places. (Modified so that the slash character is not escaped.)
 	 * @param string A String
 	 * @return  A String correctly formatted for insertion in a JSON message.
 	 */
@@ -751,8 +775,7 @@ public class JSONObject {
 			c = string.charAt(i);
 			switch (c) {
 			case '\\':
-			case '"':
-			case '/':
+			case '"':// Peter O: '/' removed as needing escaping
 				sb.append('\\');
 				sb.append(c);
 				break;

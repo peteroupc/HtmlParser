@@ -41,133 +41,6 @@ import com.upokecenter.util.StringUtility;
 import com.upokecenter.util.URL;
 final class HtmlParser {
 
-	 static class Attrib {
-		StringBuilder name;
-		IntList value;
-		String prefix=null;
-		String localName=null;
-		String nameString=null;
-		String valueString=null;
-		String namespace=null;
-
-		@Override
-		public String toString(){
-			return "[Attribute: "+getName()+"="+getValue()+"]";
-		}
-
-		public Attrib(char ch){
-			name=new StringBuilder();
-			value=new IntList();
-			name.append(ch);
-		}
-
-		public Attrib(int ch){
-			name=new StringBuilder();
-			value=new IntList();
-			if(ch<0x10000){
-				name.append((char)ch);
-			} else {
-				ch-=0x10000;
-				int lead=ch/0x400+0xd800;
-				int trail=(ch&0x3FF)+0xdc00;
-				name.append((char)lead);
-				name.append((char)trail);
-			}
-		}
-		public Attrib(Attrib attr){
-			nameString=attr.getName();
-			valueString=attr.getValue();
-			prefix=attr.prefix;
-			localName=attr.localName;
-			namespace=attr.namespace;
-		}
-
-		public Attrib(String name, String value){
-			nameString=name;
-			valueString=value;
-		}
-
-		public void appendToName(int ch){
-			if(nameString!=null)
-				throw new AssertionError();
-			if(ch<0x10000){
-				name.append((char)ch);
-			} else {
-				ch-=0x10000;
-				int lead=ch/0x400+0xd800;
-				int trail=(ch&0x3FF)+0xdc00;
-				name.append((char)lead);
-				name.append((char)trail);
-			}
-		}
-
-		public void appendToValue(int ch){
-			if(valueString!=null)
-				throw new AssertionError();
-			value.appendInt(ch);
-		}
-
-		 void commitValue(){
-			if(value==null)
-				throw new AssertionError();
-			valueString=value.toString();
-			value=null;
-		}
-
-		public String getName(){
-			return (nameString!=null) ? nameString : name.toString();
-		}
-
-		public String getValue() {
-			return (valueString!=null) ? valueString : value.toString();
-		}
-		public String getNamespace(){
-			return namespace;
-		}
-
-		public String getLocalName(){
-			return (namespace==null) ? getName() : localName;
-		}
-
-		public boolean isAttribute(String name, String namespace){
-			String thisname=getLocalName();
-			boolean match=(name==null ? thisname==null : name.equals(thisname));
-			if(!match)return false;
-			match=(namespace==null ? this.namespace==null : namespace.equals(this.namespace));
-			return match;
-		}
-
-		public void setNamespace(String value){
-			if(value==null)
-				throw new IllegalArgumentException();
-			namespace=value;
-			nameString=getName();
-			int io=nameString.indexOf(':');
-			if(io>=1){
-				prefix=nameString.substring(0,io);
-				localName=nameString.substring(io+1);
-			} else {
-				prefix="";
-				localName=getName();
-			}
-		}
-
-		public void setName(String value2) {
-			if(value2==null)
-				throw new IllegalArgumentException();
-			nameString=value2;
-			name=null;
-		}
-
-		public void setValue(String value2) {
-			if(value2==null)
-				throw new IllegalArgumentException();
-			valueString=value2;
-			value=null;
-		}
-
-	}
-
 	 static class CommentToken implements IToken {
 		IntList value;
 		public CommentToken(){
@@ -214,12 +87,12 @@ final class HtmlParser {
 		public boolean marker;
 		public Element element;
 		public StartTagToken token;
+		public boolean isMarker() {
+			return marker;
+		}
 		@Override
 		public String toString() {
 			return "FormattingElement [marker=" + marker + ", token=" + token + "]\n";
-		}
-		public boolean isMarker() {
-			return marker;
 		}
 	}
 
@@ -272,7 +145,7 @@ final class HtmlParser {
 	 static abstract class TagToken implements IToken {
 
 		protected StringBuilder builder;
-		List<Attrib> attributes=null;
+		List<Attr> attributes=null;
 		boolean selfClosing=false;
 		boolean selfClosingAck=false;
 		public TagToken(char ch){
@@ -289,24 +162,20 @@ final class HtmlParser {
 			selfClosingAck=true;
 		}
 
-		public boolean isAckSelfClosing() {
-			return !selfClosing || selfClosingAck;
-		}
-
-		public Attrib addAttribute(char ch){
+		public Attr addAttribute(char ch){
 			if(attributes==null){
-				attributes=new ArrayList<Attrib>();
+				attributes=new ArrayList<Attr>();
 			}
-			Attrib a=new Attrib(ch);
+			Attr a=new Attr(ch);
 			attributes.add(a);
 			return a;
 		}
 
-		public Attrib addAttribute(int ch){
+		public Attr addAttribute(int ch){
 			if(attributes==null){
-				attributes=new ArrayList<Attrib>();
+				attributes=new ArrayList<Attr>();
 			}
-			Attrib a=new Attrib(ch);
+			Attr a=new Attr(ch);
 			attributes.add(a);
 			return a;
 		}
@@ -348,7 +217,7 @@ final class HtmlParser {
 			if(attributes==null)return null;
 			int size=attributes.size();
 			for(int i=0;i<size;i++){
-				Attrib a=attributes.get(i);
+				IAttr a=attributes.get(i);
 				String thisname=a.getName();
 				if(thisname.equals(name))
 					return a.getValue();
@@ -356,21 +225,21 @@ final class HtmlParser {
 			return null;
 		}
 
-
 		public String getAttributeNS(String name, String namespace){
 			if(attributes==null)return null;
 			int size=attributes.size();
 			for(int i=0;i<size;i++){
-				Attrib a=attributes.get(i);
+				Attr a=attributes.get(i);
 				if(a.isAttribute(name,namespace))
 					return a.getValue();
 			}
 			return null;
 		}
 
-		public List<Attrib> getAttributes(){
+
+		public List<Attr> getAttributes(){
 			if(attributes==null)
-				return Arrays.asList(new Attrib[0]);
+				return Arrays.asList(new Attr[0]);
 			else
 				return attributes;
 		}
@@ -378,8 +247,12 @@ final class HtmlParser {
 		public String getName(){
 			return builder.toString();
 		}
+
 		@Override
 		public abstract int getType();
+		public boolean isAckSelfClosing() {
+			return !selfClosing || selfClosingAck;
+		}
 		public boolean isSelfClosing() {
 			return selfClosing;
 		}
@@ -391,19 +264,19 @@ final class HtmlParser {
 
 		public void setAttribute(String attrname, String value) {
 			if(attributes==null){
-				attributes=new ArrayList<Attrib>();
-				attributes.add(new Attrib(attrname,value));
+				attributes=new ArrayList<Attr>();
+				attributes.add(new Attr(attrname,value));
 			} else {
 				int size=attributes.size();
 				for(int i=0;i<size;i++){
-					Attrib a=attributes.get(i);
+					Attr a=attributes.get(i);
 					String thisname=a.getName();
 					if(thisname.equals(attrname)){
 						a.setValue(value);
 						return;
 					}
 				}
-				attributes.add(new Attrib(attrname,value));
+				attributes.add(new Attr(attrname,value));
 			}
 		}
 
@@ -487,9 +360,6 @@ final class HtmlParser {
 		BogusDocType,
 		CData
 	}
-	private static String[] entities=new String[]{"CounterClockwiseContourIntegral;", "ClockwiseContourIntegral;", "DoubleLongLeftRightArrow;", "NotNestedGreaterGreater;", "DiacriticalDoubleAcute;", "NotSquareSupersetEqual;", "CloseCurlyDoubleQuote;", "DoubleContourIntegral;", "FilledVerySmallSquare;", "NegativeVeryThinSpace;", "NotPrecedesSlantEqual;", "NotRightTriangleEqual;", "NotSucceedsSlantEqual;", "CapitalDifferentialD;", "DoubleLeftRightArrow;", "DoubleLongRightArrow;", "EmptyVerySmallSquare;", "NestedGreaterGreater;", "NotDoubleVerticalBar;", "NotGreaterSlantEqual;", "NotLeftTriangleEqual;", "NotSquareSubsetEqual;", "OpenCurlyDoubleQuote;", "ReverseUpEquilibrium;", "DoubleLongLeftArrow;", "DownLeftRightVector;", "LeftArrowRightArrow;", "NegativeMediumSpace;", "NotGreaterFullEqual;", "NotRightTriangleBar;", "RightArrowLeftArrow;", "SquareSupersetEqual;", "leftrightsquigarrow;", "DownRightTeeVector;", "DownRightVectorBar;", "LongLeftRightArrow;", "Longleftrightarrow;", "NegativeThickSpace;", "NotLeftTriangleBar;", "PrecedesSlantEqual;", "ReverseEquilibrium;", "RightDoubleBracket;", "RightDownTeeVector;", "RightDownVectorBar;", "RightTriangleEqual;", "SquareIntersection;", "SucceedsSlantEqual;", "blacktriangleright;", "longleftrightarrow;", "DoubleUpDownArrow;", "DoubleVerticalBar;", "DownLeftTeeVector;", "DownLeftVectorBar;", "FilledSmallSquare;", "GreaterSlantEqual;", "LeftDoubleBracket;", "LeftDownTeeVector;", "LeftDownVectorBar;", "LeftTriangleEqual;", "NegativeThinSpace;", "NotGreaterGreater;", "NotLessSlantEqual;", "NotNestedLessLess;", "NotReverseElement;", "NotSquareSuperset;", "NotTildeFullEqual;", "RightAngleBracket;", "RightUpDownVector;", "SquareSubsetEqual;", "VerticalSeparator;", "blacktriangledown;", "blacktriangleleft;", "leftrightharpoons;", "rightleftharpoons;", "twoheadrightarrow;", "DiacriticalAcute;", "DiacriticalGrave;", "DiacriticalTilde;", "DoubleRightArrow;", "DownArrowUpArrow;", "EmptySmallSquare;", "GreaterEqualLess;", "GreaterFullEqual;", "LeftAngleBracket;", "LeftUpDownVector;", "LessEqualGreater;", "NonBreakingSpace;", "NotPrecedesEqual;", "NotRightTriangle;", "NotSucceedsEqual;", "NotSucceedsTilde;", "NotSupersetEqual;", "RightTriangleBar;", "RightUpTeeVector;", "RightUpVectorBar;", "UnderParenthesis;", "UpArrowDownArrow;", "circlearrowright;", "downharpoonright;", "ntrianglerighteq;", "rightharpoondown;", "rightrightarrows;", "twoheadleftarrow;", "vartriangleright;", "CloseCurlyQuote;", "ContourIntegral;", "DoubleDownArrow;", "DoubleLeftArrow;", "DownRightVector;", "LeftRightVector;", "LeftTriangleBar;", "LeftUpTeeVector;", "LeftUpVectorBar;", "LowerRightArrow;", "NotGreaterEqual;", "NotGreaterTilde;", "NotHumpDownHump;", "NotLeftTriangle;", "NotSquareSubset;", "OverParenthesis;", "RightDownVector;", "ShortRightArrow;", "UpperRightArrow;", "bigtriangledown;", "circlearrowleft;", "curvearrowright;", "downharpoonleft;", "leftharpoondown;", "leftrightarrows;", "nLeftrightarrow;", "nleftrightarrow;", "ntrianglelefteq;", "rightleftarrows;", "rightsquigarrow;", "rightthreetimes;", "straightepsilon;", "trianglerighteq;", "vartriangleleft;", "DiacriticalDot;", "DoubleRightTee;", "DownLeftVector;", "GreaterGreater;", "HorizontalLine;", "InvisibleComma;", "InvisibleTimes;", "LeftDownVector;", "LeftRightArrow;", "Leftrightarrow;", "LessSlantEqual;", "LongRightArrow;", "Longrightarrow;", "LowerLeftArrow;", "NestedLessLess;", "NotGreaterLess;", "NotLessGreater;", "NotSubsetEqual;", "NotVerticalBar;", "OpenCurlyQuote;", "ReverseElement;", "RightTeeVector;", "RightVectorBar;", "ShortDownArrow;", "ShortLeftArrow;", "SquareSuperset;", "TildeFullEqual;", "UpperLeftArrow;", "ZeroWidthSpace;", "curvearrowleft;", "doublebarwedge;", "downdownarrows;", "hookrightarrow;", "leftleftarrows;", "leftrightarrow;", "leftthreetimes;", "longrightarrow;", "looparrowright;", "nshortparallel;", "ntriangleright;", "rightarrowtail;", "rightharpoonup;", "trianglelefteq;", "upharpoonright;", "ApplyFunction;", "DifferentialD;", "DoubleLeftTee;", "DoubleUpArrow;", "LeftTeeVector;", "LeftVectorBar;", "LessFullEqual;", "LongLeftArrow;", "Longleftarrow;", "NotEqualTilde;", "NotTildeEqual;", "NotTildeTilde;", "Poincareplane;", "PrecedesEqual;", "PrecedesTilde;", "RightArrowBar;", "RightTeeArrow;", "RightTriangle;", "RightUpVector;", "SucceedsEqual;", "SucceedsTilde;", "SupersetEqual;", "UpEquilibrium;", "VerticalTilde;", "VeryThinSpace;", "bigtriangleup;", "blacktriangle;", "divideontimes;", "fallingdotseq;", "hookleftarrow;", "leftarrowtail;", "leftharpoonup;", "longleftarrow;", "looparrowleft;", "measuredangle;", "ntriangleleft;", "shortparallel;", "smallsetminus;", "triangleright;", "upharpoonleft;", "varsubsetneqq;", "varsupsetneqq;", "DownArrowBar;", "DownTeeArrow;", "ExponentialE;", "GreaterEqual;", "GreaterTilde;", "HilbertSpace;", "HumpDownHump;", "Intersection;", "LeftArrowBar;", "LeftTeeArrow;", "LeftTriangle;", "LeftUpVector;", "NotCongruent;", "NotHumpEqual;", "NotLessEqual;", "NotLessTilde;", "Proportional;", "RightCeiling;", "RoundImplies;", "ShortUpArrow;", "SquareSubset;", "UnderBracket;", "VerticalLine;", "blacklozenge;", "exponentiale;", "risingdotseq;", "triangledown;", "triangleleft;", "varsubsetneq;", "varsupsetneq;", "CircleMinus;", "CircleTimes;", "Equilibrium;", "GreaterLess;", "LeftCeiling;", "LessGreater;", "MediumSpace;", "NotLessLess;", "NotPrecedes;", "NotSucceeds;", "NotSuperset;", "OverBracket;", "RightVector;", "Rrightarrow;", "RuleDelayed;", "SmallCircle;", "SquareUnion;", "SubsetEqual;", "UpDownArrow;", "Updownarrow;", "VerticalBar;", "backepsilon;", "blacksquare;", "circledcirc;", "circleddash;", "curlyeqprec;", "curlyeqsucc;", "diamondsuit;", "eqslantless;", "expectation;", "nRightarrow;", "nrightarrow;", "preccurlyeq;", "precnapprox;", "quaternions;", "straightphi;", "succcurlyeq;", "succnapprox;", "thickapprox;", "updownarrow;", "Bernoullis;", "CirclePlus;", "EqualTilde;", "Fouriertrf;", "ImaginaryI;", "Laplacetrf;", "LeftVector;", "Lleftarrow;", "NotElement;", "NotGreater;", "Proportion;", "RightArrow;", "RightFloor;", "Rightarrow;", "ThickSpace;", "TildeEqual;", "TildeTilde;", "UnderBrace;", "UpArrowBar;", "UpTeeArrow;", "circledast;", "complement;", "curlywedge;", "eqslantgtr;", "gtreqqless;", "lessapprox;", "lesseqqgtr;", "lmoustache;", "longmapsto;", "mapstodown;", "mapstoleft;", "nLeftarrow;", "nleftarrow;", "nsubseteqq;", "nsupseteqq;", "precapprox;", "rightarrow;", "rmoustache;", "sqsubseteq;", "sqsupseteq;", "subsetneqq;", "succapprox;", "supsetneqq;", "upuparrows;", "varepsilon;", "varnothing;", "Backslash;", "CenterDot;", "CircleDot;", "Congruent;", "Coproduct;", "DoubleDot;", "DownArrow;", "DownBreve;", "Downarrow;", "HumpEqual;", "LeftArrow;", "LeftFloor;", "Leftarrow;", "LessTilde;", "Mellintrf;", "MinusPlus;", "NotCupCap;", "NotExists;", "NotSubset;", "OverBrace;", "PlusMinus;", "Therefore;", "ThinSpace;", "TripleDot;", "UnionPlus;", "backprime;", "backsimeq;", "bigotimes;", "centerdot;", "checkmark;", "complexes;", "dotsquare;", "downarrow;", "gtrapprox;", "gtreqless;", "gvertneqq;", "heartsuit;", "leftarrow;", "lesseqgtr;", "lvertneqq;", "ngeqslant;", "nleqslant;", "nparallel;", "nshortmid;", "nsubseteq;", "nsupseteq;", "pitchfork;", "rationals;", "spadesuit;", "subseteqq;", "subsetneq;", "supseteqq;", "supsetneq;", "therefore;", "triangleq;", "varpropto;", "DDotrahd;", "DotEqual;", "Integral;", "LessLess;", "NotEqual;", "NotTilde;", "PartialD;", "Precedes;", "RightTee;", "Succeeds;", "SuchThat;", "Superset;", "Uarrocir;", "UnderBar;", "andslope;", "angmsdaa;", "angmsdab;", "angmsdac;", "angmsdad;", "angmsdae;", "angmsdaf;", "angmsdag;", "angmsdah;", "angrtvbd;", "approxeq;", "awconint;", "backcong;", "barwedge;", "bbrktbrk;", "bigoplus;", "bigsqcup;", "biguplus;", "bigwedge;", "boxminus;", "boxtimes;", "bsolhsub;", "capbrcup;", "circledR;", "circledS;", "cirfnint;", "clubsuit;", "cupbrcap;", "curlyvee;", "cwconint;", "doteqdot;", "dotminus;", "drbkarow;", "dzigrarr;", "elinters;", "emptyset;", "eqvparsl;", "fpartint;", "geqslant;", "gesdotol;", "gnapprox;", "hksearow;", "hkswarow;", "imagline;", "imagpart;", "infintie;", "integers;", "intercal;", "intlarhk;", "laemptyv;", "ldrushar;", "leqslant;", "lesdotor;", "llcorner;", "lnapprox;", "lrcorner;", "lurdshar;", "mapstoup;", "multimap;", "naturals;", "ncongdot;", "notindot;", "otimesas;", "parallel;", "plusacir;", "pointint;", "precneqq;", "precnsim;", "profalar;", "profline;", "profsurf;", "raemptyv;", "realpart;", "rppolint;", "rtriltri;", "scpolint;", "setminus;", "shortmid;", "smeparsl;", "sqsubset;", "sqsupset;", "subseteq;", "succneqq;", "succnsim;", "supseteq;", "thetasym;", "thicksim;", "timesbar;", "triangle;", "triminus;", "trpezium;", "ulcorner;", "urcorner;", "varkappa;", "varsigma;", "vartheta;", "Because;", "Cayleys;", "Cconint;", "Cedilla;", "Diamond;", "DownTee;", "Element;", "Epsilon;", "Implies;", "LeftTee;", "NewLine;", "NoBreak;", "NotLess;", "Omicron;", "OverBar;", "Product;", "UpArrow;", "Uparrow;", "Upsilon;", "alefsym;", "angrtvb;", "angzarr;", "asympeq;", "backsim;", "because;", "bemptyv;", "between;", "bigcirc;", "bigodot;", "bigstar;", "bnequiv;", "boxplus;", "ccupssm;", "cemptyv;", "cirscir;", "coloneq;", "congdot;", "cudarrl;", "cudarrr;", "cularrp;", "curarrm;", "dbkarow;", "ddagger;", "ddotseq;", "demptyv;", "diamond;", "digamma;", "dotplus;", "dwangle;", "epsilon;", "eqcolon;", "equivDD;", "gesdoto;", "gtquest;", "gtrless;", "harrcir;", "intprod;", "isindot;", "larrbfs;", "larrsim;", "lbrksld;", "lbrkslu;", "ldrdhar;", "lesdoto;", "lessdot;", "lessgtr;", "lesssim;", "lotimes;", "lozenge;", "ltquest;", "luruhar;", "maltese;", "minusdu;", "napprox;", "natural;", "nearrow;", "nexists;", "notinva;", "notinvb;", "notinvc;", "notniva;", "notnivb;", "notnivc;", "npolint;", "npreceq;", "nsqsube;", "nsqsupe;", "nsubset;", "nsucceq;", "nsupset;", "nvinfin;", "nvltrie;", "nvrtrie;", "nwarrow;", "olcross;", "omicron;", "orderof;", "orslope;", "pertenk;", "planckh;", "pluscir;", "plussim;", "plustwo;", "precsim;", "quatint;", "questeq;", "rarrbfs;", "rarrsim;", "rbrksld;", "rbrkslu;", "rdldhar;", "realine;", "rotimes;", "ruluhar;", "searrow;", "simplus;", "simrarr;", "subedot;", "submult;", "subplus;", "subrarr;", "succsim;", "supdsub;", "supedot;", "suphsol;", "suphsub;", "suplarr;", "supmult;", "supplus;", "swarrow;", "topfork;", "triplus;", "tritime;", "uparrow;", "upsilon;", "uwangle;", "vzigzag;", "zigrarr;", "Aacute;", "Abreve;", "Agrave;", "Assign;", "Atilde;", "Barwed;", "Bumpeq;", "Cacute;", "Ccaron;", "Ccedil;", "Colone;", "Conint;", "CupCap;", "Dagger;", "Dcaron;", "DotDot;", "Dstrok;", "Eacute;", "Ecaron;", "Egrave;", "Exists;", "ForAll;", "Gammad;", "Gbreve;", "Gcedil;", "HARDcy;", "Hstrok;", "Iacute;", "Igrave;", "Itilde;", "Jsercy;", "Kcedil;", "Lacute;", "Lambda;", "Lcaron;", "Lcedil;", "Lmidot;", "Lstrok;", "Nacute;", "Ncaron;", "Ncedil;", "Ntilde;", "Oacute;", "Odblac;", "Ograve;", "Oslash;", "Otilde;", "Otimes;", "Racute;", "Rarrtl;", "Rcaron;", "Rcedil;", "SHCHcy;", "SOFTcy;", "Sacute;", "Scaron;", "Scedil;", "Square;", "Subset;", "Supset;", "Tcaron;", "Tcedil;", "Tstrok;", "Uacute;", "Ubreve;", "Udblac;", "Ugrave;", "Utilde;", "Vdashl;", "Verbar;", "Vvdash;", "Yacute;", "Zacute;", "Zcaron;", "aacute;", "abreve;", "agrave;", "andand;", "angmsd;", "angsph;", "apacir;", "approx;", "atilde;", "barvee;", "barwed;", "becaus;", "bernou;", "bigcap;", "bigcup;", "bigvee;", "bkarow;", "bottom;", "bowtie;", "boxbox;", "bprime;", "brvbar;", "bullet;", "bumpeq;", "cacute;", "capand;", "capcap;", "capcup;", "capdot;", "ccaron;", "ccedil;", "circeq;", "cirmid;", "colone;", "commat;", "compfn;", "conint;", "coprod;", "copysr;", "cularr;", "cupcap;", "cupcup;", "cupdot;", "curarr;", "curren;", "cylcty;", "dagger;", "daleth;", "dcaron;", "dfisht;", "divide;", "divonx;", "dlcorn;", "dlcrop;", "dollar;", "drcorn;", "drcrop;", "dstrok;", "eacute;", "easter;", "ecaron;", "ecolon;", "egrave;", "egsdot;", "elsdot;", "emptyv;", "emsp13;", "emsp14;", "eparsl;", "eqcirc;", "equals;", "equest;", "female;", "ffilig;", "ffllig;", "forall;", "frac12;", "frac13;", "frac14;", "frac15;", "frac16;", "frac18;", "frac23;", "frac25;", "frac34;", "frac35;", "frac38;", "frac45;", "frac56;", "frac58;", "frac78;", "gacute;", "gammad;", "gbreve;", "gesdot;", "gesles;", "gtlPar;", "gtrarr;", "gtrdot;", "gtrsim;", "hairsp;", "hamilt;", "hardcy;", "hearts;", "hellip;", "hercon;", "homtht;", "horbar;", "hslash;", "hstrok;", "hybull;", "hyphen;", "iacute;", "igrave;", "iiiint;", "iinfin;", "incare;", "inodot;", "intcal;", "iquest;", "isinsv;", "itilde;", "jsercy;", "kappav;", "kcedil;", "kgreen;", "lAtail;", "lacute;", "lagran;", "lambda;", "langle;", "larrfs;", "larrhk;", "larrlp;", "larrpl;", "larrtl;", "latail;", "lbrace;", "lbrack;", "lcaron;", "lcedil;", "ldquor;", "lesdot;", "lesges;", "lfisht;", "lfloor;", "lharul;", "llhard;", "lmidot;", "lmoust;", "loplus;", "lowast;", "lowbar;", "lparlt;", "lrhard;", "lsaquo;", "lsquor;", "lstrok;", "lthree;", "ltimes;", "ltlarr;", "ltrPar;", "mapsto;", "marker;", "mcomma;", "midast;", "midcir;", "middot;", "minusb;", "minusd;", "mnplus;", "models;", "mstpos;", "nVDash;", "nVdash;", "nacute;", "nbumpe;", "ncaron;", "ncedil;", "nearhk;", "nequiv;", "nesear;", "nexist;", "nltrie;", "notinE;", "nparsl;", "nprcue;", "nrarrc;", "nrarrw;", "nrtrie;", "nsccue;", "nsimeq;", "ntilde;", "numero;", "nvDash;", "nvHarr;", "nvdash;", "nvlArr;", "nvrArr;", "nwarhk;", "nwnear;", "oacute;", "odblac;", "odsold;", "ograve;", "ominus;", "origof;", "oslash;", "otilde;", "otimes;", "parsim;", "percnt;", "period;", "permil;", "phmmat;", "planck;", "plankv;", "plusdo;", "plusdu;", "plusmn;", "preceq;", "primes;", "prnsim;", "propto;", "prurel;", "puncsp;", "qprime;", "rAtail;", "racute;", "rangle;", "rarrap;", "rarrfs;", "rarrhk;", "rarrlp;", "rarrpl;", "rarrtl;", "ratail;", "rbrace;", "rbrack;", "rcaron;", "rcedil;", "rdquor;", "rfisht;", "rfloor;", "rharul;", "rmoust;", "roplus;", "rpargt;", "rsaquo;", "rsquor;", "rthree;", "rtimes;", "sacute;", "scaron;", "scedil;", "scnsim;", "searhk;", "seswar;", "sfrown;", "shchcy;", "sigmaf;", "sigmav;", "simdot;", "smashp;", "softcy;", "solbar;", "spades;", "sqcaps;", "sqcups;", "sqsube;", "sqsupe;", "square;", "squarf;", "ssetmn;", "ssmile;", "sstarf;", "subdot;", "subset;", "subsim;", "subsub;", "subsup;", "succeq;", "supdot;", "supset;", "supsim;", "supsub;", "supsup;", "swarhk;", "swnwar;", "target;", "tcaron;", "tcedil;", "telrec;", "there4;", "thetav;", "thinsp;", "thksim;", "timesb;", "timesd;", "topbot;", "topcir;", "tprime;", "tridot;", "tstrok;", "uacute;", "ubreve;", "udblac;", "ufisht;", "ugrave;", "ulcorn;", "ulcrop;", "urcorn;", "urcrop;", "utilde;", "vangrt;", "varphi;", "varrho;", "veebar;", "vellip;", "verbar;", "vsubnE;", "vsubne;", "vsupnE;", "vsupne;", "wedbar;", "wedgeq;", "weierp;", "wreath;", "xoplus;", "xotime;", "xsqcup;", "xuplus;", "xwedge;", "yacute;", "zacute;", "zcaron;", "zeetrf;", "AElig;", "Aacute", "Acirc;", "Agrave", "Alpha;", "Amacr;", "Aogon;", "Aring;", "Atilde", "Breve;", "Ccedil", "Ccirc;", "Colon;", "Cross;", "Dashv;", "Delta;", "Eacute", "Ecirc;", "Egrave", "Emacr;", "Eogon;", "Equal;", "Gamma;", "Gcirc;", "Hacek;", "Hcirc;", "IJlig;", "Iacute", "Icirc;", "Igrave", "Imacr;", "Iogon;", "Iukcy;", "Jcirc;", "Jukcy;", "Kappa;", "Ntilde", "OElig;", "Oacute", "Ocirc;", "Ograve", "Omacr;", "Omega;", "Oslash", "Otilde", "Prime;", "RBarr;", "Scirc;", "Sigma;", "THORN;", "TRADE;", "TSHcy;", "Theta;", "Tilde;", "Uacute", "Ubrcy;", "Ucirc;", "Ugrave", "Umacr;", "Union;", "Uogon;", "UpTee;", "Uring;", "VDash;", "Vdash;", "Wcirc;", "Wedge;", "Yacute", "Ycirc;", "aacute", "acirc;", "acute;", "aelig;", "agrave", "aleph;", "alpha;", "amacr;", "amalg;", "angle;", "angrt;", "angst;", "aogon;", "aring;", "asymp;", "atilde", "awint;", "bcong;", "bdquo;", "bepsi;", "blank;", "blk12;", "blk14;", "blk34;", "block;", "boxDL;", "boxDR;", "boxDl;", "boxDr;", "boxHD;", "boxHU;", "boxHd;", "boxHu;", "boxUL;", "boxUR;", "boxUl;", "boxUr;", "boxVH;", "boxVL;", "boxVR;", "boxVh;", "boxVl;", "boxVr;", "boxdL;", "boxdR;", "boxdl;", "boxdr;", "boxhD;", "boxhU;", "boxhd;", "boxhu;", "boxuL;", "boxuR;", "boxul;", "boxur;", "boxvH;", "boxvL;", "boxvR;", "boxvh;", "boxvl;", "boxvr;", "breve;", "brvbar", "bsemi;", "bsime;", "bsolb;", "bumpE;", "bumpe;", "caret;", "caron;", "ccaps;", "ccedil", "ccirc;", "ccups;", "cedil;", "check;", "clubs;", "colon;", "comma;", "crarr;", "cross;", "csube;", "csupe;", "ctdot;", "cuepr;", "cuesc;", "cupor;", "curren", "cuvee;", "cuwed;", "cwint;", "dashv;", "dblac;", "ddarr;", "delta;", "dharl;", "dharr;", "diams;", "disin;", "divide", "doteq;", "dtdot;", "dtrif;", "duarr;", "duhar;", "eDDot;", "eacute", "ecirc;", "efDot;", "egrave", "emacr;", "empty;", "eogon;", "eplus;", "epsiv;", "eqsim;", "equiv;", "erDot;", "erarr;", "esdot;", "exist;", "fflig;", "filig;", "fjlig;", "fllig;", "fltns;", "forkv;", "frac12", "frac14", "frac34", "frasl;", "frown;", "gamma;", "gcirc;", "gescc;", "gimel;", "gneqq;", "gnsim;", "grave;", "gsime;", "gsiml;", "gtcir;", "gtdot;", "harrw;", "hcirc;", "hoarr;", "iacute", "icirc;", "iexcl;", "igrave", "iiint;", "iiota;", "ijlig;", "imacr;", "image;", "imath;", "imped;", "infin;", "iogon;", "iprod;", "iquest", "isinE;", "isins;", "isinv;", "iukcy;", "jcirc;", "jmath;", "jukcy;", "kappa;", "lAarr;", "lBarr;", "langd;", "laquo;", "larrb;", "lates;", "lbarr;", "lbbrk;", "lbrke;", "lceil;", "ldquo;", "lescc;", "lhard;", "lharu;", "lhblk;", "llarr;", "lltri;", "lneqq;", "lnsim;", "loang;", "loarr;", "lobrk;", "lopar;", "lrarr;", "lrhar;", "lrtri;", "lsime;", "lsimg;", "lsquo;", "ltcir;", "ltdot;", "ltrie;", "ltrif;", "mDDot;", "mdash;", "micro;", "middot", "minus;", "mumap;", "nabla;", "napid;", "napos;", "natur;", "nbump;", "ncong;", "ndash;", "neArr;", "nearr;", "nedot;", "nesim;", "ngeqq;", "ngsim;", "nhArr;", "nharr;", "nhpar;", "nlArr;", "nlarr;", "nleqq;", "nless;", "nlsim;", "nltri;", "notin;", "notni;", "npart;", "nprec;", "nrArr;", "nrarr;", "nrtri;", "nsime;", "nsmid;", "nspar;", "nsubE;", "nsube;", "nsucc;", "nsupE;", "nsupe;", "ntilde", "numsp;", "nvsim;", "nwArr;", "nwarr;", "oacute", "ocirc;", "odash;", "oelig;", "ofcir;", "ograve", "ohbar;", "olarr;", "olcir;", "oline;", "omacr;", "omega;", "operp;", "oplus;", "orarr;", "order;", "oslash", "otilde", "ovbar;", "parsl;", "phone;", "plusb;", "pluse;", "plusmn", "pound;", "prcue;", "prime;", "prnap;", "prsim;", "quest;", "rAarr;", "rBarr;", "radic;", "rangd;", "range;", "raquo;", "rarrb;", "rarrc;", "rarrw;", "ratio;", "rbarr;", "rbbrk;", "rbrke;", "rceil;", "rdquo;", "reals;", "rhard;", "rharu;", "rlarr;", "rlhar;", "rnmid;", "roang;", "roarr;", "robrk;", "ropar;", "rrarr;", "rsquo;", "rtrie;", "rtrif;", "sbquo;", "sccue;", "scirc;", "scnap;", "scsim;", "sdotb;", "sdote;", "seArr;", "searr;", "setmn;", "sharp;", "sigma;", "simeq;", "simgE;", "simlE;", "simne;", "slarr;", "smile;", "smtes;", "sqcap;", "sqcup;", "sqsub;", "sqsup;", "srarr;", "starf;", "strns;", "subnE;", "subne;", "supnE;", "supne;", "swArr;", "swarr;", "szlig;", "theta;", "thkap;", "thorn;", "tilde;", "times;", "trade;", "trisb;", "tshcy;", "twixt;", "uacute", "ubrcy;", "ucirc;", "udarr;", "udhar;", "ugrave", "uharl;", "uharr;", "uhblk;", "ultri;", "umacr;", "uogon;", "uplus;", "upsih;", "uring;", "urtri;", "utdot;", "utrif;", "uuarr;", "vBarv;", "vDash;", "varpi;", "vdash;", "veeeq;", "vltri;", "vnsub;", "vnsup;", "vprop;", "vrtri;", "wcirc;", "wedge;", "xcirc;", "xdtri;", "xhArr;", "xharr;", "xlArr;", "xlarr;", "xodot;", "xrArr;", "xrarr;", "xutri;", "yacute", "ycirc;", "AElig", "Acirc", "Aopf;", "Aring", "Ascr;", "Auml;", "Barv;", "Beta;", "Bopf;", "Bscr;", "CHcy;", "COPY;", "Cdot;", "Copf;", "Cscr;", "DJcy;", "DScy;", "DZcy;", "Darr;", "Dopf;", "Dscr;", "Ecirc", "Edot;", "Eopf;", "Escr;", "Esim;", "Euml;", "Fopf;", "Fscr;", "GJcy;", "Gdot;", "Gopf;", "Gscr;", "Hopf;", "Hscr;", "IEcy;", "IOcy;", "Icirc", "Idot;", "Iopf;", "Iota;", "Iscr;", "Iuml;", "Jopf;", "Jscr;", "KHcy;", "KJcy;", "Kopf;", "Kscr;", "LJcy;", "Lang;", "Larr;", "Lopf;", "Lscr;", "Mopf;", "Mscr;", "NJcy;", "Nopf;", "Nscr;", "Ocirc", "Oopf;", "Oscr;", "Ouml;", "Popf;", "Pscr;", "QUOT;", "Qopf;", "Qscr;", "Rang;", "Rarr;", "Ropf;", "Rscr;", "SHcy;", "Sopf;", "Sqrt;", "Sscr;", "Star;", "THORN", "TScy;", "Topf;", "Tscr;", "Uarr;", "Ucirc", "Uopf;", "Upsi;", "Uscr;", "Uuml;", "Vbar;", "Vert;", "Vopf;", "Vscr;", "Wopf;", "Wscr;", "Xopf;", "Xscr;", "YAcy;", "YIcy;", "YUcy;", "Yopf;", "Yscr;", "Yuml;", "ZHcy;", "Zdot;", "Zeta;", "Zopf;", "Zscr;", "acirc", "acute", "aelig", "andd;", "andv;", "ange;", "aopf;", "apid;", "apos;", "aring", "ascr;", "auml;", "bNot;", "bbrk;", "beta;", "beth;", "bnot;", "bopf;", "boxH;", "boxV;", "boxh;", "boxv;", "bscr;", "bsim;", "bsol;", "bull;", "bump;", "caps;", "cdot;", "cedil", "cent;", "chcy;", "cirE;", "circ;", "cire;", "comp;", "cong;", "copf;", "copy;", "cscr;", "csub;", "csup;", "cups;", "dArr;", "dHar;", "darr;", "dash;", "diam;", "djcy;", "dopf;", "dscr;", "dscy;", "dsol;", "dtri;", "dzcy;", "eDot;", "ecir;", "ecirc", "edot;", "emsp;", "ensp;", "eopf;", "epar;", "epsi;", "escr;", "esim;", "euml;", "euro;", "excl;", "flat;", "fnof;", "fopf;", "fork;", "fscr;", "gdot;", "geqq;", "gesl;", "gjcy;", "gnap;", "gneq;", "gopf;", "gscr;", "gsim;", "gtcc;", "gvnE;", "hArr;", "half;", "harr;", "hbar;", "hopf;", "hscr;", "icirc", "iecy;", "iexcl", "imof;", "iocy;", "iopf;", "iota;", "iscr;", "isin;", "iuml;", "jopf;", "jscr;", "khcy;", "kjcy;", "kopf;", "kscr;", "lArr;", "lHar;", "lang;", "laquo", "larr;", "late;", "lcub;", "ldca;", "ldsh;", "leqq;", "lesg;", "ljcy;", "lnap;", "lneq;", "lopf;", "lozf;", "lpar;", "lscr;", "lsim;", "lsqb;", "ltcc;", "ltri;", "lvnE;", "macr;", "male;", "malt;", "micro", "mlcp;", "mldr;", "mopf;", "mscr;", "nGtv;", "nLtv;", "nang;", "napE;", "nbsp;", "ncap;", "ncup;", "ngeq;", "nges;", "ngtr;", "nisd;", "njcy;", "nldr;", "nleq;", "nles;", "nmid;", "nopf;", "npar;", "npre;", "nsce;", "nscr;", "nsim;", "nsub;", "nsup;", "ntgl;", "ntlg;", "nvap;", "nvge;", "nvgt;", "nvle;", "nvlt;", "oast;", "ocir;", "ocirc", "odiv;", "odot;", "ogon;", "oint;", "omid;", "oopf;", "opar;", "ordf;", "ordm;", "oror;", "oscr;", "osol;", "ouml;", "para;", "part;", "perp;", "phiv;", "plus;", "popf;", "pound", "prap;", "prec;", "prnE;", "prod;", "prop;", "pscr;", "qint;", "qopf;", "qscr;", "quot;", "rArr;", "rHar;", "race;", "rang;", "raquo", "rarr;", "rcub;", "rdca;", "rdsh;", "real;", "rect;", "rhov;", "ring;", "ropf;", "rpar;", "rscr;", "rsqb;", "rtri;", "scap;", "scnE;", "sdot;", "sect;", "semi;", "sext;", "shcy;", "sime;", "simg;", "siml;", "smid;", "smte;", "solb;", "sopf;", "spar;", "squf;", "sscr;", "star;", "subE;", "sube;", "succ;", "sung;", "sup1;", "sup2;", "sup3;", "supE;", "supe;", "szlig", "tbrk;", "tdot;", "thorn", "times", "tint;", "toea;", "topf;", "tosa;", "trie;", "tscr;", "tscy;", "uArr;", "uHar;", "uarr;", "ucirc", "uopf;", "upsi;", "uscr;", "utri;", "uuml;", "vArr;", "vBar;", "varr;", "vert;", "vopf;", "vscr;", "wopf;", "wscr;", "xcap;", "xcup;", "xmap;", "xnis;", "xopf;", "xscr;", "xvee;", "yacy;", "yicy;", "yopf;", "yscr;", "yucy;", "yuml;", "zdot;", "zeta;", "zhcy;", "zopf;", "zscr;", "zwnj;", "AMP;", "Acy;", "Afr;", "And;", "Auml", "Bcy;", "Bfr;", "COPY", "Cap;", "Cfr;", "Chi;", "Cup;", "Dcy;", "Del;", "Dfr;", "Dot;", "ENG;", "ETH;", "Ecy;", "Efr;", "Eta;", "Euml", "Fcy;", "Ffr;", "Gcy;", "Gfr;", "Hat;", "Hfr;", "Icy;", "Ifr;", "Int;", "Iuml", "Jcy;", "Jfr;", "Kcy;", "Kfr;", "Lcy;", "Lfr;", "Lsh;", "Map;", "Mcy;", "Mfr;", "Ncy;", "Nfr;", "Not;", "Ocy;", "Ofr;", "Ouml", "Pcy;", "Pfr;", "Phi;", "Psi;", "QUOT", "Qfr;", "REG;", "Rcy;", "Rfr;", "Rho;", "Rsh;", "Scy;", "Sfr;", "Sub;", "Sum;", "Sup;", "Tab;", "Tau;", "Tcy;", "Tfr;", "Ucy;", "Ufr;", "Uuml", "Vcy;", "Vee;", "Vfr;", "Wfr;", "Xfr;", "Ycy;", "Yfr;", "Zcy;", "Zfr;", "acE;", "acd;", "acy;", "afr;", "amp;", "and;", "ang;", "apE;", "ape;", "ast;", "auml", "bcy;", "bfr;", "bne;", "bot;", "cap;", "cent", "cfr;", "chi;", "cir;", "copy", "cup;", "dcy;", "deg;", "dfr;", "die;", "div;", "dot;", "ecy;", "efr;", "egs;", "ell;", "els;", "eng;", "eta;", "eth;", "euml", "fcy;", "ffr;", "gEl;", "gap;", "gcy;", "gel;", "geq;", "ges;", "gfr;", "ggg;", "glE;", "gla;", "glj;", "gnE;", "gne;", "hfr;", "icy;", "iff;", "ifr;", "int;", "iuml", "jcy;", "jfr;", "kcy;", "kfr;", "lEg;", "lap;", "lat;", "lcy;", "leg;", "leq;", "les;", "lfr;", "lgE;", "lnE;", "lne;", "loz;", "lrm;", "lsh;", "macr", "map;", "mcy;", "mfr;", "mho;", "mid;", "nGg;", "nGt;", "nLl;", "nLt;", "nap;", "nbsp", "ncy;", "nfr;", "ngE;", "nge;", "ngt;", "nis;", "niv;", "nlE;", "nle;", "nlt;", "not;", "npr;", "nsc;", "num;", "ocy;", "ofr;", "ogt;", "ohm;", "olt;", "ord;", "ordf", "ordm", "orv;", "ouml", "par;", "para", "pcy;", "pfr;", "phi;", "piv;", "prE;", "pre;", "psi;", "qfr;", "quot", "rcy;", "reg;", "rfr;", "rho;", "rlm;", "rsh;", "scE;", "sce;", "scy;", "sect", "sfr;", "shy;", "sim;", "smt;", "sol;", "squ;", "sub;", "sum;", "sup1", "sup2", "sup3", "sup;", "tau;", "tcy;", "tfr;", "top;", "ucy;", "ufr;", "uml;", "uuml", "vcy;", "vee;", "vfr;", "wfr;", "xfr;", "ycy;", "yen;", "yfr;", "yuml", "zcy;", "zfr;", "zwj;", "AMP", "DD;", "ETH", "GT;", "Gg;", "Gt;", "Im;", "LT;", "Ll;", "Lt;", "Mu;", "Nu;", "Or;", "Pi;", "Pr;", "REG", "Re;", "Sc;", "Xi;", "ac;", "af;", "amp", "ap;", "dd;", "deg", "ee;", "eg;", "el;", "eth", "gE;", "ge;", "gg;", "gl;", "gt;", "ic;", "ii;", "in;", "it;", "lE;", "le;", "lg;", "ll;", "lt;", "mp;", "mu;", "ne;", "ni;", "not", "nu;", "oS;", "or;", "pi;", "pm;", "pr;", "reg", "rx;", "sc;", "shy", "uml", "wp;", "wr;", "xi;", "yen", "GT", "LT", "gt", "lt"};
-	private static int[] entityValues=new int[]{8755, 8754, 10234, -1, 733, 8931, 8221, 8751, 9642, 8203, 8928, 8941, 8929, 8517, 8660, 10233, 9643, 8811, 8742, -2, 8940, 8930, 8220, 10607, 10232, 10576, 8646, 8203, -3, -4, 8644, 8850, 8621, 10591, 10583, 10231, 10234, 8203, -5, 8828, 8651, 10215, 10589, 10581, 8885, 8851, 8829, 9656, 10231, 8661, 8741, 10590, 10582, 9724, 10878, 10214, 10593, 10585, 8884, 8203, -6, -7, -8, 8716, -9, 8775, 10217, 10575, 8849, 10072, 9662, 9666, 8651, 8652, 8608, 180, 96, 732, 8658, 8693, 9723, 8923, 8807, 10216, 10577, 8922, 160, -10, 8939, -11, -12, 8841, 10704, 10588, 10580, 9181, 8645, 8635, 8642, 8941, 8641, 8649, 8606, 8883, 8217, 8750, 8659, 8656, 8641, 10574, 10703, 10592, 10584, 8600, 8817, 8821, -13, 8938, -14, 9180, 8642, 8594, 8599, 9661, 8634, 8631, 8643, 8637, 8646, 8654, 8622, 8940, 8644, 8605, 8908, 1013, 8885, 8882, 729, 8872, 8637, 10914, 9472, 8291, 8290, 8643, 8596, 8660, 10877, 10230, 10233, 8601, 8810, 8825, 8824, 8840, 8740, 8216, 8715, 10587, 10579, 8595, 8592, 8848, 8773, 8598, 8203, 8630, 8966, 8650, 8618, 8647, 8596, 8907, 10230, 8620, 8742, 8939, 8611, 8640, 8884, 8638, 8289, 8518, 10980, 8657, 10586, 10578, 8806, 10229, 10232, -15, 8772, 8777, 8460, 10927, 8830, 8677, 8614, 8883, 8638, 10928, 8831, 8839, 10606, 8768, 8202, 9651, 9652, 8903, 8786, 8617, 8610, 8636, 10229, 8619, 8737, 8938, 8741, 8726, 9657, 8639, -16, -17, 10515, 8615, 8519, 8805, 8819, 8459, 8782, 8898, 8676, 8612, 8882, 8639, 8802, -18, 8816, 8820, 8733, 8969, 10608, 8593, 8847, 9141, 124, 10731, 8519, 8787, 9663, 9667, -19, -20, 8854, 8855, 8652, 8823, 8968, 8822, 8287, -21, 8832, 8833, -22, 9140, 8640, 8667, 10740, 8728, 8852, 8838, 8597, 8661, 8739, 1014, 9642, 8858, 8861, 8926, 8927, 9830, 10901, 8496, 8655, 8603, 8828, 10937, 8461, 981, 8829, 10938, 8776, 8597, 8492, 8853, 8770, 8497, 8520, 8466, 8636, 8666, 8713, 8815, 8759, 8594, 8971, 8658, -23, 8771, 8776, 9183, 10514, 8613, 8859, 8705, 8911, 10902, 10892, 10885, 10891, 9136, 10236, 8615, 8612, 8653, 8602, -24, -25, 10935, 8594, 9137, 8849, 8850, 10955, 10936, 10956, 8648, 1013, 8709, 8726, 183, 8857, 8801, 8720, 168, 8595, 785, 8659, 8783, 8592, 8970, 8656, 8818, 8499, 8723, 8813, 8708, -26, 9182, 177, 8756, 8201, 8411, 8846, 8245, 8909, 10754, 183, 10003, 8450, 8865, 8595, 10886, 8923, -27, 9829, 8592, 8922, -28, -29, -30, 8742, 8740, 8840, 8841, 8916, 8474, 9824, 10949, 8842, 10950, 8843, 8756, 8796, 8733, 10513, 8784, 8747, 10913, 8800, 8769, 8706, 8826, 8866, 8827, 8715, 8835, 10569, 95, 10840, 10664, 10665, 10666, 10667, 10668, 10669, 10670, 10671, 10653, 8778, 8755, 8780, 8965, 9142, 10753, 10758, 10756, 8896, 8863, 8864, 10184, 10825, 174, 9416, 10768, 9827, 10824, 8910, 8754, 8785, 8760, 10512, 10239, 9191, 8709, 10725, 10765, 10878, 10884, 10890, 10533, 10534, 8464, 8465, 10717, 8484, 8890, 10775, 10676, 10571, 10877, 10883, 8990, 10889, 8991, 10570, 8613, 8888, 8469, -31, -32, 10806, 8741, 10787, 10773, 10933, 8936, 9006, 8978, 8979, 10675, 8476, 10770, 10702, 10771, 8726, 8739, 10724, 8847, 8848, 8838, 10934, 8937, 8839, 977, 8764, 10801, 9653, 10810, 9186, 8988, 8989, 1008, 962, 977, 8757, 8493, 8752, 184, 8900, 8868, 8712, 917, 8658, 8867, 10, 8288, 8814, 927, 8254, 8719, 8593, 8657, 933, 8501, 8894, 9084, 8781, 8765, 8757, 10672, 8812, 9711, 10752, 9733, -33, 8862, 10832, 10674, 10690, 8788, 10861, 10552, 10549, 10557, 10556, 10511, 8225, 10871, 10673, 8900, 989, 8724, 10662, 949, 8789, 10872, 10882, 10876, 8823, 10568, 10812, 8949, 10527, 10611, 10639, 10637, 10599, 10881, 8918, 8822, 8818, 10804, 9674, 10875, 10598, 10016, 10794, 8777, 9838, 8599, 8708, 8713, 8951, 8950, 8716, 8958, 8957, 10772, -34, 8930, 8931, -35, -36, -37, 10718, -38, -39, 8598, 10683, 959, 8500, 10839, 8241, 8462, 10786, 10790, 10791, 8830, 10774, 8799, 10528, 10612, 10638, 10640, 10601, 8475, 10805, 10600, 8600, 10788, 10610, 10947, 10945, 10943, 10617, 8831, 10968, 10948, 10185, 10967, 10619, 10946, 10944, 8601, 10970, 10809, 10811, 8593, 965, 10663, 10650, 8669, 193, 258, 192, 8788, 195, 8966, 8782, 262, 268, 199, 10868, 8751, 8781, 8225, 270, 8412, 272, 201, 282, 200, 8707, 8704, 988, 286, 290, 1066, 294, 205, 204, 296, 1032, 310, 313, 923, 317, 315, 319, 321, 323, 327, 325, 209, 211, 336, 210, 216, 213, 10807, 340, 10518, 344, 342, 1065, 1068, 346, 352, 350, 9633, 8912, 8913, 356, 354, 358, 218, 364, 368, 217, 360, 10982, 8214, 8874, 221, 377, 381, 225, 259, 224, 10837, 8737, 8738, 10863, 8776, 227, 8893, 8965, 8757, 8492, 8898, 8899, 8897, 10509, 8869, 8904, 10697, 8245, 166, 8226, 8783, 263, 10820, 10827, 10823, 10816, 269, 231, 8791, 10991, 8788, 64, 8728, 8750, 8720, 8471, 8630, 10822, 10826, 8845, 8631, 164, 9005, 8224, 8504, 271, 10623, 247, 8903, 8990, 8973, 36, 8991, 8972, 273, 233, 10862, 283, 8789, 232, 10904, 10903, 8709, 8196, 8197, 10723, 8790, 61, 8799, 9792, 64259, 64260, 8704, 189, 8531, 188, 8533, 8537, 8539, 8532, 8534, 190, 8535, 8540, 8536, 8538, 8541, 8542, 501, 989, 287, 10880, 10900, 10645, 10616, 8919, 8819, 8202, 8459, 1098, 9829, 8230, 8889, 8763, 8213, 8463, 295, 8259, 8208, 237, 236, 10764, 10716, 8453, 305, 8890, 191, 8947, 297, 1112, 1008, 311, 312, 10523, 314, 8466, 955, 10216, 10525, 8617, 8619, 10553, 8610, 10521, 123, 91, 318, 316, 8222, 10879, 10899, 10620, 8970, 10602, 10603, 320, 9136, 10797, 8727, 95, 10643, 10605, 8249, 8218, 322, 8907, 8905, 10614, 10646, 8614, 9646, 10793, 42, 10992, 183, 8863, 8760, 8723, 8871, 8766, 8879, 8878, 324, -40, 328, 326, 10532, 8802, 10536, 8708, 8940, -41, -42, 8928, -43, -44, 8941, 8929, 8772, 241, 8470, 8877, 10500, 8876, 10498, 10499, 10531, 10535, 243, 337, 10684, 242, 8854, 8886, 248, 245, 8855, 10995, 37, 46, 8240, 8499, 8463, 8463, 8724, 10789, 177, 10927, 8473, 8936, 8733, 8880, 8200, 8279, 10524, 341, 10217, 10613, 10526, 8618, 8620, 10565, 8611, 10522, 125, 93, 345, 343, 8221, 10621, 8971, 10604, 9137, 10798, 10644, 8250, 8217, 8908, 8906, 347, 353, 351, 8937, 10533, 10537, 8994, 1097, 962, 962, 10858, 10803, 1100, 9023, 9824, -45, -46, 8849, 8850, 9633, 9642, 8726, 8995, 8902, 10941, 8834, 10951, 10965, 10963, 10928, 10942, 8835, 10952, 10964, 10966, 10534, 10538, 8982, 357, 355, 8981, 8756, 977, 8201, 8764, 8864, 10800, 9014, 10993, 8244, 9708, 359, 250, 365, 369, 10622, 249, 8988, 8975, 8989, 8974, 361, 10652, 981, 1009, 8891, 8942, 124, -47, -48, -49, -50, 10847, 8793, 8472, 8768, 10753, 10754, 10758, 10756, 8896, 253, 378, 382, 8488, 198, 193, 194, 192, 913, 256, 260, 197, 195, 728, 199, 264, 8759, 10799, 10980, 916, 201, 202, 200, 274, 280, 10869, 915, 284, 711, 292, 306, 205, 206, 204, 298, 302, 1030, 308, 1028, 922, 209, 338, 211, 212, 210, 332, 937, 216, 213, 8243, 10512, 348, 931, 222, 8482, 1035, 920, 8764, 218, 1038, 219, 217, 362, 8899, 370, 8869, 366, 8875, 8873, 372, 8896, 221, 374, 225, 226, 180, 230, 224, 8501, 945, 257, 10815, 8736, 8735, 197, 261, 229, 8776, 227, 10769, 8780, 8222, 1014, 9251, 9618, 9617, 9619, 9608, 9559, 9556, 9558, 9555, 9574, 9577, 9572, 9575, 9565, 9562, 9564, 9561, 9580, 9571, 9568, 9579, 9570, 9567, 9557, 9554, 9488, 9484, 9573, 9576, 9516, 9524, 9563, 9560, 9496, 9492, 9578, 9569, 9566, 9532, 9508, 9500, 728, 166, 8271, 8909, 10693, 10926, 8783, 8257, 711, 10829, 231, 265, 10828, 184, 10003, 9827, 58, 44, 8629, 10007, 10961, 10962, 8943, 8926, 8927, 10821, 164, 8910, 8911, 8753, 8867, 733, 8650, 948, 8643, 8642, 9830, 8946, 247, 8784, 8945, 9662, 8693, 10607, 10871, 233, 234, 8786, 232, 275, 8709, 281, 10865, 1013, 8770, 8801, 8787, 10609, 8784, 8707, 64256, 64257, -51, 64258, 9649, 10969, 189, 188, 190, 8260, 8994, 947, 285, 10921, 8503, 8809, 8935, 96, 10894, 10896, 10874, 8919, 8621, 293, 8703, 237, 238, 161, 236, 8749, 8489, 307, 299, 8465, 305, 437, 8734, 303, 10812, 191, 8953, 8948, 8712, 1110, 309, 567, 1108, 954, 8666, 10510, 10641, 171, 8676, -52, 10508, 10098, 10635, 8968, 8220, 10920, 8637, 8636, 9604, 8647, 9722, 8808, 8934, 10220, 8701, 10214, 10629, 8646, 8651, 8895, 10893, 10895, 8216, 10873, 8918, 8884, 9666, 8762, 8212, 181, 183, 8722, 8888, 8711, -53, 329, 9838, -54, 8775, 8211, 8663, 8599, -55, -56, -57, 8821, 8654, 8622, 10994, 8653, 8602, -58, 8814, 8820, 8938, 8713, 8716, -59, 8832, 8655, 8603, 8939, 8772, 8740, 8742, -60, 8840, 8833, -61, 8841, 241, 8199, -62, 8662, 8598, 243, 244, 8861, 339, 10687, 242, 10677, 8634, 10686, 8254, 333, 969, 10681, 8853, 8635, 8500, 248, 245, 9021, 11005, 9742, 8862, 10866, 177, 163, 8828, 8242, 10937, 8830, 63, 8667, 10511, 8730, 10642, 10661, 187, 8677, 10547, 8605, 8758, 10509, 10099, 10636, 8969, 8221, 8477, 8641, 8640, 8644, 8652, 10990, 10221, 8702, 10215, 10630, 8649, 8217, 8885, 9656, 8218, 8829, 349, 10938, 8831, 8865, 10854, 8664, 8600, 8726, 9839, 963, 8771, 10912, 10911, 8774, 8592, 8995, -63, 8851, 8852, 8847, 8848, 8594, 9733, 175, 10955, 8842, 10956, 8843, 8665, 8601, 223, 952, 8776, 254, 732, 215, 8482, 10701, 1115, 8812, 250, 1118, 251, 8645, 10606, 249, 8639, 8638, 9600, 9720, 363, 371, 8846, 978, 367, 9721, 8944, 9652, 8648, 10985, 8872, 982, 8866, 8794, 8882, -64, -65, 8733, 8883, 373, 8743, 9711, 9661, 10234, 10231, 10232, 10229, 10752, 10233, 10230, 9651, 253, 375, 198, 194, 120120, 197, 119964, 196, 10983, 914, 120121, 8492, 1063, 169, 266, 8450, 119966, 1026, 1029, 1039, 8609, 120123, 119967, 202, 278, 120124, 8496, 10867, 203, 120125, 8497, 1027, 288, 120126, 119970, 8461, 8459, 1045, 1025, 206, 304, 120128, 921, 8464, 207, 120129, 119973, 1061, 1036, 120130, 119974, 1033, 10218, 8606, 120131, 8466, 120132, 8499, 1034, 8469, 119977, 212, 120134, 119978, 214, 8473, 119979, 34, 8474, 119980, 10219, 8608, 8477, 8475, 1064, 120138, 8730, 119982, 8902, 222, 1062, 120139, 119983, 8607, 219, 120140, 978, 119984, 220, 10987, 8214, 120141, 119985, 120142, 119986, 120143, 119987, 1071, 1031, 1070, 120144, 119988, 376, 1046, 379, 918, 8484, 119989, 226, 180, 230, 10844, 10842, 10660, 120146, 8779, 39, 229, 119990, 228, 10989, 9141, 946, 8502, 8976, 120147, 9552, 9553, 9472, 9474, 119991, 8765, 92, 8226, 8782, -66, 267, 184, 162, 1095, 10691, 710, 8791, 8705, 8773, 120148, 169, 119992, 10959, 10960, -67, 8659, 10597, 8595, 8208, 8900, 1106, 120149, 119993, 1109, 10742, 9663, 1119, 8785, 8790, 234, 279, 8195, 8194, 120150, 8917, 949, 8495, 8770, 235, 8364, 33, 9837, 402, 120151, 8916, 119995, 289, 8807, -68, 1107, 10890, 10888, 120152, 8458, 8819, 10919, -69, 8660, 189, 8596, 8463, 120153, 119997, 238, 1077, 161, 8887, 1105, 120154, 953, 119998, 8712, 239, 120155, 119999, 1093, 1116, 120156, 120000, 8656, 10594, 10216, 171, 8592, 10925, 123, 10550, 8626, 8806, -70, 1113, 10889, 10887, 120157, 10731, 40, 120001, 8818, 91, 10918, 9667, -71, 175, 9794, 10016, 181, 10971, 8230, 120158, 120002, -72, -73, -74, -75, 160, 10819, 10818, 8817, -76, 8815, 8954, 1114, 8229, 8816, -77, 8740, 120159, 8742, -78, -79, 120003, 8769, 8836, 8837, 8825, 8824, -80, -81, -82, -83, -84, 8859, 8858, 244, 10808, 8857, 731, 8750, 10678, 120160, 10679, 170, 186, 10838, 8500, 8856, 246, 182, 8706, 8869, 981, 43, 120161, 163, 10935, 8826, 10933, 8719, 8733, 120005, 10764, 120162, 120006, 34, 8658, 10596, -85, 10217, 187, 8594, 125, 10551, 8627, 8476, 9645, 1009, 730, 120163, 41, 120007, 93, 9657, 10936, 10934, 8901, 167, 59, 10038, 1096, 8771, 10910, 10909, 8739, 10924, 10692, 120164, 8741, 9642, 120008, 9734, 10949, 8838, 8827, 9834, 185, 178, 179, 10950, 8839, 223, 9140, 8411, 254, 215, 8749, 10536, 120165, 10537, 8796, 120009, 1094, 8657, 10595, 8593, 251, 120166, 965, 120010, 9653, 252, 8661, 10984, 8597, 124, 120167, 120011, 120168, 120012, 8898, 8899, 10236, 8955, 120169, 120013, 8897, 1103, 1111, 120170, 120014, 1102, 255, 380, 950, 1078, 120171, 120015, 8204, 38, 1040, 120068, 10835, 196, 1041, 120069, 169, 8914, 8493, 935, 8915, 1044, 8711, 120071, 168, 330, 208, 1069, 120072, 919, 203, 1060, 120073, 1043, 120074, 94, 8460, 1048, 8465, 8748, 207, 1049, 120077, 1050, 120078, 1051, 120079, 8624, 10501, 1052, 120080, 1053, 120081, 10988, 1054, 120082, 214, 1055, 120083, 934, 936, 34, 120084, 174, 1056, 8476, 929, 8625, 1057, 120086, 8912, 8721, 8913, 9, 932, 1058, 120087, 1059, 120088, 220, 1042, 8897, 120089, 120090, 120091, 1067, 120092, 1047, 8488, -86, 8767, 1072, 120094, 38, 8743, 8736, 10864, 8778, 42, 228, 1073, 120095, -87, 8869, 8745, 162, 120096, 967, 9675, 169, 8746, 1076, 176, 120097, 168, 247, 729, 1101, 120098, 10902, 8467, 10901, 331, 951, 240, 235, 1092, 120099, 10892, 10886, 1075, 8923, 8805, 10878, 120100, 8921, 10898, 10917, 10916, 8809, 10888, 120101, 1080, 8660, 120102, 8747, 239, 1081, 120103, 1082, 120104, 10891, 10885, 10923, 1083, 8922, 8804, 10877, 120105, 10897, 8808, 10887, 9674, 8206, 8624, 175, 8614, 1084, 120106, 8487, 8739, -88, -89, -90, -91, 8777, 160, 1085, 120107, -92, 8817, 8815, 8956, 8715, -93, 8816, 8814, 172, 8832, 8833, 35, 1086, 120108, 10689, 937, 10688, 10845, 170, 186, 10843, 246, 8741, 182, 1087, 120109, 966, 982, 10931, 10927, 968, 120110, 34, 1088, 174, 120111, 961, 8207, 8625, 10932, 10928, 1089, 167, 120112, 173, 8764, 10922, 47, 9633, 8834, 8721, 185, 178, 179, 8835, 964, 1090, 120113, 8868, 1091, 120114, 168, 252, 1074, 8744, 120115, 120116, 120117, 1099, 165, 120118, 255, 1079, 120119, 8205, 38, 8517, 208, 62, 8921, 8811, 8465, 60, 8920, 8810, 924, 925, 10836, 928, 10939, 174, 8476, 10940, 926, 8766, 8289, 38, 8776, 8518, 176, 8519, 10906, 10905, 240, 8807, 8805, 8811, 8823, 62, 8291, 8520, 8712, 8290, 8806, 8804, 8822, 8810, 60, 8723, 956, 8800, 8715, 172, 957, 9416, 8744, 960, 177, 8826, 174, 8478, 8827, 173, 168, 8472, 8768, 958, 165, 62, 60, 62, 60};
-	private static int[] entityDoubles=new int[]{10914, 824, 10878, 824, 8807, 824, 10704, 824, 10703, 824, 8811, 824, 10877, 824, 10913, 824, 8848, 824, 10927, 824, 10928, 824, 8831, 824, 8782, 824, 8847, 824, 8770, 824, 10955, 65024, 10956, 65024, 8783, 824, 8842, 65024, 8843, 65024, 8810, 824, 8835, 8402, 8287, 8202, 10949, 824, 10950, 824, 8834, 8402, 8809, 65024, 8808, 65024, 10878, 824, 10877, 824, 10861, 824, 8949, 824, 8801, 8421, 10927, 824, 8834, 8402, 10928, 824, 8835, 8402, 8884, 8402, 8885, 8402, 8783, 824, 8953, 824, 11005, 8421, 10547, 824, 8605, 824, 8851, 65024, 8852, 65024, 10955, 65024, 8842, 65024, 10956, 65024, 8843, 65024, 102, 106, 10925, 65024, 8779, 824, 8782, 824, 8784, 824, 8770, 824, 8807, 824, 8806, 824, 8706, 824, 10949, 824, 10950, 824, 8764, 8402, 10924, 65024, 8834, 8402, 8835, 8402, 8745, 65024, 8746, 65024, 8923, 65024, 8809, 65024, 8922, 65024, 8808, 65024, 8811, 824, 8810, 824, 8736, 8402, 10864, 824, 10878, 824, 10877, 824, 10927, 824, 10928, 824, 8781, 8402, 8805, 8402, 62, 8402, 8804, 8402, 60, 8402, 8765, 817, 8766, 819, 61, 8421, 8921, 824, 8811, 8402, 8920, 824, 8810, 8402, 8807, 824, 8806, 824};
 
 
 
@@ -510,7 +380,7 @@ final class HtmlParser {
 	 static int TOKEN_TYPE_MASK=0xF0000000;
 	 static int TOKEN_CHARACTER=0x00000000;
 	private static int TOKEN_INDEX_MASK=0x0FFFFFFF;
-	public static String HTML_NAMESPACE="http://www.w3.org/1999/xhtml";
+	public static final String HTML_NAMESPACE="http://www.w3.org/1999/xhtml";
 
 	private static String[] quirksModePublicIdPrefixes=new String[]{
 		"+//silmaril//dtd html pro v0r11 19970101//",
@@ -586,7 +456,7 @@ final class HtmlParser {
 	private Html5Decoder decoder=null;
 	private TagToken currentEndTag=null;
 	private TagToken currentTag=null;
-	private Attrib currentAttribute=null;
+	private Attr currentAttribute=null;
 	private int bogusCommentCharacter=0;
 	private final IntList tempBuffer=new IntList();
 	private TokenizerState state=TokenizerState.Data;
@@ -610,39 +480,23 @@ final class HtmlParser {
 	private boolean noforeign;
 	private final String address;
 
-	private void initialize(){
-		noforeign=false;
-		document=new Document();
-		document.baseurl=address;
-		context=null;
-		openElements.clear();
-		error=false;
-		baseurl=null;
-		hasForeignContent=false; // performance optimization
-		lastState=TokenizerState.Data;
-		lastComment=null;
-		docTypeToken=null;
-		tokens.clear();
-		lastStartTag=null;
-		currentEndTag=null;
-		currentTag=null;
-		currentAttribute=null;
-		bogusCommentCharacter=0;
-		tempBuffer.clearAll();
-		state=TokenizerState.Data;
-		framesetOk=true;
-		integrationElements.clear();
-		tokenQueue.clear();
-		insertionMode=InsertionMode.Initial;
-		originalInsertionMode=InsertionMode.Initial;
-		formattingElements.clear();
-		doFosterParent=false;
-		headElement=null;
-		formElement=null;
-		inputElement=null;
-		done=false;
-		pendingTableCharacters.clearAll();
+	public static final String XLINK_NAMESPACE="http://www.w3.org/1999/xlink";
+
+	public static final String XML_NAMESPACE="http://www.w3.org/XML/1998/namespace";
+	private static final String XMLNS_NAMESPACE="http://www.w3.org/2000/xmlns/";
+
+
+	private static <T> T removeAtIndex(List<T> array, int index){
+		T ret=array.get(index);
+		array.remove(index);
+		return ret;
 	}
+
+	public HtmlParser(InputStream s, String string) throws IOException {
+		this(s,string,null);
+	}
+
+
 
 	public HtmlParser(InputStream source, String address, String charset) throws IOException{
 		if(source==null)throw new IllegalArgumentException();
@@ -659,164 +513,7 @@ final class HtmlParser {
 		decoder=new Html5Decoder(TextEncoding.getDecoder(encoding.getEncoding()));
 		charInput=new StackableCharacterInput(new DecoderCharacterInput(inputStream,decoder));
 	}
-	public HtmlParser(InputStream s, String string) throws IOException {
-		this(s,string,null);
-	}
 
-
-	private static <T> T removeAtIndex(List<T> array, int index){
-		T ret=array.get(index);
-		array.remove(index);
-		return ret;
-	}
-
-	private boolean isMathMLTextIntegrationPoint(Element element) {
-		String name=element.getLocalName();
-		return MATHML_NAMESPACE.equals(element.getNamespaceURI()) && (
-				name.equals("mi") ||
-				name.equals("mo") ||
-				name.equals("mn") ||
-				name.equals("ms") ||
-				name.equals("mtext"));
-	}
-
-	private boolean isHtmlIntegrationPoint(Element element) {
-		if(integrationElements.contains(element))
-			return true;
-		String name=element.getLocalName();
-		return SVG_NAMESPACE.equals(element.getNamespaceURI()) && (
-				name.equals("foreignObject") ||
-				name.equals("desc") ||
-				name.equals("title"));
-	}
-
-
-
-	private boolean isForeignContext(int token){
-		if(hasForeignContent && token!=TOKEN_EOF){
-			Element element=(context!=null && openElements.size()==1) ?
-					context : getCurrentNode(); // adjusted current node
-			if(element==null)return false;
-			if(element.getNamespaceURI().equals(HTML_NAMESPACE))
-				return false;
-			if((token&TOKEN_TYPE_MASK)==TOKEN_START_TAG){
-				StartTagToken tag=(StartTagToken)getToken(token);
-				String name=element.getLocalName();
-				if(isMathMLTextIntegrationPoint(element)){
-					String tokenName=tag.getName();
-					if(!"mglyph".equals(tokenName) &&
-							!"malignmark".equals(tokenName))
-						return false;
-				}
-				if(MATHML_NAMESPACE.equals(element.getNamespaceURI()) && (
-						name.equals("annotation-xml")) &&
-						"svg".equals(tag.getName()))
-					return false;
-				if(isHtmlIntegrationPoint(element))
-					return false;
-				return true;
-			} else if((token&TOKEN_TYPE_MASK)==TOKEN_CHARACTER){
-				if(isMathMLTextIntegrationPoint(element) ||
-						isHtmlIntegrationPoint(element))
-					return false;
-				return true;
-			} else
-				return true;
-		}
-		return false;
-	}
-
-
-	private Text getFosterParentedTextNode() {
-		if(openElements.size()==0)return null;
-		Node fosterParent=openElements.get(0);
-		List<Node> childNodes;
-		for(int i=openElements.size()-1;i>=0;i--){
-			Element e=openElements.get(i);
-			if(e.getLocalName().equals("table")){
-				Node parent=(Node) e.getParentNode();
-				boolean isElement=(parent!=null && parent.getNodeType()==NodeType.ELEMENT_NODE);
-				if(!isElement){ // the parent is not an element
-					if(i<=1)
-						// This usually won't happen
-						throw new AssertionError();
-					// append to the element before this table
-					fosterParent=openElements.get(i-1);
-					break;
-				} else {
-					// Parent of the table, insert before the table
-					childNodes=parent.getChildNodesInternal();
-					if(childNodes.size()==0)
-						throw new AssertionError();
-					for(int j=0;j<childNodes.size();j++){
-						if(childNodes.get(j).equals(e)){
-							if(j>0 && childNodes.get(j-1).getNodeType()==NodeType.TEXT_NODE)
-								return (Text)childNodes.get(j-1);
-							else {
-								Text textNode=new Text();
-								parent.insertBefore(textNode, e);
-								return textNode;
-							}
-						}
-					}
-					throw new AssertionError();
-				}
-			}
-		}
-		childNodes=fosterParent.getChildNodesInternal();
-		Node lastChild=(childNodes.size()==0) ? null : childNodes.get(childNodes.size()-1);
-		if(lastChild==null || lastChild.getNodeType()!=NodeType.TEXT_NODE){
-			Text textNode=new Text();
-			fosterParent.appendChild(textNode);
-			return textNode;
-		} else
-			return ((Text)lastChild);
-	}
-
-	private Text getTextNodeToInsert(Node node){
-		if(doFosterParent && node.equals(getCurrentNode())){
-			String name=((Element)node).getLocalName();
-			if("table".equals(name) ||
-					"tbody".equals(name) ||
-					"tfoot".equals(name) ||
-					"thead".equals(name) ||
-					"tr".equals(name))
-				return getFosterParentedTextNode();
-		}
-		List<Node> childNodes=node.getChildNodesInternal();
-		Node lastChild=(childNodes.size()==0) ? null : childNodes.get(childNodes.size()-1);
-		if(lastChild==null || lastChild.getNodeType()!=NodeType.TEXT_NODE){
-			Text textNode=new Text();
-			node.appendChild(textNode);
-			return textNode;
-		} else
-			return ((Text)lastChild);
-	}
-
-	private void insertInCurrentNode(Node element){
-		Element node=getCurrentNode();
-		if(doFosterParent){
-			String name=node.getLocalName();
-			if("table".equals(name) ||
-					"tbody".equals(name) ||
-					"tfoot".equals(name) ||
-					"thead".equals(name) ||
-					"tr".equals(name)){
-				fosterParent(element);
-			} else {
-				node.appendChild(element);
-			}
-		} else {
-			node.appendChild(element);
-		}
-	}
-
-	private Comment createCommentNode(int token){
-		CommentToken comment=(CommentToken)getToken(token);
-		Comment node=new Comment();
-		node.setData(comment.getValue());
-		return node;
-	}
 
 	private void addCommentNodeToCurrentNode(int token){
 		insertInCurrentNode(createCommentNode(token));
@@ -826,34 +523,12 @@ final class HtmlParser {
 		document.appendChild(createCommentNode(token));
 	}
 
-
 	private void addCommentNodeToFirst(int token){
 		openElements.get(0).appendChild(createCommentNode(token));
 	}
 
-
 	private Element addHtmlElement(StartTagToken tag){
 		Element element=Element.fromToken(tag);
-		Element currentNode=getCurrentNode();
-		if(currentNode!=null) {
-			insertInCurrentNode(element);
-		} else {
-			document.appendChild(element);
-		}
-		openElements.add(element);
-		return element;
-	}
-
-	private Element insertForeignElement(StartTagToken tag, String namespace) {
-		Element element=Element.fromToken(tag,namespace);
-		String xmlns=element.getAttributeNS(XMLNS_NAMESPACE,"xmlns");
-		String xlink=element.getAttributeNS(XMLNS_NAMESPACE,"xlink");
-		if(xmlns!=null && !xmlns.equals(namespace)){
-			error=true;
-		}
-		if(xlink!=null && !xlink.equals(XLINK_NAMESPACE)){
-			error=true;
-		}
 		Element currentNode=getCurrentNode();
 		if(currentNode!=null) {
 			insertInCurrentNode(element);
@@ -873,17 +548,110 @@ final class HtmlParser {
 		return element;
 	}
 
-	private void insertCharacter(Node node, int ch){
-		Text textNode=getTextNodeToInsert(node);
-		if(textNode!=null) {
-			textNode.text.appendInt(ch);
+	private void adjustForeignAttributes(StartTagToken token){
+		List<Attr> attributes=token.getAttributes();
+		for(Attr attr : attributes){
+			String name=attr.getName();
+			if(name.equals("xlink:actuate") ||
+					name.equals("xlink:arcrole") ||
+					name.equals("xlink:href") ||
+					name.equals("xlink:role") ||
+					name.equals("xlink:show") ||
+					name.equals("xlink:title") ||
+					name.equals("xlink:type")
+					){
+				attr.setNamespace(XLINK_NAMESPACE);
+			}
+			else if(name.equals("xml:base") ||
+					name.equals("xml:lang") ||
+					name.equals("xml:space")
+					){
+				attr.setNamespace(XML_NAMESPACE);
+			}
+			else if(name.equals("xmlns") ||
+					name.equals("xmlns:xlink")){
+				attr.setNamespace(XMLNS_NAMESPACE);
+			}
 		}
 	}
 
-	private void insertString(Node node, String str){
-		Text textNode=getTextNodeToInsert(node);
-		if(textNode!=null) {
-			textNode.text.appendString(str);
+
+	private void adjustMathMLAttributes(StartTagToken token){
+		List<Attr> attributes=token.getAttributes();
+		for(Attr attr : attributes){
+			if(attr.getName().equals("definitionurl")){
+				attr.setName("definitionURL");
+			}
+		}
+	}
+
+
+	private void adjustSvgAttributes(StartTagToken token){
+		List<Attr> attributes=token.getAttributes();
+		for(Attr attr : attributes){
+			String name=attr.getName();
+			if(name.equals("attributename")){ attr.setName("attributeName"); }
+			else if(name.equals("attributetype")){ attr.setName("attributeType");  }
+			else if(name.equals("basefrequency")){ attr.setName("baseFrequency");  }
+			else if(name.equals("baseprofile")){ attr.setName("baseProfile");  }
+			else if(name.equals("calcmode")){ attr.setName("calcMode");  }
+			else if(name.equals("clippathunits")){ attr.setName("clipPathUnits");  }
+			else if(name.equals("contentscripttype")){ attr.setName("contentScriptType");  }
+			else if(name.equals("contentstyletype")){ attr.setName("contentStyleType");  }
+			else if(name.equals("diffuseconstant")){ attr.setName("diffuseConstant");  }
+			else if(name.equals("edgemode")){ attr.setName("edgeMode");  }
+			else if(name.equals("externalresourcesrequired")){ attr.setName("externalResourcesRequired");  }
+			else if(name.equals("filterres")){ attr.setName("filterRes");  }
+			else if(name.equals("filterunits")){ attr.setName("filterUnits");  }
+			else if(name.equals("glyphref")){ attr.setName("glyphRef");  }
+			else if(name.equals("gradienttransform")){ attr.setName("gradientTransform");  }
+			else if(name.equals("gradientunits")){ attr.setName("gradientUnits");  }
+			else if(name.equals("kernelmatrix")){ attr.setName("kernelMatrix");  }
+			else if(name.equals("kernelunitlength")){ attr.setName("kernelUnitLength");  }
+			else if(name.equals("keypoints")){ attr.setName("keyPoints");  }
+			else if(name.equals("keysplines")){ attr.setName("keySplines");  }
+			else if(name.equals("keytimes")){ attr.setName("keyTimes");  }
+			else if(name.equals("lengthadjust")){ attr.setName("lengthAdjust");  }
+			else if(name.equals("limitingconeangle")){ attr.setName("limitingConeAngle");  }
+			else if(name.equals("markerheight")){ attr.setName("markerHeight");  }
+			else if(name.equals("markerunits")){ attr.setName("markerUnits");  }
+			else if(name.equals("markerwidth")){ attr.setName("markerWidth");  }
+			else if(name.equals("maskcontentunits")){ attr.setName("maskContentUnits");  }
+			else if(name.equals("maskunits")){ attr.setName("maskUnits");  }
+			else if(name.equals("numoctaves")){ attr.setName("numOctaves");  }
+			else if(name.equals("pathlength")){ attr.setName("pathLength");  }
+			else if(name.equals("patterncontentunits")){ attr.setName("patternContentUnits");  }
+			else if(name.equals("patterntransform")){ attr.setName("patternTransform");  }
+			else if(name.equals("patternunits")){ attr.setName("patternUnits");  }
+			else if(name.equals("pointsatx")){ attr.setName("pointsAtX");  }
+			else if(name.equals("pointsaty")){ attr.setName("pointsAtY");  }
+			else if(name.equals("pointsatz")){ attr.setName("pointsAtZ");  }
+			else if(name.equals("preservealpha")){ attr.setName("preserveAlpha");  }
+			else if(name.equals("preserveaspectratio")){ attr.setName("preserveAspectRatio");  }
+			else if(name.equals("primitiveunits")){ attr.setName("primitiveUnits");  }
+			else if(name.equals("refx")){ attr.setName("refX");  }
+			else if(name.equals("refy")){ attr.setName("refY");  }
+			else if(name.equals("repeatcount")){ attr.setName("repeatCount");  }
+			else if(name.equals("repeatdur")){ attr.setName("repeatDur");  }
+			else if(name.equals("requiredextensions")){ attr.setName("requiredExtensions");  }
+			else if(name.equals("requiredfeatures")){ attr.setName("requiredFeatures");  }
+			else if(name.equals("specularconstant")){ attr.setName("specularConstant");  }
+			else if(name.equals("specularexponent")){ attr.setName("specularExponent");  }
+			else if(name.equals("spreadmethod")){ attr.setName("spreadMethod");  }
+			else if(name.equals("startoffset")){ attr.setName("startOffset");  }
+			else if(name.equals("stddeviation")){ attr.setName("stdDeviation");  }
+			else if(name.equals("stitchtiles")){ attr.setName("stitchTiles");  }
+			else if(name.equals("surfacescale")){ attr.setName("surfaceScale");  }
+			else if(name.equals("systemlanguage")){ attr.setName("systemLanguage");  }
+			else if(name.equals("tablevalues")){ attr.setName("tableValues");  }
+			else if(name.equals("targetx")){ attr.setName("targetX");  }
+			else if(name.equals("targety")){ attr.setName("targetY");  }
+			else if(name.equals("textlength")){ attr.setName("textLength");  }
+			else if(name.equals("viewbox")){ attr.setName("viewBox");  }
+			else if(name.equals("viewtarget")){ attr.setName("viewTarget");  }
+			else if(name.equals("xchannelselector")){ attr.setName("xChannelSelector");  }
+			else if(name.equals("ychannelselector")){ attr.setName("yChannelSelector");  }
+			else if(name.equals("zoomandpan")){ attr.setName("zoomAndPan");  }
 		}
 	}
 
@@ -1104,60 +872,6 @@ final class HtmlParser {
 		return true;
 	}
 
-	private boolean hasNativeElementInScope() {
-		for(int i=openElements.size()-1;i>=0;i--){
-			Element e=openElements.get(i);
-			//DebugUtility.log("%s %s",e.getLocalName(),e.getNamespaceURI());
-			if(e.getNamespaceURI().equals(HTML_NAMESPACE) ||
-					isMathMLTextIntegrationPoint(e) ||
-					isHtmlIntegrationPoint(e))
-				return true;
-			if(e.isHtmlElement("applet")||
-					e.isHtmlElement("caption")||
-					e.isHtmlElement("html")||
-					e.isHtmlElement("table")||
-					e.isHtmlElement("td")||
-					e.isHtmlElement("th")||
-					e.isHtmlElement("marquee")||
-					e.isHtmlElement("object")||
-					e.isMathMLElement("mi")||
-					e.isMathMLElement("mo")||
-					e.isMathMLElement("mn")||
-					e.isMathMLElement("ms")||
-					e.isMathMLElement("mtext")||
-					e.isMathMLElement("annotation-xml")||
-					e.isSvgElement("foreignObject")||
-					e.isSvgElement("desc")||
-					e.isSvgElement("title")
-					)
-				return false;
-		}
-		return false;
-	}
-
-	private void skipLineFeed() throws IOException {
-		int mark=charInput.setSoftMark();
-		int nextToken=charInput.read();
-		if(nextToken==0x0a)
-			return; // ignore the token if it's 0x0A
-		else if(nextToken==0x26){ // start of character reference
-			int charref=parseCharacterReference(-1);
-			if(charref<0){
-				// more than one character in this reference
-				int index=Math.abs(charref+1);
-				tokenQueue.add(entityDoubles[index*2]);
-				tokenQueue.add(entityDoubles[index*2+1]);
-			} else if(charref==0x0a)
-				return; // ignore the token
-			else {
-				tokenQueue.add(charref);
-			}
-		} else {
-			// anything else; reset the input stream
-			charInput.setMarkPosition(mark);
-		}
-	}
-
 	private boolean applyInsertionMode(int token, InsertionMode insMode) throws IOException{
 		//DebugUtility.log("[[%08X %s %s %s(%s)",token,getToken(token),insMode==null ? insertionMode :
 		//insMode,isForeignContext(token),noforeign);
@@ -1257,7 +971,7 @@ final class HtmlParser {
 
 				return true;
 			}
-			if(!"about:srcdoc".equals(address)){
+			if(!"about:srcdoc".equals(document.address)){
 				error=true;
 				document.setMode(DocumentMode.QuirksMode);
 			}
@@ -1295,7 +1009,7 @@ final class HtmlParser {
 				}
 			}
 			Element element=new Element();
-			element.setName("html");
+			element.setLocalName("html");
 			element.setNamespace(HTML_NAMESPACE);
 			document.appendChild(element);
 			openElements.add(element);
@@ -1901,7 +1615,7 @@ final class HtmlParser {
 					applyStartTag("hr",insMode);
 					applyStartTag("label",insMode);
 					StartTagToken isindex=new StartTagToken("input");
-					for(Attrib attr : tag.getAttributes()){
+					for(IAttr attr : tag.getAttributes()){
 						String attrname=attr.getName();
 						if(!"name".equals(attrname) &&
 								!"action".equals(attrname) &&
@@ -3386,7 +3100,6 @@ final class HtmlParser {
 		}
 	}
 
-
 	private boolean applyStartTag(String name, InsertionMode insMode) throws IOException {
 		return applyInsertionMode(getArtificialToken(TOKEN_START_TAG,name),insMode);
 	}
@@ -3430,6 +3143,29 @@ final class HtmlParser {
 			applyEndTag("p",insMode);
 		}
 	}
+
+	private Comment createCommentNode(int token){
+		CommentToken comment=(CommentToken)getToken(token);
+		Comment node=new Comment();
+		node.setData(comment.getValue());
+		return node;
+	}
+
+	private int emitCurrentTag() {
+		int ret=tokens.size()|currentTag.getType();
+		tokens.add(currentTag);
+		if(currentTag.getType()==TOKEN_START_TAG) {
+			lastStartTag=currentTag;
+		} else {
+			if(currentTag.getAttributes().size()>0 ||
+					currentTag.isSelfClosing()){
+				error=true;
+			}
+		}
+		currentTag=null;
+		return ret;
+	}
+
 
 	private void fosterParent(Node element) {
 		if(openElements.size()==0)return;
@@ -3476,7 +3212,6 @@ final class HtmlParser {
 		}
 	}
 
-
 	private void generateImpliedEndTagsExcept(String string) {
 		while(true){
 			Element node=getCurrentNode();
@@ -3499,6 +3234,7 @@ final class HtmlParser {
 			}
 		}
 	}
+
 	private int getArtificialToken(int type, String name){
 		if(type==TOKEN_END_TAG){
 			EndTagToken token=new EndTagToken(name);
@@ -3514,16 +3250,84 @@ final class HtmlParser {
 		}
 		throw new IllegalArgumentException();
 	}
+
 	private Element getCurrentNode(){
 		if(openElements.size()==0)return null;
 		return openElements.get(openElements.size()-1);
 	}
+
 	private FormattingElement getFormattingElement(Element node) {
 		for(FormattingElement fe : formattingElements){
 			if(!fe.isMarker() && node.equals(fe.element))
 				return fe;
 		}
 		return null;
+	}
+
+
+	private Text getFosterParentedTextNode() {
+		if(openElements.size()==0)return null;
+		Node fosterParent=openElements.get(0);
+		List<Node> childNodes;
+		for(int i=openElements.size()-1;i>=0;i--){
+			Element e=openElements.get(i);
+			if(e.getLocalName().equals("table")){
+				Node parent=(Node) e.getParentNode();
+				boolean isElement=(parent!=null && parent.getNodeType()==NodeType.ELEMENT_NODE);
+				if(!isElement){ // the parent is not an element
+					if(i<=1)
+						// This usually won't happen
+						throw new AssertionError();
+					// append to the element before this table
+					fosterParent=openElements.get(i-1);
+					break;
+				} else {
+					// Parent of the table, insert before the table
+					childNodes=parent.getChildNodesInternal();
+					if(childNodes.size()==0)
+						throw new AssertionError();
+					for(int j=0;j<childNodes.size();j++){
+						if(childNodes.get(j).equals(e)){
+							if(j>0 && childNodes.get(j-1).getNodeType()==NodeType.TEXT_NODE)
+								return (Text)childNodes.get(j-1);
+							else {
+								Text textNode=new Text();
+								parent.insertBefore(textNode, e);
+								return textNode;
+							}
+						}
+					}
+					throw new AssertionError();
+				}
+			}
+		}
+		childNodes=fosterParent.getChildNodesInternal();
+		Node lastChild=(childNodes.size()==0) ? null : childNodes.get(childNodes.size()-1);
+		if(lastChild==null || lastChild.getNodeType()!=NodeType.TEXT_NODE){
+			Text textNode=new Text();
+			fosterParent.appendChild(textNode);
+			return textNode;
+		} else
+			return ((Text)lastChild);
+	}
+	private Text getTextNodeToInsert(Node node){
+		if(doFosterParent && node.equals(getCurrentNode())){
+			String name=((Element)node).getLocalName();
+			if("table".equals(name) ||
+					"tbody".equals(name) ||
+					"tfoot".equals(name) ||
+					"thead".equals(name) ||
+					"tr".equals(name))
+				return getFosterParentedTextNode();
+		}
+		List<Node> childNodes=node.getChildNodesInternal();
+		Node lastChild=(childNodes.size()==0) ? null : childNodes.get(childNodes.size()-1);
+		if(lastChild==null || lastChild.getNodeType()!=NodeType.TEXT_NODE){
+			Text textNode=new Text();
+			node.appendChild(textNode);
+			return textNode;
+		} else
+			return ((Text)lastChild);
 	}
 	 IToken getToken(int token){
 		if((token&TOKEN_TYPE_MASK)==TOKEN_CHARACTER ||
@@ -3633,7 +3437,6 @@ final class HtmlParser {
 		}
 		return false;
 	}
-
 	private boolean hasHtmlElementInScope(String name){
 		for(int i=openElements.size()-1;i>=0;i--){
 			Element e=openElements.get(i);
@@ -3661,9 +3464,6 @@ final class HtmlParser {
 		}
 		return false;
 	}
-
-
-
 	private boolean hasHtmlElementInSelectScope(String name) {
 		for(int i=openElements.size()-1;i>=0;i--){
 			Element e=openElements.get(i);
@@ -3688,6 +3488,8 @@ final class HtmlParser {
 		return false;
 
 	}
+
+
 
 	private boolean hasHtmlHeaderElementInScope() {
 		for(int i=openElements.size()-1;i>=0;i--){
@@ -3722,6 +3524,99 @@ final class HtmlParser {
 		return false;
 	}
 
+	private boolean hasNativeElementInScope() {
+		for(int i=openElements.size()-1;i>=0;i--){
+			Element e=openElements.get(i);
+			//DebugUtility.log("%s %s",e.getLocalName(),e.getNamespaceURI());
+			if(e.getNamespaceURI().equals(HTML_NAMESPACE) ||
+					isMathMLTextIntegrationPoint(e) ||
+					isHtmlIntegrationPoint(e))
+				return true;
+			if(e.isHtmlElement("applet")||
+					e.isHtmlElement("caption")||
+					e.isHtmlElement("html")||
+					e.isHtmlElement("table")||
+					e.isHtmlElement("td")||
+					e.isHtmlElement("th")||
+					e.isHtmlElement("marquee")||
+					e.isHtmlElement("object")||
+					e.isMathMLElement("mi")||
+					e.isMathMLElement("mo")||
+					e.isMathMLElement("mn")||
+					e.isMathMLElement("ms")||
+					e.isMathMLElement("mtext")||
+					e.isMathMLElement("annotation-xml")||
+					e.isSvgElement("foreignObject")||
+					e.isSvgElement("desc")||
+					e.isSvgElement("title")
+					)
+				return false;
+		}
+		return false;
+	}
+
+	private void initialize(){
+		noforeign=false;
+		document=new Document();
+		document.address=address;
+		document.setBaseURI(address);
+		context=null;
+		openElements.clear();
+		error=false;
+		baseurl=null;
+		hasForeignContent=false; // performance optimization
+		lastState=TokenizerState.Data;
+		lastComment=null;
+		docTypeToken=null;
+		tokens.clear();
+		lastStartTag=null;
+		currentEndTag=null;
+		currentTag=null;
+		currentAttribute=null;
+		bogusCommentCharacter=0;
+		tempBuffer.clearAll();
+		state=TokenizerState.Data;
+		framesetOk=true;
+		integrationElements.clear();
+		tokenQueue.clear();
+		insertionMode=InsertionMode.Initial;
+		originalInsertionMode=InsertionMode.Initial;
+		formattingElements.clear();
+		doFosterParent=false;
+		headElement=null;
+		formElement=null;
+		inputElement=null;
+		done=false;
+		pendingTableCharacters.clearAll();
+	}
+
+	private void insertCharacter(Node node, int ch){
+		Text textNode=getTextNodeToInsert(node);
+		if(textNode!=null) {
+			textNode.text.appendInt(ch);
+		}
+	}
+
+	private Element insertForeignElement(StartTagToken tag, String namespace) {
+		Element element=Element.fromToken(tag,namespace);
+		String xmlns=element.getAttributeNS(XMLNS_NAMESPACE,"xmlns");
+		String xlink=element.getAttributeNS(XMLNS_NAMESPACE,"xlink");
+		if(xmlns!=null && !xmlns.equals(namespace)){
+			error=true;
+		}
+		if(xlink!=null && !xlink.equals(XLINK_NAMESPACE)){
+			error=true;
+		}
+		Element currentNode=getCurrentNode();
+		if(currentNode!=null) {
+			insertInCurrentNode(element);
+		} else {
+			document.appendChild(element);
+		}
+		openElements.add(element);
+		return element;
+	}
+
 	private void insertFormattingMarker(StartTagToken tag,
 			Element addHtmlElement) {
 		FormattingElement fe=new FormattingElement();
@@ -3731,12 +3626,93 @@ final class HtmlParser {
 		formattingElements.add(fe);
 	}
 
+	private void insertInCurrentNode(Node element){
+		Element node=getCurrentNode();
+		if(doFosterParent){
+			String name=node.getLocalName();
+			if("table".equals(name) ||
+					"tbody".equals(name) ||
+					"tfoot".equals(name) ||
+					"thead".equals(name) ||
+					"tr".equals(name)){
+				fosterParent(element);
+			} else {
+				node.appendChild(element);
+			}
+		} else {
+			node.appendChild(element);
+		}
+	}
+
+
+	private void insertString(Node node, String str){
+		Text textNode=getTextNodeToInsert(node);
+		if(textNode!=null) {
+			textNode.text.appendString(str);
+		}
+	}
 	private boolean isAppropriateEndTag(){
 		if(lastStartTag==null || currentEndTag==null)
 			return false;
 		//DebugUtility.log("lastStartTag=%s",lastStartTag.getName());
 		//DebugUtility.log("currentEndTag=%s",currentEndTag.getName());
 		return currentEndTag.getName().equals(lastStartTag.getName());
+	}
+
+	public boolean isError() {
+		return error;
+	}
+	private boolean isForeignContext(int token){
+		if(hasForeignContent && token!=TOKEN_EOF){
+			Element element=(context!=null && openElements.size()==1) ?
+					context : getCurrentNode(); // adjusted current node
+			if(element==null)return false;
+			if(element.getNamespaceURI().equals(HTML_NAMESPACE))
+				return false;
+			if((token&TOKEN_TYPE_MASK)==TOKEN_START_TAG){
+				StartTagToken tag=(StartTagToken)getToken(token);
+				String name=element.getLocalName();
+				if(isMathMLTextIntegrationPoint(element)){
+					String tokenName=tag.getName();
+					if(!"mglyph".equals(tokenName) &&
+							!"malignmark".equals(tokenName))
+						return false;
+				}
+				if(MATHML_NAMESPACE.equals(element.getNamespaceURI()) && (
+						name.equals("annotation-xml")) &&
+						"svg".equals(tag.getName()))
+					return false;
+				if(isHtmlIntegrationPoint(element))
+					return false;
+				return true;
+			} else if((token&TOKEN_TYPE_MASK)==TOKEN_CHARACTER){
+				if(isMathMLTextIntegrationPoint(element) ||
+						isHtmlIntegrationPoint(element))
+					return false;
+				return true;
+			} else
+				return true;
+		}
+		return false;
+	}
+	private boolean isHtmlIntegrationPoint(Element element) {
+		if(integrationElements.contains(element))
+			return true;
+		String name=element.getLocalName();
+		return SVG_NAMESPACE.equals(element.getNamespaceURI()) && (
+				name.equals("foreignObject") ||
+				name.equals("desc") ||
+				name.equals("title"));
+	}
+
+	private boolean isMathMLTextIntegrationPoint(Element element) {
+		String name=element.getLocalName();
+		return MATHML_NAMESPACE.equals(element.getNamespaceURI()) && (
+				name.equals("mi") ||
+				name.equals("mo") ||
+				name.equals("mn") ||
+				name.equals("ms") ||
+				name.equals("mtext"));
 	}
 
 	private boolean isSpecialElement(Element node) {
@@ -3751,6 +3727,37 @@ final class HtmlParser {
 			return true;
 
 		return false;
+	}
+	 String nodesToDebugString(List<Node> nodes){
+		StringBuilder builder=new StringBuilder();
+		for(Node node : nodes){
+			String str=node.toDebugString();
+			String[] strarray=StringUtility.splitAt(str,"\n");
+			for(String el : strarray){
+				builder.append("| ");
+				builder.append(el.replace("~~~~","\n"));
+				builder.append("\n");
+			}
+		}
+		return builder.toString();
+	}
+	public IDocument parse() throws IOException {
+		while(true){
+			int token=parserRead();
+			applyInsertionMode(token,null);
+			if((token&TOKEN_TYPE_MASK)==TOKEN_START_TAG){
+				StartTagToken tag=(StartTagToken)getToken(token);
+				//	DebugUtility.log(tag);
+				if(!tag.isAckSelfClosing()){
+					error=true;
+				}
+			}
+			//	DebugUtility.log("token=%08X, insertionMode=%s, error=%s",token,insertionMode,error);
+			if(done){
+				break;
+			}
+		}
+		return document;
 	}
 
 	private int parseCharacterReference(int allowedCharacter) throws IOException{
@@ -3908,8 +3915,8 @@ final class HtmlParser {
 				charInput.setMarkPosition(markStart+1);
 			}
 			int count=0;
-			for(int index=0;index<entities.length;index++){
-				String entity=entities[index];
+			for(int index=0;index<HtmlEntities.entities.length;index++){
+				String entity=HtmlEntities.entities[index];
 				if(entity.charAt(0)==c1){
 					if(data==null){
 						// Read the rest of the character reference
@@ -3967,7 +3974,7 @@ final class HtmlParser {
 								error=true;
 							}
 						}
-						return entityValues[index];
+						return HtmlEntities.entityValues[index];
 					}
 				}
 			}
@@ -3993,133 +4000,71 @@ final class HtmlParser {
 		}
 	}
 
-
-	private void adjustSvgAttributes(StartTagToken token){
-		List<Attrib> attributes=token.getAttributes();
-		for(Attrib attr : attributes){
-			String name=attr.getName();
-			if(name.equals("attributename")){ attr.setName("attributeName"); }
-			else if(name.equals("attributetype")){ attr.setName("attributeType");  }
-			else if(name.equals("basefrequency")){ attr.setName("baseFrequency");  }
-			else if(name.equals("baseprofile")){ attr.setName("baseProfile");  }
-			else if(name.equals("calcmode")){ attr.setName("calcMode");  }
-			else if(name.equals("clippathunits")){ attr.setName("clipPathUnits");  }
-			else if(name.equals("contentscripttype")){ attr.setName("contentScriptType");  }
-			else if(name.equals("contentstyletype")){ attr.setName("contentStyleType");  }
-			else if(name.equals("diffuseconstant")){ attr.setName("diffuseConstant");  }
-			else if(name.equals("edgemode")){ attr.setName("edgeMode");  }
-			else if(name.equals("externalresourcesrequired")){ attr.setName("externalResourcesRequired");  }
-			else if(name.equals("filterres")){ attr.setName("filterRes");  }
-			else if(name.equals("filterunits")){ attr.setName("filterUnits");  }
-			else if(name.equals("glyphref")){ attr.setName("glyphRef");  }
-			else if(name.equals("gradienttransform")){ attr.setName("gradientTransform");  }
-			else if(name.equals("gradientunits")){ attr.setName("gradientUnits");  }
-			else if(name.equals("kernelmatrix")){ attr.setName("kernelMatrix");  }
-			else if(name.equals("kernelunitlength")){ attr.setName("kernelUnitLength");  }
-			else if(name.equals("keypoints")){ attr.setName("keyPoints");  }
-			else if(name.equals("keysplines")){ attr.setName("keySplines");  }
-			else if(name.equals("keytimes")){ attr.setName("keyTimes");  }
-			else if(name.equals("lengthadjust")){ attr.setName("lengthAdjust");  }
-			else if(name.equals("limitingconeangle")){ attr.setName("limitingConeAngle");  }
-			else if(name.equals("markerheight")){ attr.setName("markerHeight");  }
-			else if(name.equals("markerunits")){ attr.setName("markerUnits");  }
-			else if(name.equals("markerwidth")){ attr.setName("markerWidth");  }
-			else if(name.equals("maskcontentunits")){ attr.setName("maskContentUnits");  }
-			else if(name.equals("maskunits")){ attr.setName("maskUnits");  }
-			else if(name.equals("numoctaves")){ attr.setName("numOctaves");  }
-			else if(name.equals("pathlength")){ attr.setName("pathLength");  }
-			else if(name.equals("patterncontentunits")){ attr.setName("patternContentUnits");  }
-			else if(name.equals("patterntransform")){ attr.setName("patternTransform");  }
-			else if(name.equals("patternunits")){ attr.setName("patternUnits");  }
-			else if(name.equals("pointsatx")){ attr.setName("pointsAtX");  }
-			else if(name.equals("pointsaty")){ attr.setName("pointsAtY");  }
-			else if(name.equals("pointsatz")){ attr.setName("pointsAtZ");  }
-			else if(name.equals("preservealpha")){ attr.setName("preserveAlpha");  }
-			else if(name.equals("preserveaspectratio")){ attr.setName("preserveAspectRatio");  }
-			else if(name.equals("primitiveunits")){ attr.setName("primitiveUnits");  }
-			else if(name.equals("refx")){ attr.setName("refX");  }
-			else if(name.equals("refy")){ attr.setName("refY");  }
-			else if(name.equals("repeatcount")){ attr.setName("repeatCount");  }
-			else if(name.equals("repeatdur")){ attr.setName("repeatDur");  }
-			else if(name.equals("requiredextensions")){ attr.setName("requiredExtensions");  }
-			else if(name.equals("requiredfeatures")){ attr.setName("requiredFeatures");  }
-			else if(name.equals("specularconstant")){ attr.setName("specularConstant");  }
-			else if(name.equals("specularexponent")){ attr.setName("specularExponent");  }
-			else if(name.equals("spreadmethod")){ attr.setName("spreadMethod");  }
-			else if(name.equals("startoffset")){ attr.setName("startOffset");  }
-			else if(name.equals("stddeviation")){ attr.setName("stdDeviation");  }
-			else if(name.equals("stitchtiles")){ attr.setName("stitchTiles");  }
-			else if(name.equals("surfacescale")){ attr.setName("surfaceScale");  }
-			else if(name.equals("systemlanguage")){ attr.setName("systemLanguage");  }
-			else if(name.equals("tablevalues")){ attr.setName("tableValues");  }
-			else if(name.equals("targetx")){ attr.setName("targetX");  }
-			else if(name.equals("targety")){ attr.setName("targetY");  }
-			else if(name.equals("textlength")){ attr.setName("textLength");  }
-			else if(name.equals("viewbox")){ attr.setName("viewBox");  }
-			else if(name.equals("viewtarget")){ attr.setName("viewTarget");  }
-			else if(name.equals("xchannelselector")){ attr.setName("xChannelSelector");  }
-			else if(name.equals("ychannelselector")){ attr.setName("yChannelSelector");  }
-			else if(name.equals("zoomandpan")){ attr.setName("zoomAndPan");  }
-		}
-	}
-	private void adjustMathMLAttributes(StartTagToken token){
-		List<Attrib> attributes=token.getAttributes();
-		for(Attrib attr : attributes){
-			if(attr.getName().equals("definitionurl")){
-				attr.setName("definitionURL");
-			}
-		}
-	}
-
-	public static final String XLINK_NAMESPACE="http://www.w3.org/1999/xlink";
-	public static final String XML_NAMESPACE="http://www.w3.org/XML/1998/namespace";
-	private static final String XMLNS_NAMESPACE="http://www.w3.org/2000/xmlns/";
-
-	private void adjustForeignAttributes(StartTagToken token){
-		List<Attrib> attributes=token.getAttributes();
-		for(Attrib attr : attributes){
-			String name=attr.getName();
-			if(name.equals("xlink:actuate") ||
-					name.equals("xlink:arcrole") ||
-					name.equals("xlink:href") ||
-					name.equals("xlink:role") ||
-					name.equals("xlink:show") ||
-					name.equals("xlink:title") ||
-					name.equals("xlink:type")
-					){
-				attr.setNamespace(XLINK_NAMESPACE);
-			}
-			else if(name.equals("xml:base") ||
-					name.equals("xml:lang") ||
-					name.equals("xml:space")
-					){
-				attr.setNamespace(XML_NAMESPACE);
-			}
-			else if(name.equals("xmlns") ||
-					name.equals("xmlns:xlink")){
-				attr.setNamespace(XMLNS_NAMESPACE);
-			}
-		}
-	}
-
-	public IDocument parse() throws IOException {
-		while(true){
-			int token=parserRead();
-			applyInsertionMode(token,null);
-			if((token&TOKEN_TYPE_MASK)==TOKEN_START_TAG){
-				StartTagToken tag=(StartTagToken)getToken(token);
-				//	DebugUtility.log(tag);
-				if(!tag.isAckSelfClosing()){
-					error=true;
+	public List<Node> parseFragment(Element context) throws IOException{
+		if(context==null)
+			throw new IllegalArgumentException();
+		initialize();
+		document=new Document();
+		INode ownerDocument=context;
+		INode lastForm=null;
+		while(ownerDocument!=null){
+			if(lastForm==null && ownerDocument.getNodeType()==NodeType.ELEMENT_NODE){
+				String name=((Element)ownerDocument).getLocalName();
+				if(name.equals("form")){
+					lastForm=ownerDocument;
 				}
 			}
-			//	DebugUtility.log("token=%08X, insertionMode=%s, error=%s",token,insertionMode,error);
-			if(done){
+			ownerDocument=ownerDocument.getParentNode();
+			if(ownerDocument==null ||
+					ownerDocument.getNodeType()==NodeType.DOCUMENT_NODE){
 				break;
 			}
 		}
-		return document;
+		Document ownerDoc=null;
+		if(ownerDocument!=null && ownerDocument.getNodeType()==NodeType.DOCUMENT_NODE){
+			ownerDoc=(Document)ownerDocument;
+			document.setMode(ownerDoc.getMode());
+		}
+		String name2=context.getLocalName();
+		state=TokenizerState.Data;
+		if(name2.equals("title")||name2.equals("textarea")){
+			state=TokenizerState.RcData;
+		} else if(name2.equals("style") || name2.equals("xmp") ||
+				name2.equals("iframe") || name2.equals("noembed") ||
+				name2.equals("noframes")){
+			state=TokenizerState.RawText;
+		} else if(name2.equals("script")){
+			state=TokenizerState.ScriptData;
+		} else if(name2.equals("noscript")){
+			state=TokenizerState.Data;
+		} else if(name2.equals("plaintext")){
+			state=TokenizerState.PlainText;
+		}
+		Element element=new Element();
+		element.setLocalName("html");
+		element.setNamespace(HTML_NAMESPACE);
+		document.appendChild(element);
+		done=false;
+		openElements.clear();
+		openElements.add(element);
+		this.context=context;
+		resetInsertionMode();
+		formElement=(lastForm==null) ? null : ((Element)lastForm);
+		if(encoding.getConfidence()!=EncodingConfidence.Irrelevant){
+			encoding=new EncodingConfidence(encoding.getEncoding(),
+					EncodingConfidence.Irrelevant);
+		}
+		parse();
+		return new ArrayList<Node>(element.getChildNodesInternal());
 	}
+
+	public List<Node> parseFragment(String contextName) throws IOException{
+		Element element=new Element();
+		element.setLocalName(contextName);
+		element.setNamespace(HTML_NAMESPACE);
+		return parseFragment(element);
+	}
+
 	 int parserRead() throws IOException{
 		int token=parserReadInternal();
 		//DebugUtility.log("token=%08X [%c]",token,token&0xFF);
@@ -4128,6 +4073,7 @@ final class HtmlParser {
 		}
 		return token;
 	}
+
 	private int parserReadInternal() throws IOException{
 		if(tokenQueue.size()>0)
 			return removeAtIndex(tokenQueue,0);
@@ -4169,8 +4115,8 @@ final class HtmlParser {
 				if(charref<0){
 					// more than one character in this reference
 					int index=Math.abs(charref+1);
-					tokenQueue.add(entityDoubles[index*2+1]);
-					return entityDoubles[index*2];
+					tokenQueue.add(HtmlEntities.entityDoubles[index*2+1]);
+					return HtmlEntities.entityDoubles[index*2];
 				}
 				return charref;
 			}
@@ -4180,8 +4126,8 @@ final class HtmlParser {
 				if(charref<0){
 					// more than one character in this reference
 					int index=Math.abs(charref+1);
-					tokenQueue.add(entityDoubles[index*2+1]);
-					return entityDoubles[index*2];
+					tokenQueue.add(HtmlEntities.entityDoubles[index*2+1]);
+					return HtmlEntities.entityDoubles[index*2];
 				}
 				return charref;
 			}
@@ -5157,8 +5103,8 @@ final class HtmlParser {
 				if(ch<0){
 					// more than one character in this reference
 					int index=Math.abs(ch+1);
-					currentAttribute.appendToValue(entityDoubles[index*2]);
-					currentAttribute.appendToValue(entityDoubles[index*2+1]);
+					currentAttribute.appendToValue(HtmlEntities.entityDoubles[index*2]);
+					currentAttribute.appendToValue(HtmlEntities.entityDoubles[index*2+1]);
 				} else {
 					currentAttribute.appendToValue(ch);
 				}
@@ -5602,21 +5548,6 @@ final class HtmlParser {
 		}
 	}
 
-	private int emitCurrentTag() {
-		int ret=tokens.size()|currentTag.getType();
-		tokens.add(currentTag);
-		if(currentTag.getType()==TOKEN_START_TAG) {
-			lastStartTag=currentTag;
-		} else {
-			if(currentTag.getAttributes().size()>0 ||
-					currentTag.isSelfClosing()){
-				error=true;
-			}
-		}
-		currentTag=null;
-		return ret;
-	}
-
 	private Element popCurrentNode(){
 		if(openElements.size()>0)
 			return removeAtIndex(openElements,openElements.size()-1);
@@ -5635,13 +5566,13 @@ final class HtmlParser {
 			}
 			if(fe.element.getLocalName().equals(name) &&
 					fe.element.getNamespaceURI().equals(element.getNamespaceURI())){
-				List<Attrib> attribs=fe.element.getAttributes();
-				List<Attrib> myAttribs=element.getAttributes();
+				List<IAttr> attribs=fe.element.getAttributes();
+				List<IAttr> myAttribs=element.getAttributes();
 				if(attribs.size()==myAttribs.size()){
 					boolean match=true;
 					for(int j=0;j<myAttribs.size();j++){
 						String name1=myAttribs.get(j).getName();
-						String namespace=myAttribs.get(j).getNamespace();
+						String namespace=myAttribs.get(j).getNamespaceURI();
 						String value=myAttribs.get(j).getValue();
 						String otherValue=fe.element.getAttributeNS(namespace,name1);
 						if(otherValue==null || !otherValue.equals(value)){
@@ -5664,7 +5595,6 @@ final class HtmlParser {
 		fe2.element=element;
 		formattingElements.add(fe2);
 	}
-
 	private void reconstructFormatting(){
 		if(formattingElements.size()==0)return;
 		//DebugUtility.log("reconstructing elements");
@@ -5689,7 +5619,6 @@ final class HtmlParser {
 			fe.marker=false;
 		}
 	}
-
 	private void removeFormattingElement(Element aElement) {
 		FormattingElement f=null;
 		for(FormattingElement fe : formattingElements){
@@ -5702,7 +5631,6 @@ final class HtmlParser {
 			formattingElements.remove(f);
 		}
 	}
-
 	private void resetInsertionMode(){
 		boolean last=false;
 		for(int i=openElements.size()-1;i>=0;i--){
@@ -5759,133 +5687,60 @@ final class HtmlParser {
 		}
 	}
 
-	 void setRcData(){
-		state=TokenizerState.RcData;
-	}
-	 void setPlainText(){
-		state=TokenizerState.PlainText;
-	}
-	 void setRawText(){
-		state=TokenizerState.RawText;
-	}
 	 void setCData(){
 		state=TokenizerState.CData;
 	}
 
-	public static String resolveURL(INode node, String url, String base){
-		String encoding=(node instanceof IDocument) ?
-				((IDocument)node).getCharacterSet() :
-					node.getOwnerDocument().getCharacterSet();
-				if("utf-16be".equals(encoding) ||
-						"utf-16le".equals(encoding)){
-					encoding="utf-8";
-				}
-				if(base==null){
-					base=node.getBaseURI();
-				}
-				URL resolved=URL.parse(url,URL.parse(base),encoding,true);
-				if(resolved==null)
-					return base;
-				return resolved.toString();
+	 void setPlainText(){
+		state=TokenizerState.PlainText;
+	}
+
+	 void setRawText(){
+		state=TokenizerState.RawText;
+	}
+
+	////////////////////////////////////////////////////
+
+	 void setRcData(){
+		state=TokenizerState.RcData;
+	}
+
+	private void skipLineFeed() throws IOException {
+		int mark=charInput.setSoftMark();
+		int nextToken=charInput.read();
+		if(nextToken==0x0a)
+			return; // ignore the token if it's 0x0A
+		else if(nextToken==0x26){ // start of character reference
+			int charref=parseCharacterReference(-1);
+			if(charref<0){
+				// more than one character in this reference
+				int index=Math.abs(charref+1);
+				tokenQueue.add(HtmlEntities.entityDoubles[index*2]);
+				tokenQueue.add(HtmlEntities.entityDoubles[index*2+1]);
+			} else if(charref==0x0a)
+				return; // ignore the token
+			else {
+				tokenQueue.add(charref);
+			}
+		} else {
+			// anything else; reset the input stream
+			charInput.setMarkPosition(mark);
+		}
 	}
 
 	private void stopParsing() {
 		done=true;
 		document.encoding=encoding.getEncoding();
-		if(document.baseurl==null || document.baseurl.length()==0){
-			document.baseurl=baseurl;
+		String docbase=document.getBaseURI();
+		if(docbase==null || docbase.length()==0){
+			docbase=baseurl;
 		} else {
 			if(baseurl!=null && baseurl.length()>0){
-				document.baseurl=resolveURL(document,baseurl,document.baseurl);
+				document.setBaseURI(HtmlDocument.resolveURL(document,baseurl,docbase));
 			}
 		}
 		openElements.clear();
 		formattingElements.clear();
-	}
-
-	public boolean isError() {
-		return error;
-	}
-
-	////////////////////////////////////////////////////
-
-	 String nodesToDebugString(List<Node> nodes){
-		StringBuilder builder=new StringBuilder();
-		for(Node node : nodes){
-			String str=node.toDebugString();
-			String[] strarray=StringUtility.splitAt(str,"\n");
-			for(String el : strarray){
-				builder.append("| ");
-				builder.append(el.replace("~~~~","\n"));
-				builder.append("\n");
-			}
-		}
-		return builder.toString();
-	}
-
-	public List<Node> parseFragment(String contextName) throws IOException{
-		Element element=new Element();
-		element.setName(contextName);
-		element.setNamespace(HTML_NAMESPACE);
-		return parseFragment(element);
-	}
-
-	public List<Node> parseFragment(Element context) throws IOException{
-		if(context==null)
-			throw new IllegalArgumentException();
-		initialize();
-		document=new Document();
-		INode ownerDocument=context;
-		INode lastForm=null;
-		while(ownerDocument!=null){
-			if(lastForm==null && ownerDocument.getNodeType()==NodeType.ELEMENT_NODE){
-				String name=((Element)ownerDocument).getLocalName();
-				if(name.equals("form")){
-					lastForm=ownerDocument;
-				}
-			}
-			ownerDocument=ownerDocument.getParentNode();
-			if(ownerDocument==null ||
-					ownerDocument.getNodeType()==NodeType.DOCUMENT_NODE){
-				break;
-			}
-		}
-		Document ownerDoc=null;
-		if(ownerDocument!=null && ownerDocument.getNodeType()==NodeType.DOCUMENT_NODE){
-			ownerDoc=(Document)ownerDocument;
-			document.setMode(ownerDoc.getMode());
-		}
-		String name2=context.getLocalName();
-		state=TokenizerState.Data;
-		if(name2.equals("title")||name2.equals("textarea")){
-			state=TokenizerState.RcData;
-		} else if(name2.equals("style") || name2.equals("xmp") ||
-				name2.equals("iframe") || name2.equals("noembed") ||
-				name2.equals("noframes")){
-			state=TokenizerState.RawText;
-		} else if(name2.equals("script")){
-			state=TokenizerState.ScriptData;
-		} else if(name2.equals("noscript")){
-			state=TokenizerState.Data;
-		} else if(name2.equals("plaintext")){
-			state=TokenizerState.PlainText;
-		}
-		Element element=new Element();
-		element.setName("html");
-		element.setNamespace(HTML_NAMESPACE);
-		document.appendChild(element);
-		done=false;
-		openElements.clear();
-		openElements.add(element);
-		this.context=context;
-		resetInsertionMode();
-		formElement=(lastForm==null) ? null : ((Element)lastForm);
-		if(encoding.getConfidence()!=EncodingConfidence.Irrelevant){
-			encoding=new EncodingConfidence(encoding.getEncoding(),
-					EncodingConfidence.Irrelevant);
-		}
-		parse();
-		return new ArrayList<Node>(element.getChildNodesInternal());
 	}
 
 

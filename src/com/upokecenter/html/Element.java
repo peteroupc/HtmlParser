@@ -35,9 +35,9 @@ import com.upokecenter.util.StringUtility;
 
 class Element extends Node implements IElement {
 	private static final class AttributeNameComparator implements
-	Comparator<HtmlParser.Attrib> {
+	Comparator<IAttr> {
 		@Override
-		public int compare(HtmlParser.Attrib arg0, HtmlParser.Attrib arg1) {
+		public int compare(IAttr arg0, IAttr arg1) {
 			String a=arg0.getName();
 			String b=arg1.getName();
 			return a.compareTo(b);
@@ -53,9 +53,9 @@ class Element extends Node implements IElement {
 			HtmlParser.StartTagToken token, String namespace){
 		Element ret=new Element();
 		ret.name=token.getName();
-		ret.attributes=new ArrayList<HtmlParser.Attrib>();
-		for(HtmlParser.Attrib attribute : token.getAttributes()){
-			ret.attributes.add(new HtmlParser.Attrib(attribute));
+		ret.attributes=new ArrayList<Attr>();
+		for(Attr attribute : token.getAttributes()){
+			ret.attributes.add(new Attr(attribute));
 		}
 		ret.namespace=namespace;
 		return ret;
@@ -67,42 +67,113 @@ class Element extends Node implements IElement {
 
 	private String prefix=null;
 
-	private List<HtmlParser.Attrib> attributes;
+	private List<Attr> attributes;
 
 	 Element() {
 		super(NodeType.ELEMENT_NODE);
-		attributes=new ArrayList<HtmlParser.Attrib>();
+		attributes=new ArrayList<Attr>();
 	}
 
 	public Element(String name) {
 		super(NodeType.ELEMENT_NODE);
-		attributes=new ArrayList<HtmlParser.Attrib>();
+		attributes=new ArrayList<Attr>();
 		this.name=name;
+	}
+
+
+	private void collectElements(INode c, String s, List<IElement> nodes){
+		if(c.getNodeType()==NodeType.ELEMENT_NODE){
+			Element e=(Element)c;
+			if(s==null || e.getLocalName().equals(s)){
+				nodes.add(e);
+			}
+		}
+		for(INode node : c.getChildNodes()){
+			collectElements(node,s,nodes);
+		}
+	}
+
+
+	private void collectElementsHtml(INode c, String s,
+			String sLowercase, List<IElement> nodes){
+		if(c.getNodeType()==NodeType.ELEMENT_NODE){
+			Element e=(Element)c;
+			if(s==null){
+				nodes.add(e);
+			} else if(HtmlParser.HTML_NAMESPACE.equals(e.getNamespaceURI()) &&
+					e.getLocalName().equals(sLowercase)){
+				nodes.add(e);
+			} else if(e.getLocalName().equals(s)){
+				nodes.add(e);
+			}
+		}
+		for(INode node : c.getChildNodes()){
+			collectElements(node,s,nodes);
+		}
 	}
 
 	@Override
 	public String getAttribute(String name) {
-		for(HtmlParser.Attrib attr : getAttributes()){
+		for(IAttr attr : getAttributes()){
 			if(attr.getName().equals(name))
 				return attr.getValue();
 		}
 		return null;
 	}
 
-	public void setPrefix(String prefix){
-		this.prefix=prefix;
-	}
-
 	@Override
 	public String getAttributeNS(String namespace, String localName) {
-		for(HtmlParser.Attrib attr : getAttributes()){
-			if(attr.isAttribute(localName,namespace))
+		for(IAttr attr : getAttributes()){
+			if((localName==null ? attr.getLocalName()==null : localName.equals(attr.getLocalName())) &&
+					(namespace==null ? attr.getNamespaceURI()==null : namespace.equals(attr.getNamespaceURI())))
 				return attr.getValue();
 		}
 		return null;
 	}
-	public List<HtmlParser.Attrib> getAttributes() {
-		return attributes;
+
+	@Override
+	public List<IAttr> getAttributes() {
+		return new ArrayList<IAttr>(attributes);
+	}
+	@Override
+	public IElement getElementById(String id) {
+		if(id==null)
+			throw new IllegalArgumentException();
+		for(INode node : getChildNodes()){
+			if(node instanceof IElement){
+				if(id.equals(((IElement)node).getId()))
+					return (IElement)node;
+				IElement element=((IElement)node).getElementById(id);
+				if(element!=null)return element;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public List<IElement> getElementsByTagName(String tagName) {
+		if(tagName==null)
+			throw new IllegalArgumentException();
+		if(tagName.equals("*")) {
+			tagName=null;
+		}
+		List<IElement> ret=new ArrayList<IElement>();
+		if(((Document) getOwnerDocument()).isHtmlDocument()){
+			String lowerTagName=StringUtility.toLowerCaseAscii(tagName);
+			for(INode node : getChildNodes()){
+				collectElementsHtml(node,tagName,lowerTagName,ret);
+			}
+		} else {
+			for(INode node : getChildNodes()){
+				collectElements(node,tagName,ret);
+			}
+		}
+		return ret;
+	}
+
+	@Override
+	public String getId(){
+		return getAttribute("id");
 	}
 
 	@Override
@@ -115,10 +186,31 @@ class Element extends Node implements IElement {
 		return namespace;
 	}
 
+	@Override
+	public String getTagName() {
+		String tagName=name;
+		if(prefix!=null){
+			tagName=prefix+":"+name;
+		}
+		if((getOwnerDocument() instanceof Document) &&
+				HtmlParser.HTML_NAMESPACE.equals(namespace))
+			return StringUtility.toUpperCaseAscii(tagName);
+		return tagName;
+	}
+	@Override
+	public  String getTextContent(){
+		StringBuilder builder=new StringBuilder();
+		for(INode node : getChildNodes()){
+			if(node.getNodeType()!=NodeType.COMMENT_NODE){
+				builder.append(node.getTextContent());
+			}
+		}
+		return builder.toString();
+	}
+
 	 boolean isHtmlElement(String name){
 		return name.equals(this.name) && HtmlParser.HTML_NAMESPACE.equals(namespace);
 	}
-
 	 boolean isMathMLElement(String name){
 		return name.equals(this.name) && HtmlParser.MATHML_NAMESPACE.equals(namespace);
 	}
@@ -126,8 +218,9 @@ class Element extends Node implements IElement {
 	 boolean isSvgElement(String name){
 		return name.equals(this.name) && HtmlParser.SVG_NAMESPACE.equals(namespace);
 	}
+
 	 void mergeAttributes(HtmlParser.StartTagToken token){
-		for(HtmlParser.Attrib attr : token.getAttributes()){
+		for(IAttr attr : token.getAttributes()){
 			String s=getAttribute(attr.getName());
 			if(s==null){
 				setAttribute(attr.getName(),attr.getValue());
@@ -135,15 +228,21 @@ class Element extends Node implements IElement {
 		}
 	}
 
-	public void setAttribute(String string, String value) {
-		for(HtmlParser.Attrib attr : getAttributes()){
+	 void addAttribute(Attr value) {
+		attributes.add(value);
+	}
+
+
+	 void setAttribute(String string, String value) {
+		for(IAttr attr : getAttributes()){
 			if(attr.getName().equals(string)){
-				attr.setValue(value);
+				((Attr)attr).setValue(value);
 			}
 		}
-		attributes.add(new HtmlParser.Attrib(string,value));
+		attributes.add(new Attr(string,value));
 	}
-	 void setName(String name) {
+
+	 void setLocalName(String name) {
 		this.name = name;
 	}
 
@@ -151,6 +250,9 @@ class Element extends Node implements IElement {
 		this.namespace = namespace;
 	}
 
+	public void setPrefix(String prefix){
+		this.prefix=prefix;
+	}
 	@Override
 	 String toDebugString(){
 		StringBuilder builder=new StringBuilder();
@@ -162,16 +264,16 @@ class Element extends Node implements IElement {
 			extra="svg ";
 		}
 		builder.append("<"+extra+name.toString()+">\n");
-		ArrayList<HtmlParser.Attrib> attribs=new ArrayList<HtmlParser.Attrib>(getAttributes());
+		ArrayList<IAttr> attribs=new ArrayList<IAttr>(getAttributes());
 		Collections.sort(attribs,new AttributeNameComparator());
-		for(HtmlParser.Attrib attribute : attribs){
+		for(IAttr attribute : attribs){
 			//DebugUtility.log("%s %s",attribute.getNamespace(),attribute.getLocalName());
-			if(attribute.getNamespace()!=null){
+			if(attribute.getNamespaceURI()!=null){
 				String extra1="";
-				if(HtmlParser.XLINK_NAMESPACE.equals(attribute.getNamespace())) {
+				if(HtmlParser.XLINK_NAMESPACE.equals(attribute.getNamespaceURI())) {
 					extra1="xlink ";
 				}
-				if(HtmlParser.XML_NAMESPACE.equals(attribute.getNamespace())) {
+				if(HtmlParser.XML_NAMESPACE.equals(attribute.getNamespaceURI())) {
 					extra1="xml ";
 				}
 				extra1+=attribute.getLocalName();
@@ -195,93 +297,14 @@ class Element extends Node implements IElement {
 		return builder.toString();
 	}
 
+
 	@Override
-	public String toString(){
-		StringBuilder builder=new StringBuilder();
-		builder.append("Element: "+name.toString()+", "+namespace.toString()+"\n");
-		for(HtmlParser.Attrib attribute : getAttributes()){
-			builder.append("Attribute: "+attribute.getName().toString()+"="+
-					attribute.getValue().toString()+"\n");
-		}
-		for(Node node : getChildNodesInternal()){
-			String str=node.toString();
-			String[] strarray=StringUtility.splitAt(str,"\n");
-			for(String el : strarray){
-				builder.append("  ");
-				builder.append(el);
-				builder.append("\n");
-			}
-		}
-		return builder.toString();
+	public  String getNodeName(){
+		return getTagName();
 	}
 
 	@Override
-	public String getTagName() {
-		String tagName=name;
-		if(prefix!=null){
-			tagName=prefix+":"+name;
-		}
-		if((getOwnerDocument() instanceof Document) &&
-				HtmlParser.HTML_NAMESPACE.equals(namespace))
-			return StringUtility.toUpperCaseAscii(tagName);
-		return tagName;
-	}
-
-	private void collectElements(INode c, String s, List<IElement> nodes){
-		if(c.getNodeType()==NodeType.ELEMENT_NODE){
-			Element e=(Element)c;
-			if(s==null || e.getLocalName().equals(s)){
-				nodes.add(e);
-			}
-		}
-		for(INode node : c.getChildNodes()){
-			collectElements(node,s,nodes);
-		}
-	}
-
-	private void collectElementsHtml(INode c, String s,
-			String sLowercase, List<IElement> nodes){
-		if(c.getNodeType()==NodeType.ELEMENT_NODE){
-			Element e=(Element)c;
-			if(s==null){
-				nodes.add(e);
-			} else if(HtmlParser.HTML_NAMESPACE.equals(e.getNamespaceURI()) &&
-					e.getLocalName().equals(sLowercase)){
-				nodes.add(e);
-			} else if(e.getLocalName().equals(s)){
-				nodes.add(e);
-			}
-		}
-		for(INode node : c.getChildNodes()){
-			collectElements(node,s,nodes);
-		}
-	}
-	@Override
-	public List<IElement> getElementsByTagName(String tagName) {
-		if(tagName==null)
-			throw new IllegalArgumentException();
-		if(tagName.equals("*")) {
-			tagName="";
-		}
-		List<IElement> ret=new ArrayList<IElement>();
-		if(((Document) getOwnerDocument()).isHtmlDocument()){
-			collectElementsHtml(this,tagName,
-					StringUtility.toLowerCaseAscii(tagName),ret);
-		} else {
-			collectElements(this,tagName,ret);
-		}
-		return ret;
-	}
-
-
-	@Override
-	public  String getTextContent(){
-		StringBuilder builder=new StringBuilder();
-		for(INode node : getChildNodes()){
-			if(node.getNodeType()!=NodeType.COMMENT_NODE){
-				builder.append(node.getTextContent());
-			}
-		}
-		return builder.toString();
+	public String getPrefix() {
+		return prefix;
 	}
 }

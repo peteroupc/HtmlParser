@@ -29,29 +29,85 @@ package com.upokecenter.html;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.upokecenter.util.URL;
+
 class Node implements INode {
 	private final List<Node> childNodes;
 	private Node parentNode=null;
 	private IDocument ownerDocument=null;
+
+	int nodeType;
+
+	public Node(int nodeType){
+		this.nodeType=nodeType;
+		childNodes=new ArrayList<Node>();
+	}
+
+	public void appendChild(Node node){
+		if(node==this)
+			throw new IllegalArgumentException();
+		node.parentNode=this;
+		node.ownerDocument=(this instanceof IDocument) ? (IDocument)this : ownerDocument;
+		childNodes.add(node);
+	}
+
+	private String baseURI=null;
+
+	@Override
+	public  String getBaseURI() {
+		INode parent=getParentNode();
+		if(baseURI==null){
+			if(parent==null)
+				return "about:blank";
+			else
+				return parent.getBaseURI();
+		} else {
+			if(parent==null)
+				return baseURI;
+			else {
+				URL ret=URL.parse(baseURI,URL.parse(parent.getBaseURI()));
+				return (ret==null) ? parent.getBaseURI() : ret.toString();
+			}
+		}
+	}
+
+	 void setBaseURI(String value){
+		INode parent=getParentNode();
+		if(parent==null){
+			baseURI=value;
+		} else {
+			String val=URL.parse(value,URL.parse(parent.getBaseURI())).toString();
+			baseURI=(val==null) ? parent.getBaseURI() : val.toString();
+		}
+	}
+
+	@Override
+	public List<INode> getChildNodes() {
+		return new ArrayList<INode>(childNodes);
+	}
+
+	 List<Node> getChildNodesInternal(){
+		return childNodes;
+	}
+
+	@Override
+	public int getNodeType(){
+		return nodeType;
+	}
 
 	@Override
 	public  IDocument getOwnerDocument(){
 		return ownerDocument;
 	}
 
-	void setOwnerDocument(IDocument document){
-		ownerDocument=document;
+	@Override
+	public INode getParentNode() {
+		return parentNode;
 	}
-
-	int nodeType;
-	public Node(int nodeType){
-		this.nodeType=nodeType;
-		childNodes=new ArrayList<Node>();
-	}
-	 String toDebugString() {
+	@Override
+	public  String getTextContent(){
 		return null;
 	}
-
 	public void insertBefore(Node child, Node sibling){
 		if(sibling==null){
 			appendChild(child);
@@ -70,45 +126,28 @@ class Node implements INode {
 		}
 		throw new IllegalArgumentException();
 	}
-
-	public void appendChild(Node node){
-		if(node==this)
-			throw new IllegalArgumentException();
-		node.parentNode=this;
-		node.ownerDocument=(this instanceof IDocument) ? (IDocument)this : ownerDocument;
-		childNodes.add(node);
-	}
-
-	 List<Node> getChildNodesInternal(){
-		return childNodes;
-	}
-
-	@Override
-	public int getNodeType(){
-		return nodeType;
-	}
-	@Override
-	public INode getParentNode() {
-		return parentNode;
-	}
 	public void removeChild(Node node){
 		node.parentNode=null;
 		childNodes.remove(node);
 	}
-	@Override
-	public List<INode> getChildNodes() {
-		return new ArrayList<INode>(childNodes);
+
+	void setOwnerDocument(IDocument document){
+		ownerDocument=document;
 	}
 
-	@Override
-	public  String getBaseURI() {
-		IDocument doc=getOwnerDocument();
-		if(doc==null)return "";
-		return doc.getBaseURI();
-	}
-
-	@Override
-	public  String getTextContent(){
+	 String toDebugString() {
 		return null;
 	}
+
+	@Override
+	public  String getNodeName() {
+		return "";
+	}
+
+	@Override
+	public String toString() {
+		return getNodeName();
+	}
+
+
 }

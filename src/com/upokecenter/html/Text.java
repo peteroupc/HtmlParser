@@ -35,8 +35,8 @@ class Text extends Node implements IText {
 	}
 
 	@Override
-	 String toDebugString(){
-		return "\""+text.toString().replace("\n","~~~~")+"\"\n";
+	public String getData(){
+		return text.toString();
 	}
 
 	@Override
@@ -45,8 +45,11 @@ class Text extends Node implements IText {
 	}
 
 	@Override
-	public String getData(){
-		return text.toString();
+	 String toDebugString(){
+		return "\""+text.toString().replace("\n","~~~~")+"\"\n";
 	}
 
+	public String getName(){
+		return "#text";
+	}
 }

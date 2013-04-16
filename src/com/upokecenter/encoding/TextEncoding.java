@@ -315,7 +315,9 @@ public final class TextEncoding {
 	private static Object syncRoot=new Object();
 
 	/**
-	 * Converts a name to a supported character encoding
+	 * Converts a name to a supported character encoding.
+	 * In this implementation, the return value will be the name preferred in the
+	 * WHATWG's Encoding specification.
 	 * 
 	 * @param encoding the name of an encoding
 	 * @return a character encoding, or null if the name
@@ -349,11 +351,15 @@ public final class TextEncoding {
 	/**
 	 * Utility method to decode an input byte stream into a string.
 	 * 
-	 * @param input
-	 * @param decoder
-	 * @param error
+	 * @param input an input stream containing character data
+	 * encoded as bytes. If null, throws IllegalArgumentException.
+	 * @param decoder a text decoder.
+	 * @param error an object that handles encoding errors.  You
+	 * can use TextEncoding.ENCODING_ERROR_THROW or
+	 * TextEncoding.ENCODING_ERROR_REPLACE for this.
 	 * 
-	 * @throws IOException
+	 * @throws IOException if the error handler throws an exception
+	 * or another I/O error occurs
 	 */
 	public static String decodeString(
 			InputStream input, ITextDecoder decoder, IEncodingError error)
@@ -389,11 +395,16 @@ public final class TextEncoding {
 	 * @param str String. If null, throws IllegalArgumentException.
 	 * Any unpaired surrogates in the string are kept intact in the
 	 * input to the encoder.
-	 * @param output
+	 * @param output a stream for writing converted bytes to.
+	 * If null, throws IllegalArgumentException.
 	 * @param encoder Encoder for converting Unicode characters
-	 * to bytes
+	 * to bytes.
+	 * If null, throws IllegalArgumentException.
 	 * @param error Error handler called when a Unicode character
-	 * cannot be converted to bytes
+	 * cannot be converted to bytes.  You
+	 * can use TextEncoding.ENCODING_ERROR_THROW or
+	 * TextEncoding.ENCODING_ERROR_REPLACE for this.
+	 * If null, throws IllegalArgumentException.
 	 * @throws IOException if the error handler throws an exception
 	 * or another I/O error occurs
 	 */

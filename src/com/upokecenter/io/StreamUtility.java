@@ -7,14 +7,11 @@ package com.upokecenter.io;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.Reader;
-import java.io.Writer;
 
 public final class StreamUtility {
 	private StreamUtility(){}
@@ -80,26 +77,70 @@ public final class StreamUtility {
 	}
 
 
+	/**
+	 * 
+	 * Writes a string in UTF-8 to the specified output stream.
+	 * 
+	 * @param s a string to write. Illegal code unit
+	 * sequences are replaced with
+	 * U+FFFD REPLACEMENT CHARACTER when writing to the stream.
+	 * @param stream an output stream to write to.
+	 * @throws IOException if an I/O error occurs
+	 */
 	public static void stringToStream(String s, OutputStream stream) throws IOException{
-		Writer writer=null;
-		try {
-			writer=new OutputStreamWriter(stream);
-			writer.write(s);
-		} finally {
-			if(writer!=null) {
-				writer.close();
+		byte[] bytes=new byte[4];
+		for(int index=0;index<s.length();index++){
+			int c=s.charAt(index);
+			if(c>=0xD800 && c<=0xDBFF && index+1<s.length() &&
+					s.charAt(index+1)>=0xDC00 && s.charAt(index+1)<=0xDFFF){
+				// Get the Unicode code point for the surrogate pair
+				c=0x10000+(c-0xD800)*0x400+(s.charAt(index+1)-0xDC00);
+				index++;
+			} else if(c>=0xD800 && c<=0xDFFF){
+				// unpaired surrogate, write U+FFFD instead
+				c=0xFFFD;
+			}
+			if(c<=0x7F){
+				stream.write(c);
+			} else if(c<=0x7FF){
+				bytes[0]=((byte)(0xC0|((c>>6)&0x1F)));
+				bytes[1]=((byte)(0x80|(c   &0x3F)));
+				stream.write(bytes,0,2);
+			} else if(c<=0xFFFF){
+				bytes[0]=((byte)(0xE0|((c>>12)&0x0F)));
+				bytes[1]=((byte)(0x80|((c>>6 )&0x3F)));
+				bytes[2]=((byte)(0x80|(c      &0x3F)));
+				stream.write(bytes,0,3);
+			} else {
+				bytes[0]=((byte)(0xF0|((c>>18)&0x07)));
+				bytes[1]=((byte)(0x80|((c>>12)&0x3F)));
+				bytes[2]=((byte)(0x80|((c>>6 )&0x3F)));
+				bytes[3]=((byte)(0x80|(c      &0x3F)));
+				stream.write(bytes,0,4);
 			}
 		}
 	}
 
+	/**
+	 * 
+	 * Writes a string in UTF-8 to the specified file.
+	 * If the file exists, it will be overwritten
+	 * 
+	 * @param s a string to write. Illegal code unit
+	 * sequences are replaced with
+	 * with U+FFFD REPLACEMENT CHARACTER when writing to the stream.
+	 * @param file a filename
+	 * @throws IOException if the file can't be created
+	 * or another I/O error occurs.
+	 */
 	public static void stringToFile(String s, File file) throws IOException{
-		FileWriter writer=null;
+		OutputStream os=null;
 		try {
-			writer=new FileWriter(file.toString());
-			writer.write(s);
+			os=new FileOutputStream(file);
+			stringToStream(s,os);
 		} finally {
-			if(writer!=null) {
-				writer.close();
+			if(os!=null) {
+				os.close();
 			}
 		}
 	}

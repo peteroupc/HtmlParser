@@ -558,7 +558,7 @@ public final class HeaderParser {
 		return startIndex;
 	}
 
-	static String getQuotedString(String v, int index){
+	private static String getQuotedString(String v, int index){
 		// assumes index points to quotation mark
 		index++;
 		int length=v.length();
@@ -620,7 +620,7 @@ public final class HeaderParser {
 		// type
 		while(i<str.length()){
 			char c=str.charAt(i);
-			if(c<=0x20 || c>=0x7F || StringUtility.isChar(c,"()<>@,;:\\\"/[]?=")) {
+			if(c<=0x20 || c>=0x7F || ((c&0x7F)==c && "()<>@,;:\\\"/[]?=".indexOf((char)c)>=0)) {
 				break;
 			}
 			i++;
@@ -631,15 +631,27 @@ public final class HeaderParser {
 	static String getMimeToken(String str, int index){
 		int i=skipMimeToken(str,index);
 		return str.substring(index,i);
-
 	}
+	/**
+	 * Extracts the type and subtype from a MIME media
+	 * type.  For example, in the string "text/plain;charset=utf-8",
+	 * returns "text/plain".
+	 * 
+	 * @param str a string containing a MIME media type.
+	 * @param index the index into the string where the
+	 * media type begins. Specify 0 for the beginning of the
+	 * string.
+	 * @return the type and subtype, or an empty string
+	 * if the string is not a valid MIME media type.
+	 * The string will be normalized to ASCII lower-case.
+	 */
 	public static String getMediaType(String str, int index){
 		int i=skipMimeToken(str,index);
 		if(i>=str.length() || str.charAt(i)!='/')
 			return "";
 		i++;
 		i=skipMimeToken(str,i);
-		return str.substring(index,i);
+		return StringUtility.toLowerCaseAscii(str.substring(index,i));
 	}
 
 	public static int skipContentType(String data, int index){
@@ -712,7 +724,7 @@ public final class HeaderParser {
 			}
 			if(c<=0x20 || c>=0x7F)
 				return index;
-			if(!StringUtility.isChar(c,"-_.!~*'()") &&
+			if(!((c&0x7F)==c && "-_.!~*'()".indexOf((char)c)>=0) &&
 					!(c>='A' && c<='Z') &&
 					!(c>='a' && c<='z') &&
 					!(c>='0' && c<='9'))
@@ -755,13 +767,13 @@ public final class HeaderParser {
 				i+=3;
 				continue;
 			}
-			if(c<=0x20 || c>=0x7F || StringUtility.isChar(c,"()<>@,;:\\\"/[]?=")){
+			if(c<=0x20 || c>=0x7F || ((c&0x7F)==c && "()<>@,;:\\\"/[]?=".indexOf((char)c)>=0)){
 				if(doquote) {
 					builder.append('\"');
 				}
 				return true;
 			}
-			if(!StringUtility.isChar(c,"-_.!~*'()") &&
+			if(!((c&0x7F)==c && "-_.!~*'()".indexOf((char)c)>=0) &&
 					!(c>='A' && c<='Z') &&
 					!(c>='a' && c<='z') &&
 					!(c>='0' && c<='9'))
@@ -786,14 +798,14 @@ public final class HeaderParser {
 				int hex2=toHexNumber(str.charAt(i+2));
 				c=(char)(hex1*16+hex2);
 				builder.append(c);
-				if(c<=0x20 || c>=0x7F || StringUtility.isChar(c,"()<>@,;:\\\"/[]?="))
+				if(c<=0x20 || c>=0x7F || ((c&0x7F)==c && "()<>@,;:\\\"/[]?=".indexOf((char)c)>=0))
 					return false;
 				i+=3;
 				continue;
 			}
-			if(c<=0x20 || c>=0x7F || StringUtility.isChar(c,"()<>@,;:\\\"/[]?="))
+			if(c<=0x20 || c>=0x7F || ((c&0x7F)==c && "()<>@,;:\\\"/[]?=".indexOf((char)c)>=0))
 				return true;
-			if(!StringUtility.isChar(c,"-_.!~*'()") &&
+			if(!((c&0x7F)==c && "-_.!~*'()".indexOf((char)c)>=0) &&
 					!(c>='A' && c<='Z') &&
 					!(c>='a' && c<='z') &&
 					!(c>='0' && c<='9'))
@@ -864,6 +876,21 @@ public final class HeaderParser {
 		}
 	}
 
+	/**
+	 * Extracts the charset parameter from a MIME media
+	 * type.  For example, in the string "text/plain;charset=utf-8",
+	 * returns "utf-8". This method skips linear whitespace
+	 * where allowed in the HTTP/1.1 specification.  For example,
+	 * a string like "text/plain;\n  charset=utf-8" is allowed.
+	 * 
+	 * @param str a string containing a MIME media type.
+	 * @param index the index into the string where the
+	 * media type begins.
+	 * @return the charset parameter, or "ISO-8859-1" if the string
+	 * is a "text" media type without a charset parameter
+	 * or if the media type is omitted and there is no charset
+	 * parameter, or an empty string otherwise.  
+	 */
 	public static String getCharset(String data, int index){
 		if(data==null)
 			return "";

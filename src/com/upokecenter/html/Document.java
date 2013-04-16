@@ -34,59 +34,11 @@ import com.upokecenter.util.StringUtility;
 class Document extends Node implements IDocument {
 	 DocumentType doctype;
 	 String encoding;
-	 String baseurl;
 	private DocumentMode docmode=DocumentMode.NoQuirksMode;
 
 	 Document() {
 		super(NodeType.DOCUMENT_NODE);
 	}
-
-	 boolean isHtmlDocument(){
-		return true;
-	}
-
-	@Override
-	public IDocumentType getDoctype(){
-		return doctype;
-	}
-
-	@Override
-	public  IDocument getOwnerDocument(){
-		return null;
-	}
-
-	@Override
-	 String toDebugString(){
-		StringBuilder builder=new StringBuilder();
-		for(Node node : getChildNodesInternal()){
-			String str=node.toDebugString();
-			if(str==null) {
-				continue;
-			}
-			String[] strarray=StringUtility.splitAt(str,"\n");
-			for(String el : strarray){
-				builder.append("| ");
-				builder.append(el.replace("~~~~","\n"));
-				builder.append("\n");
-			}
-		}
-		return builder.toString();
-	}
-
-
-	@Override
-	public  String getBaseURI() {
-		return (baseurl==null) ? "" : baseurl;
-	}
-
-	 DocumentMode getMode() {
-		return docmode;
-	}
-
-	 void setMode(DocumentMode mode) {
-		docmode=mode;
-	}
-
 
 	private void collectElements(INode c, String s, List<IElement> nodes){
 		if(c.getNodeType()==NodeType.ELEMENT_NODE){
@@ -117,26 +69,16 @@ class Document extends Node implements IDocument {
 			collectElements(node,s,nodes);
 		}
 	}
-	@Override
-	public List<IElement> getElementsByTagName(String tagName) {
-		if(tagName==null)
-			throw new IllegalArgumentException();
-		if(tagName.equals("*")) {
-			tagName="";
-		}
-		List<IElement> ret=new ArrayList<IElement>();
-		if(isHtmlDocument()){
-			collectElementsHtml(this,tagName,
-					StringUtility.toLowerCaseAscii(tagName),ret);
-		} else {
-			collectElements(this,tagName,ret);
-		}
-		return ret;
-	}
 
 	@Override
 	public String getCharacterSet() {
 		return (encoding==null) ? "utf-8" : encoding;
+	}
+
+
+	@Override
+	public IDocumentType getDoctype(){
+		return doctype;
 	}
 
 	@Override
@@ -148,4 +90,82 @@ class Document extends Node implements IDocument {
 		return null;
 	}
 
+	@Override
+	public IElement getElementById(String id) {
+		if(id==null)
+			throw new IllegalArgumentException();
+		for(INode node : getChildNodes()){
+			if(node instanceof IElement){
+				if(id.equals(((IElement)node).getId()))
+					return (IElement)node;
+				IElement element=((IElement)node).getElementById(id);
+				if(element!=null)return element;
+			}
+		}
+		return null;
+	}
+
+
+	@Override
+	public List<IElement> getElementsByTagName(String tagName) {
+		if(tagName==null)
+			throw new IllegalArgumentException();
+		if(tagName.equals("*")) {
+			tagName=null;
+		}
+		List<IElement> ret=new ArrayList<IElement>();
+		if(isHtmlDocument()){
+			collectElementsHtml(this,tagName,
+					StringUtility.toLowerCaseAscii(tagName),ret);
+		} else {
+			collectElements(this,tagName,ret);
+		}
+		return ret;
+	}
+
+	 DocumentMode getMode() {
+		return docmode;
+	}
+	@Override
+	public  IDocument getOwnerDocument(){
+		return null;
+	}
+
+	 boolean isHtmlDocument(){
+		return true;
+	}
+
+	 void setMode(DocumentMode mode) {
+		docmode=mode;
+	}
+
+	@Override
+	 String toDebugString(){
+		StringBuilder builder=new StringBuilder();
+		for(Node node : getChildNodesInternal()){
+			String str=node.toDebugString();
+			if(str==null) {
+				continue;
+			}
+			String[] strarray=StringUtility.splitAt(str,"\n");
+			for(String el : strarray){
+				builder.append("| ");
+				builder.append(el.replace("~~~~","\n"));
+				builder.append("\n");
+			}
+		}
+		return builder.toString();
+	}
+
+	@Override
+	public  String getNodeName(){
+		return "#document";
+	}
+
+	 String address;
+
+	@Override
+	public String getURL() {
+		return address;
+	}
 }

@@ -1,6 +1,8 @@
 // Modified by Peter O. to use generics; also
 // moved from org.json.  Still in the public domain.
-package com.upokecenter.net;
+// Modified by Peter O. to use int and -1 as the terminating
+// value rather than char and 0.
+package com.upokecenter.json;
 
 import java.text.ParseException;
 
@@ -14,6 +16,29 @@ import java.text.ParseException;
  * @version 0.1
  */
 public class JSONTokener {
+
+	private static String trimSpaces(String s){
+		if(s==null || s.length()==0)return s;
+		int index=0;
+		int sLength=s.length();
+		while(index<sLength){
+			char c=s.charAt(index);
+			if(c!=0x09 && c!=0x0a && c!=0x0c && c!=0x0d && c!=0x20){
+				break;
+			}
+			index++;
+		}
+		if(index==sLength)return "";
+		int startIndex=index;
+		index=sLength-1;
+		while(index>=0){
+			char c=s.charAt(index);
+			if(c!=0x09 && c!=0x0a && c!=0x0c && c!=0x0d && c!=0x20)
+				return s.substring(startIndex,index+1);
+			index--;
+		}
+		return "";
+	}
 
 	/**
 	 * The index of the next character.
@@ -83,8 +108,8 @@ public class JSONTokener {
 	 *
 	 * @return The next character, or 0 if past the end of the source string.
 	 */
-	public char next() {
-		char c = more() ? mySource.charAt(myIndex) : (char)0;
+	public int next() {
+		int c = more() ? mySource.charAt(myIndex) : -1;
 		myIndex += 1;
 		return c;
 	}
@@ -97,8 +122,8 @@ public class JSONTokener {
 	 * @return The character.
 	 * @throws ParseException if the character does not match.
 	 */
-	public char next(char c) throws ParseException {
-		char n = next();
+	public int next(char c) throws ParseException {
+		int n = next();
 		if (n != c)
 			throw syntaxError("Expected '" + c + "' and instead saw '" +
 					n + "'.");
@@ -130,20 +155,20 @@ public class JSONTokener {
 	 * @throws ParseException
 	 * @return  A character, or 0 if there are no more characters.
 	 */
-	public char nextClean() throws java.text.ParseException {
+	public int nextClean() throws java.text.ParseException {
 		while (true) {
-			char c = next();
+			int c = next();
 			if (c == '/') {
 				switch (next()) {
 				case '/':
 					do {
 						c = next();
-					} while (c != '\n' && c != '\r' && c != 0);
+					} while (c != '\n' && c != '\r' && c != -1);
 					break;
 				case '*':
 					while (true) {
 						c = next();
-						if (c == 0)
+						if (c == -1)
 							throw syntaxError("Unclosed comment.");
 						if (c == '*') {
 							if (next() == '/') {
@@ -157,7 +182,7 @@ public class JSONTokener {
 					back();
 					return '/';
 				}
-			} else if (c == 0 || c > ' ')
+			} else if (c == -1 || c > ' ')
 				return c;
 		}
 	}
@@ -172,15 +197,15 @@ public class JSONTokener {
 	 * @return      A String.
 	 * @exception ParseException Unterminated string.
 	 */
-	public String nextString(char quote) throws ParseException {
-		char c;
+	public String nextString(int quote) throws ParseException {
+		int c;
 		StringBuilder sb = new StringBuilder();
 		while (true) {
 			c = next();
 			switch (c) {
-			case (char)0:
-			case (char)0x0A:
-			case (char)0x0D:
+			case -1:
+			case 0x0A:
+			case 0x0D:
 				throw syntaxError("Unterminated string");
 			case '\\':
 				c = next();
@@ -207,14 +232,14 @@ public class JSONTokener {
 					sb.append((char)Integer.parseInt(next(2), 16));
 					break;
 				default:
-					sb.append(c);
+					sb.append((char)c);
 					break;
 				}
 				break;
 			default:
 				if (c == quote)
 					return sb.toString();
-				sb.append(c);
+				sb.append((char)c);
 				break;
 			}
 		}
@@ -230,14 +255,14 @@ public class JSONTokener {
 	public String nextTo(char d) {
 		StringBuilder sb = new StringBuilder();
 		while (true) {
-			char c = next();
-			if (c == d || c == 0 || c == '\n' || c == '\r') {
-				if (c != 0) {
+			int c = next();
+			if (c == d || c == -1 || c == '\n' || c == '\r') {
+				if (c != -1) {
 					back();
 				}
-				return sb.toString().trim();
+				return trimSpaces(sb.toString());
 			}
-			sb.append(c);
+			sb.append((char)c);
 		}
 	}
 
@@ -249,18 +274,18 @@ public class JSONTokener {
 	 * @return A string, trimmed.
 	 */
 	public String nextTo(String delimiters) {
-		char c;
+		int c;
 		StringBuilder sb = new StringBuilder();
 		while (true) {
 			c = next();
-			if (delimiters.indexOf(c) >= 0 || c == 0 ||
+			if (c==-1 || delimiters.indexOf((char)c) >= 0  ||
 					c == '\n' || c == '\r') {
-				if (c != 0) {
+				if (c != -1) {
 					back();
 				}
-				return sb.toString().trim();
+				return trimSpaces(sb.toString());
 			}
-			sb.append(c);
+			sb.append((char)c);
 		}
 	}
 
@@ -273,7 +298,7 @@ public class JSONTokener {
 	 * @return An object.
 	 */
 	public Object nextValue() throws ParseException {
-		char c = nextClean();
+		int c = nextClean();
 		String s;
 
 		if (c == '"' || c == '\'')
@@ -287,14 +312,14 @@ public class JSONTokener {
 			return new JSONArray(this);
 		}
 		StringBuilder sb = new StringBuilder();
-		char b = c;
+		int b = c;
 		while (c >= ' ' && c != ':' && c != ',' && c != ']' && c != '}' &&
 				c != '/') {
-			sb.append(c);
+			sb.append((char)c);
 			c = next();
 		}
 		back();
-		s = sb.toString().trim();
+		s = trimSpaces(sb.toString());
 		if (s.equals("true"))
 			return Boolean.TRUE;
 		if (s.equals("false"))
@@ -324,12 +349,12 @@ public class JSONTokener {
 	 * @return The requested character, or zero if the requested character
 	 * is not found.
 	 */
-	public char skipTo(char to) {
-		char c;
+	public int skipTo(int to) {
+		int c;
 		int index = myIndex;
 		do {
 			c = next();
-			if (c == 0) {
+			if (c == -1) {
 				myIndex = index;
 				return c;
 			}

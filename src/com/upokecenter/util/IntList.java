@@ -20,6 +20,20 @@ public final class IntList {
 		buffer[index]=value;
 	}
 
+	public void appendInts(int[] array, int offset, int length){
+		if((array)==null)throw new NullPointerException("array");
+		if((offset)<0)throw new IndexOutOfBoundsException("offset"+" not greater or equal to "+"0"+" ("+Integer.toString(offset)+")");
+		if((length)<0)throw new IndexOutOfBoundsException("length"+" not greater or equal to "+"0"+" ("+Integer.toString(length)+")");
+		if((offset+length)>array.length)throw new IndexOutOfBoundsException("offset+length"+" not less or equal to "+Integer.toString(array.length)+" ("+Integer.toString(offset+length)+")");
+		if(ptr+length>buffer.length){
+			int[] newbuffer=new int[Math.max(buffer.length*2, buffer.length+length)];
+			System.arraycopy(buffer,0,newbuffer,0,buffer.length);
+			buffer=newbuffer;
+		}
+		System.arraycopy(array, offset, buffer, ptr, length);
+		ptr+=length;
+	}
+
 	public void appendInt(int v){
 		if(ptr<buffer.length){
 			buffer[ptr++]=v;

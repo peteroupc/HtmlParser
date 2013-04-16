@@ -38,18 +38,6 @@ final class DocumentType extends Node implements IDocumentType {
 		super(NodeType.DOCUMENT_TYPE_NODE);
 	}
 	@Override
-	 String toDebugString(){
-		StringBuilder builder=new StringBuilder();
-		builder.append("<!DOCTYPE "+name);
-		if((publicId!=null && publicId.length()>0) ||
-				(systemId!=null && systemId.length()>0)){
-			builder.append(publicId!=null && publicId.length()>0 ? " \""+publicId.replace("\n","~~~~")+"\"" : " \"\"");
-			builder.append(systemId!=null && systemId.length()>0 ? " \""+systemId.replace("\n","~~~~")+"\"" : " \"\"");
-		}
-		builder.append(">\n");
-		return builder.toString();
-	}
-	@Override
 	public String getName() {
 		return name;
 	}
@@ -61,10 +49,26 @@ final class DocumentType extends Node implements IDocumentType {
 	public String getSystemId() {
 		return systemId;
 	}
-
-
 	@Override
 	public  String getTextContent(){
 		return null;
+	}
+
+	@Override
+	public  String getNodeName(){
+		return getName();
+	}
+
+	@Override
+	 String toDebugString(){
+		StringBuilder builder=new StringBuilder();
+		builder.append("<!DOCTYPE "+name);
+		if((publicId!=null && publicId.length()>0) ||
+				(systemId!=null && systemId.length()>0)){
+			builder.append(publicId!=null && publicId.length()>0 ? " \""+publicId.replace("\n","~~~~")+"\"" : " \"\"");
+			builder.append(systemId!=null && systemId.length()>0 ? " \""+systemId.replace("\n","~~~~")+"\"" : " \"\"");
+		}
+		builder.append(">\n");
+		return builder.toString();
 	}
 }
