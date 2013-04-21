@@ -55,29 +55,31 @@ public final class StringUtility {
 	/**
 	 * 
 	 * Splits a string by a delimiter.  If the string ends
-	 * with the delimiter, the trailing string does not
-	 * appear in the result.
+	 * with the delimiter, the result will end with an
+	 * empty string.  If the string begins with the
+	 * delimiter, the result will start with an empty string.
+	 * If the delimiter is null or empty, throws an exception.
 	 * 
-	 * @param s
-	 * @param delimiter
+	 * 
+	 * @param s a string to split.
+	 * @param delimiter a string to signal where each substring
+	 * begins and ends.
 	 * 
 	 */
 	public static String[] splitAt(String s, String delimiter){
-		if(delimiter==null)throw new IllegalArgumentException();
+		if(delimiter==null ||
+				delimiter.length()==0)throw new IllegalArgumentException();
 		if(s==null || s.length()==0)return emptyStringArray;
 		int index=0;
 		boolean first=true;
 		ArrayList<String> strings=null;
 		int delimLength=delimiter.length();
 		if(delimLength==0)return emptyStringArray;
-		int sLength=s.length();
 		while(true){
 			int index2=s.indexOf(delimiter,index);
 			if(index2<0){
-				if(first)return emptyStringArray;
-				if(index!=sLength) {
-					strings.add(s.substring(index));
-				}
+				if(first)return new String[]{s};
+        strings.add(s.substring(index));
 				break;
 			} else {
 				if(first) {
@@ -147,8 +149,11 @@ public final class StringUtility {
 
 	/**
 	 * 
-	 * Splits a string separated by space characters. The method ignores
-	 * leading and trailing space characters.  The space characters are
+	 * Splits a string separated by space characters.
+	 * This method acts as though it strips leading and
+	 * trailing space
+	 * characters from the string before splitting it.
+	 * The space characters are
 	 * U+0009, U+000A, U+000C, U+000D, and U+0020.
 	 * 
 	 * @param s a string. Can be null.
@@ -197,8 +202,10 @@ public final class StringUtility {
 	/**
 	 * 
 	 * Splits a string separated by space characters other than
-	 * form feed. The method ignores
-	 * leading and trailing space characters.  The space characters used
+	 * form feed. This method acts as though it strips
+	 * leading and trailing space
+	 * characters from the string before splitting it.
+	 * The space characters used
 	 * here are U+0009, U+000A, U+000D, and U+0020.
 	 * 
 	 * @param s a string. Can be null.

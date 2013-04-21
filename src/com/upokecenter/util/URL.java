@@ -681,8 +681,10 @@ public final class URL {
 						state=ParseState.AuthorityIgnoreSlashes;
 					}
 				} else {
-					url.host=baseurl.host;
-					url.port=baseurl.port;
+					if(baseurl!=null){
+						url.host=baseurl.host;
+						url.port=baseurl.port;
+					}
 					state=ParseState.RelativePath;
 					index=oldindex;
 				}
@@ -749,7 +751,7 @@ public final class URL {
 							result.appendInt(cp);
 						}
 					}
-					
+
 					//DebugUtility.log("username=%s",username);
 					//DebugUtility.log("password=%s",password);
 					buffer.clearAll();

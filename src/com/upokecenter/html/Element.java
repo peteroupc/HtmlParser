@@ -288,7 +288,13 @@ class Element extends Node implements IElement {
 				continue;
 			}
 			String[] strarray=StringUtility.splitAt(str,"\n");
-			for(String el : strarray){
+			int len=strarray.length;
+			if(len>0 && strarray[len-1].length()==0)
+			{
+				len--; // ignore trailing empty string
+			}
+			for(int i=0;i<len;i++){
+				String el=strarray[i];
 				builder.append("  ");
 				builder.append(el);
 				builder.append("\n");
@@ -307,4 +313,20 @@ class Element extends Node implements IElement {
 	public String getPrefix() {
 		return prefix;
 	}
+
+	@Override public  String getLanguage(){
+		INode parent=getParentNode();
+		String a=getAttributeNS(HtmlParser.XML_NAMESPACE,"lang");
+		if(a==null) {
+			a=getAttribute("lang");
+		}
+		if(a!=null)return a;
+		if(parent==null){
+			parent=getOwnerDocument();
+			if(parent==null)return "";
+			return parent.getLanguage();
+		} else
+			return parent.getLanguage();
+	}
+
 }

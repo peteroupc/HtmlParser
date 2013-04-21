@@ -36,6 +36,7 @@ import com.upokecenter.encoding.TextEncoding;
 import com.upokecenter.io.ConditionalBufferInputStream;
 import com.upokecenter.io.IMarkableCharacterInput;
 import com.upokecenter.io.StackableCharacterInput;
+import com.upokecenter.net.HeaderParser;
 import com.upokecenter.util.IntList;
 import com.upokecenter.util.StringUtility;
 import com.upokecenter.util.URL;
@@ -480,6 +481,8 @@ final class HtmlParser {
 	private boolean noforeign;
 	private final String address;
 
+	private final String[] contentLanguage;
+
 	public static final String XLINK_NAMESPACE="http://www.w3.org/1999/xlink";
 
 	public static final String XML_NAMESPACE="http://www.w3.org/XML/1998/namespace";
@@ -492,19 +495,24 @@ final class HtmlParser {
 		return ret;
 	}
 
-	public HtmlParser(InputStream s, String string) throws IOException {
-		this(s,string,null);
+	public HtmlParser(InputStream s, String address) throws IOException {
+		this(s,address,null,null);
+	}
+
+	public HtmlParser(InputStream s, String address, String charset) throws IOException {
+		this(s,address,charset,null);
 	}
 
 
-
-	public HtmlParser(InputStream source, String address, String charset) throws IOException{
+	public HtmlParser(InputStream source, String address,
+			String charset, String contentLanguage) throws IOException{
 		if(source==null)throw new IllegalArgumentException();
 		if(address!=null && address.length()>0){
 			URL url=URL.parse(address);
 			if(url==null || url.getScheme().length()==0)
 				throw new IllegalArgumentException();
 		}
+		this.contentLanguage=HeaderParser.getLanguages(contentLanguage);
 		this.address=address;
 		initialize();
 		inputStream=new ConditionalBufferInputStream(source);
@@ -1107,8 +1115,9 @@ final class HtmlParser {
 								return true;
 							}
 						}
-						String value=element.getAttribute("http-equiv");
-						if(value!=null && StringUtility.toLowerCaseAscii(value).equals("content-type")){
+						String value=StringUtility.toLowerCaseAscii(
+								element.getAttribute("http-equiv"));
+						if("content-type".equals(value)){
 							value=element.getAttribute("content");
 							if(value!=null){
 								value=StringUtility.toLowerCaseAscii(value);
@@ -1123,7 +1132,19 @@ final class HtmlParser {
 									return true;
 								}
 							}
+						} else if("content-language".equals(value)){
+							// HTML5 requires us to use this algorithm
+							// to parse the Content-Language, rather than
+							// use HTTP parsing (with HeaderParser.getLanguages)
+							// NOTE: this pragma is non-conforming
+							value=element.getAttribute("content");
+							if(!StringUtility.isNullOrEmpty(value) &&
+									value.indexOf(',')<0){
+								String[] data=StringUtility.splitAtSpaces(value);
+								document.defaultLanguage=(data.length==0) ? "" : data[0];
+							}
 						}
+
 					}
 					if(encoding.getConfidence()==EncodingConfidence.Certain){
 						inputStream.disableBuffer();
@@ -3733,7 +3754,13 @@ final class HtmlParser {
 		for(Node node : nodes){
 			String str=node.toDebugString();
 			String[] strarray=StringUtility.splitAt(str,"\n");
-			for(String el : strarray){
+			int len=strarray.length;
+			if(len>0 && strarray[len-1].length()==0)
+			{
+				len--; // ignore trailing empty string
+			}
+			for(int i=0;i<len;i++){
+				String el=strarray[i];
 				builder.append("| ");
 				builder.append(el.replace("~~~~","\n"));
 				builder.append("\n");
@@ -5730,6 +5757,14 @@ final class HtmlParser {
 
 	private void stopParsing() {
 		done=true;
+		if(StringUtility.isNullOrEmpty(document.defaultLanguage)){
+			if(contentLanguage.length==1){
+				// set the fallback language if there is
+				// only one language defined and no meta element
+				// defines the language
+				document.defaultLanguage=contentLanguage[0];
+			}
+		}
 		document.encoding=encoding.getEncoding();
 		String docbase=document.getBaseURI();
 		if(docbase==null || docbase.length()==0){

@@ -3,6 +3,7 @@
 package com.upokecenter.json;
 
 import java.text.ParseException;
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.NoSuchElementException;
@@ -116,6 +117,12 @@ public class JSONArray {
 		myArrayList = new ArrayList<Object>(collection);
 	}
 
+	public JSONArray(List<String> collection) {
+		myArrayList = new ArrayList<Object>();
+    for(String str : collection){
+      myArrayList.add(str);
+    }
+	}
 
 	/**
 	 * Get the object value associated with an index.

@@ -479,26 +479,14 @@ public final class DownloadHelper {
 	}
 
 	private static String getDataURLContentType(String data){
-		int index=HeaderParser.skipContentType(data, 0);
-		String ctype=null;
-		if(index==0)
-			return "text/plain;charset=US-ASCII";
-		else if(data.charAt(0)==';'){
-			ctype="text/plain"+data.substring(0,index);
-		} else {
-			ctype=data.substring(0,index);
-		}
-		if(ctype.indexOf('%')<0)
-			return ctype;
-		ctype=HeaderParser.unescapeContentType(ctype,0);
-		if(ctype==null || ctype.length()==0)
-			return "text/plain;charset=US-ASCII";
-		return ctype;
+		StringBuilder builder=new StringBuilder();
+		HeaderParser.skipDataUrlContentType(data,0,data.length(),builder);
+		return builder.toString();
 	}
 
 
 	private static byte[] getDataURLBytes(String data){
-		int index=HeaderParser.skipContentType(data, 0);
+		int index=HeaderParser.skipDataUrlContentType(data, 0,data.length(),null);
 		if(data.startsWith(";base64,",index)){
 			index+=8;
 			try {

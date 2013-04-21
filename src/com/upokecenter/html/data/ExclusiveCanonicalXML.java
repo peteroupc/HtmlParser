@@ -29,7 +29,7 @@ import com.upokecenter.util.URIUtility;
  * @author Peter
  *
  */
-final class ExclusiveCanonicalXML {
+public final class ExclusiveCanonicalXML {
 	private ExclusiveCanonicalXML(){}
 	private static final class NamespaceAttrComparer implements Comparator<IAttr> {
 		@Override
@@ -67,6 +67,21 @@ final class ExclusiveCanonicalXML {
 			){
 		return canonicalize(node,includeRoot,prefixList,false);
 	}
+	private static void checkNamespacePrefix(String prefix, String nsvalue){
+		if(prefix.equals("xmlns"))
+			throw new IllegalArgumentException("'xmlns' namespace declared");
+		if(prefix.equals("xml") && !"http://www.w3.org/XML/1998/namespace".equals(nsvalue))
+			throw new IllegalArgumentException("'xml' bound to wrong namespace name");
+		if(!"xml".equals(prefix) && "http://www.w3.org/XML/1998/namespace".equals(nsvalue))
+			throw new IllegalArgumentException("'xml' bound to wrong namespace name");
+		if("http://www.w3.org/2000/xmlns/".equals(nsvalue))
+			throw new IllegalArgumentException("'prefix' bound to xmlns namespace name");
+		if(!StringUtility.isNullOrEmpty(nsvalue)){
+			if(!URIUtility.hasSchemeForURI(nsvalue))
+				throw new IllegalArgumentException(nsvalue+" is not a valid namespace URI.");
+		} else if(!"".equals(prefix))
+			throw new IllegalArgumentException("can't undeclare a prefix");
+	}
 	public static String canonicalize(
 			INode node,
 			boolean includeRoot,
@@ -79,15 +94,12 @@ final class ExclusiveCanonicalXML {
 		if(prefixList==null) {
 			prefixList=new HashMap<String,String>();
 		} else {
-      for(String prefix : prefixList.keySet()){
-        String nsvalue=prefixList.get(prefix);
-        if(!StringUtility.isNullOrEmpty(nsvalue)){
-					if(!URIUtility.hasSchemeForURI(nsvalue))
-						throw new IllegalArgumentException(nsvalue+" is not a valid namespace URI.");
-				}
-      }
-    }
-    HashMap<String,String> item=new HashMap<String,String>(); 
+			for(String prefix : prefixList.keySet()){
+				String nsvalue=prefixList.get(prefix);
+				checkNamespacePrefix(prefix,nsvalue);
+			}
+		}
+		HashMap<String,String> item=new HashMap<String,String>();
 		stack.add(item);
 		if(node instanceof IDocument){
 			boolean beforeElement=true;
@@ -239,10 +251,10 @@ final class ExclusiveCanonicalXML {
 		int nodeType=node.getNodeType();
 		if(nodeType==NodeType.COMMENT_NODE){
 			if(withComments){
-        builder.append("<!--");
-		  	builder.append(((IComment)node).getData());
-			  builder.append("-->");
-      }
+				builder.append("<!--");
+				builder.append(((IComment)node).getData());
+				builder.append("-->");
+			}
 		} else if(nodeType==NodeType.PROCESSING_INSTRUCTION_NODE){
 			builder.append("<?");
 			builder.append(((IProcessingInstruction)node).getTarget());
@@ -276,16 +288,14 @@ final class ExclusiveCanonicalXML {
 						declaredNames.add("");
 					}
 					nsvalue=attr.getValue();
+					checkNamespacePrefix("",nsvalue);
 				} else if(name.startsWith("xmlns:") && name.length()>6){
 					attrs.add(attr); // add prefix namespace
 					if(declaredNames!=null) {
 						declaredNames.add(attr.getLocalName());
 					}
 					nsvalue=attr.getValue();
-				}
-				if(!StringUtility.isNullOrEmpty(nsvalue)){
-					if(!URIUtility.hasSchemeForURI(nsvalue))
-						throw new IllegalArgumentException(nsvalue+" is not a valid namespace URI.");
+					checkNamespacePrefix(attr.getLocalName(),nsvalue);
 				}
 			}
 			if(declaredNames!=null){

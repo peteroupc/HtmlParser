@@ -148,7 +148,13 @@ class Document extends Node implements IDocument {
 				continue;
 			}
 			String[] strarray=StringUtility.splitAt(str,"\n");
-			for(String el : strarray){
+			int len=strarray.length;
+			if(len>0 && strarray[len-1].length()==0)
+			{
+				len--; // ignore trailing empty string
+			}
+			for(int i=0;i<len;i++){
+				String el=strarray[i];
 				builder.append("| ");
 				builder.append(el.replace("~~~~","\n"));
 				builder.append("\n");
@@ -163,9 +169,15 @@ class Document extends Node implements IDocument {
 	}
 
 	 String address;
+	 String defaultLanguage;
 
 	@Override
 	public String getURL() {
 		return address;
 	}
+
+	@Override public  String getLanguage(){
+		return (defaultLanguage==null) ? "" : defaultLanguage;
+	}
+
 }

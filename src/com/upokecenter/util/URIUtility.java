@@ -2,7 +2,18 @@
 // Public domain dedication: http://creativecommons.org/publicdomain/zero/1.0/
 package com.upokecenter.util;
 
+/**
+ * 
+ * Contains utility methods for processing Uniform
+ * Resource Identifiers (URIs) and Internationalized
+ * Resource Identifiers (IRIs) under RFC3986 and RFC3987,
+ * respectively.
+ * 
+ * @author Peter
+ *
+ */
 public final class URIUtility {
+	
 	private URIUtility(){}
 
 	private static int parseDecOctet(String s, int index,
@@ -132,7 +143,7 @@ public final class URIUtility {
 				if((c>='a' && c<='z') ||
 						(c>='A' && c<='Z') ||
 						(c>='0' && c<='9') ||
-						((c&0x7F)==c && ":-._~!$&'()*+,;=".indexOf((char)c)>=0)){
+						((c&0x7F)==c && ":-._~!$&'()*+,;=".indexOf(c)>=0)){
 					hex=true;
 				} else {
 					break;
@@ -435,7 +446,7 @@ public final class URIUtility {
 	 * false otherwise.
 	 */
 	public static boolean hasSchemeForURI(String ref){
-		int[] segments=splitIRI(ref,false);
+		int[] segments=splitIRI(ref,ParseMode.URIStrict);
 		return segments!=null && segments[0]>=0;
 	}
 
@@ -471,6 +482,19 @@ public final class URIUtility {
 		return splitIRI(s)!=null;
 	}
 
+	/**
+	 * 
+	 * Resolves a URI or IRI relative to another URI or IRI.
+	 * 
+	 * @param ref an absolute or relative URI reference
+	 * @param base an absolute URI reference.
+	 * @return the resolved IRI, or null if ref is null or is not a
+	 * valid IRI.  If base
+	 * is null or is not a valid IRI, returns ref.
+	 */
+	public static String relativeResolve(String ref, String base){
+		return relativeResolve(ref,base,ParseMode.IRIStrict);
+	}
 
 	/**
 	 * 
@@ -478,23 +502,37 @@ public final class URIUtility {
 	 * 
 	 * @param ref an absolute or relative URI reference
 	 * @param base an absolute URI reference.
-	 * @return the resolved URI, or null if ref is null or is not a
+	 * @param parseMode Specifies whether certain characters are allowed
+	 * in <i>ref</i> and <i>base</i>:
+	 * <ul>
+	 * <li>URIUtility.ParseMode.IRIStrict: The rules follow the syntax
+	 * for parsing IRIs.</li>
+	 * <li>URIUtility.ParseMode.URIStrict: Same as IRIStrict, 
+	 * except that non-ASCII characters are not allowed.</li>
+	 * <li>URIUtility.ParseMode.IRILenient: The rules only check for the appropriate
+	 * delimiters when splitting the path, without checking if all the characters
+	 * in each component are valid.  Even with this mode, strings with unpaired
+	 * surrogate code points are considered invalid.</li>
+	 * <li>URIUtility.ParseMode.URILenient: Same as IRILenient, 
+	 * except that non-ASCII characters are not allowed.</li>
+	 * </ul>
+	 * @return the resolved IRI, or null if ref is null or is not a
 	 * valid IRI.  If base
 	 * is null or is not a valid IRI, returns ref.
 	 */
-	public static String relativeResolve(String ref, String base){
-		int[] segments=splitIRI(ref);
+	public static String relativeResolve(String ref, String base, ParseMode parseMode){
+		int[] segments=splitIRI(ref,parseMode);
 		if(segments==null)return null;
-		int[] segmentsBase=splitIRI(base);
+		int[] segmentsBase=splitIRI(base,parseMode);
 		if(segmentsBase==null)return ref;
 		StringBuilder builder=new StringBuilder();
-		if(segments[0]>=0){
+		if(segments[0]>=0){ // scheme present
 			appendScheme(builder,ref,segments);
 			appendAuthority(builder,ref,segments);
 			appendNormalizedPath(builder,ref,segments);
 			appendQuery(builder,ref,segments);
 			appendFragment(builder,ref,segments);
-		} else if(segments[2]>=0){
+		} else if(segments[2]>=0){ // authority present
 			appendScheme(builder,base,segmentsBase);
 			appendAuthority(builder,ref,segments);
 			appendNormalizedPath(builder,ref,segments);
@@ -517,7 +555,7 @@ public final class URIUtility {
 				appendNormalizedPath(builder,ref,segments);
 			} else {
 				StringBuilder merged=new StringBuilder();
-				if(segmentsBase[2]>=0 && segmentsBase[4]==segments[5]){
+				if(segmentsBase[2]>=0 && segmentsBase[4]==segmentsBase[5]){
 					merged.append('/');
 					appendPath(merged,ref,segments);
 					builder.append(normalizePath(merged.toString()));
@@ -532,9 +570,6 @@ public final class URIUtility {
 		}
 		return builder.toString();
 	}
-
-
-
 
 	/**
 	 * Escapes characters that cannot appear in URIs or IRIs.
@@ -604,6 +639,15 @@ public final class URIUtility {
 		}
 		return builder.toString();
 	}
+	/**
+* Specifies whether certain characters are allowed when parsing URIs and IRIs.
+*/
+	public enum ParseMode {
+		IRIStrict,
+		URIStrict,
+		IRILenient,
+		URILenient
+	}
 
 	/**
 	 * Parses a substring that represents an
@@ -616,10 +660,8 @@ public final class URIUtility {
 	 * @param offset Index of the first character of a substring
 	 * to check for an IRI.
 	 * @param length Length of the substring to check for an IRI.
-	 * @param asciiOnly Specifies whether non-ASCII characters
-	 * are allowed in the string.  If false, the rules will correspond
-	 * to those for parsing Uniform Resource Identifiers (URIs) under
-	 * RFC3986.
+	 * @param parseMode Specifies whether certain characters are allowed
+	 * in the string.
 	 * @return If the string is a valid IRI, returns an array of 10
 	 * integers.  Each of the five pairs corresponds to the start
 	 * and end index of the IRI's scheme, authority, path, query,
@@ -629,7 +671,7 @@ public final class URIUtility {
 	 * or is not a valid IRI, returns null.
 	 */
 	public static int[] splitIRI(String s,
-			int offset, int length, boolean asciiOnly){
+			int offset, int length, ParseMode parseMode){
 		if(s==null)return null;
 		if(offset<0||length<0||offset+length>s.length())
 			throw new IndexOutOfBoundsException();
@@ -639,6 +681,8 @@ public final class URIUtility {
 			retval[5]=0;
 			return retval;
 		}
+		boolean asciiOnly=(parseMode==ParseMode.URILenient || parseMode==ParseMode.URIStrict);
+		boolean strict=(parseMode==ParseMode.URIStrict || parseMode==ParseMode.IRIStrict);
 		int index=offset;
 		int sLength=offset+length;
 		boolean scheme=false;
@@ -652,16 +696,16 @@ public final class URIUtility {
 				index++;
 				break;
 			}
-			if(index==offset && !((c>='a' && c<='z') || (c>='A' && c<='Z'))){
-				index++;
+			if(strict && index==offset && !((c>='a' && c<='z') || (c>='A' && c<='Z'))){
 				break;
 			}
-			else if(index>offset && !((c>='a' && c<='z') || (c>='A' && c<='Z') || (c>='0' && c<='9') ||
+			else if(strict && index>offset && !((c>='a' && c<='z') || (c>='A' && c<='Z') || (c>='0' && c<='9') ||
 					c=='+' && c=='-' && c=='.')){
-				index++;
 				break;
 			}
-
+			else if(!strict && (c=='#' || c==':' || c=='?' || c=='/')){
+				break;
+			}
 			index++;
 		}
 		if(!scheme) {
@@ -689,7 +733,7 @@ public final class URIUtility {
 				} else if(c>=0xD800 && c<=0xDFFF)
 					// error
 					return null;
-				if(c=='%' && (state==0 || state==1)){
+				if(c=='%' && (state==0 || state==1) && strict){
 					// Percent encoded character (except in port)
 					if(index+2<sLength && isHexChar(s.charAt(index+1)) &&
 							isHexChar(s.charAt(index+2))){
@@ -704,12 +748,12 @@ public final class URIUtility {
 						state=1;
 						index=authorityStart;
 						continue;
-					} else if(c=='@'){
+					} else if(strict && c=='@'){
 						// is user info
 						index++;
 						state=1;
 						continue;
-					} else if(isIUserInfoChar(c)){
+					} else if(strict && isIUserInfoChar(c)){
 						index++;
 						if(index==sLength){
 							// not user info
@@ -724,15 +768,17 @@ public final class URIUtility {
 						continue;
 					}
 				} else if(state==1){ // host
-					if(c=='['){
+					if(c=='/' || c=='?' || c=='#'){
+						// end of authority
+						retval[3]=index;
+						break;
+					} else if(!strict){
+						index++;
+					} else if(c=='['){
 						index++;
 						index=parseIPLiteral(s,index,sLength);
 						if(index<0)return null;
 						continue;
-					} else if(c=='/' || c=='?' || c=='#'){
-						// end of authority
-						retval[3]=index;
-						break;
 					} else if(c==':'){
 						// port
 						state=2;
@@ -775,7 +821,7 @@ public final class URIUtility {
 			} else if(c>=0xD800 && c<=0xDFFF)
 				// error
 				return null;
-			if(c=='%'){
+			if(c=='%' && strict){
 				// Percent encoded character
 				if(index+2<sLength && isHexChar(s.charAt(index+1)) &&
 						isHexChar(s.charAt(index+2))){
@@ -789,7 +835,7 @@ public final class URIUtility {
 					colon=true;
 				} else if(c=='/' && fullyRelative && !segment){
 					// noscheme path can't have colon before slash
-					if(colon)return null;
+					if(strict && colon)return null;
 					segment=true;
 				}
 				if(c=='?'){
@@ -802,7 +848,7 @@ public final class URIUtility {
 					retval[8]=index+1;
 					retval[9]=sLength;
 					state=2;//move to fragment state
-				} else if(!isIpchar(c))return null;
+				} else if(strict && !isIpchar(c))return null;
 				index++;
 			} else if(state==1){ // Query
 				if(c=='#'){
@@ -810,14 +856,14 @@ public final class URIUtility {
 					retval[8]=index+1;
 					retval[9]=sLength;
 					state=2;//move to fragment state
-				} else if(!isIqueryChar(c))return null;
+				} else if(strict && !isIqueryChar(c))return null;
 				index++;
 			} else if(state==2){ // Fragment
-				if(!isIfragmentChar(c))return null;
+				if(strict && !isIfragmentChar(c))return null;
 				index++;
 			}
 		}
-		if(fullyRelative && colon && !segment)
+		if(strict && fullyRelative && colon && !segment)
 			return null; // ex. "x@y:z"
 		return retval;
 	}
@@ -909,7 +955,7 @@ public final class URIUtility {
 	 * or is not a valid IRI, returns null.
 	 */
 	public static int[] splitIRI(String s){
-		return splitIRI(s,false);
+		return splitIRI(s,ParseMode.IRIStrict);
 	}
 	/**
 	 * Parses an Internationalized Resource Identifier (IRI) reference
@@ -918,10 +964,19 @@ public final class URIUtility {
 	 * the indices into the components.
 	 * 
 	 * @param s A string.
-	 * @param asciiOnly Specifies whether non-ASCII characters
-	 * are allowed in the string.  If false, the rules will correspond
-	 * to those for parsing Uniform Resource Identifiers under
-	 * RFC3986.
+	 * @param parseMode Specifies whether certain characters are allowed
+	 * in the string:
+	 * <ul>
+	 * <li>URIUtility.ParseMode.IRIStrict: The rules follow the syntax
+	 * for parsing IRIs.</li>
+	 * <li>URIUtility.ParseMode.URIStrict: Same as IRIStrict, 
+	 * except that non-ASCII characters are not allowed.</li>
+	 * <li>URIUtility.ParseMode.IRILenient: The rules only check for the appropriate
+	 * delimiters when splitting the path, without checking if all the characters
+	 * in each component are valid.  Even with this mode</li>
+	 * <li>URIUtility.ParseMode.URILenient: Same as IRILenient, 
+	 * except that non-ASCII characters are not allowed.</li>
+	 * </ul>
 	 * @return If the string is a valid IRI reference, returns an array of 10
 	 * integers.  Each of the five pairs corresponds to the start
 	 * and end index of the IRI's scheme, authority, path, query,
@@ -929,8 +984,8 @@ public final class URIUtility {
 	 * both indices in that pair will be -1.  If the string is null
 	 * or is not a valid IRI, returns null.
 	 */
-	public static int[] splitIRI(String s, boolean asciiOnly){
+	public static int[] splitIRI(String s, ParseMode parseMode){
 		if(s==null)return null;
-		return splitIRI(s,0,s.length(),asciiOnly);
+		return splitIRI(s,0,s.length(),parseMode);
 	}
 }

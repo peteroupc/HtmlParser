@@ -211,7 +211,7 @@ class RDFa1 implements IRDFParser {
 	private static boolean isValidCurieReference(String s, int offset, int length){
 		if(s==null)return false;
 		if(length==0)return true;
-		int[] indexes=URIUtility.splitIRI(s,offset,length,false);
+		int[] indexes=URIUtility.splitIRI(s,offset,length,URIUtility.ParseMode.IRIStrict);
 		if(indexes==null)
 			return false;
 		if(indexes[0]!=-1) // check if scheme component is present

@@ -181,6 +181,7 @@ public class RDFa implements IRDFParser {
 		return builder.toString();
 	}
 
+
 	private static boolean isNCNameStartChar(int c){
 		return (c>='a' && c<='z') ||
 				(c>='A' && c<='Z') ||

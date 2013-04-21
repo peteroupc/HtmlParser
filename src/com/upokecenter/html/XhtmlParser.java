@@ -15,11 +15,12 @@ import org.xml.sax.ext.DefaultHandler2;
 import org.xml.sax.helpers.XMLReaderFactory;
 
 import com.upokecenter.encoding.TextEncoding;
+import com.upokecenter.net.HeaderParser;
 import com.upokecenter.util.DebugUtility;
 import com.upokecenter.util.StringUtility;
 import com.upokecenter.util.URL;
 
-public class XhtmlParser {
+class XhtmlParser {
 
 	private final String address;
 	private XMLReader reader;
@@ -49,7 +50,7 @@ public class XhtmlParser {
 				data[2]==0x3f && data[3]==0x00)
 			return "utf-16le";
 		if(count>=4 && data[0]==0x3c && data[1]==0x3f &&
-				data[2]==0x78 && data[3]==0x6d){
+				data[2]==0x78 && data[3]==0x6d){ // <?xm
 			data=new byte[128];
 			s.mark(data.length+2);
 			try {
@@ -59,7 +60,7 @@ public class XhtmlParser {
 			}
 			int i=4;
 			if(i+1>count)return "utf-8";
-			if(data[i++]!='l')return "utf-8";
+			if(data[i++]!='l')return "utf-8"; // l in <?xml
 			boolean space=false;
 			while(i<count){
 				if(data[i]==0x09||data[i]==0x0a||data[i]==0x0d||data[i]==0x20)
@@ -144,7 +145,7 @@ public class XhtmlParser {
 
 
 
-	public static class ProcessingInstruction extends Node
+	 static class ProcessingInstruction extends Node
 	implements IProcessingInstruction {
 
 		public String target,data;
@@ -166,13 +167,13 @@ public class XhtmlParser {
 	}
 
 
-	public static class XhtmlContentHandler extends DefaultHandler2
+	 static class XhtmlContentHandler extends DefaultHandler2
 	{
 		private final List<Element> elements;
 		private final List<Element> xmlBaseElements;
 		private Document document;
-		private String baseurl;
-		private String encoding;
+		 String baseurl;
+		 String encoding;
 		boolean useEntities=false;
 		private Node getCurrentNode(){
 			if(elements.size()==0)return document;
@@ -207,11 +208,11 @@ public class XhtmlParser {
 			elements.clear();
 		}
 
-		public void setDocument(Document doc){
+		 void setDocument(Document doc){
 			this.document=doc;
 		}
 
-		public Document getDocument(){
+		 Document getDocument(){
 			return this.document;
 		}
 
@@ -233,30 +234,29 @@ public class XhtmlParser {
 		}
 
 		@Override
-		public void characters(char[] arg0, int arg1, int arg2)
+		public  void characters(char[] arg0, int arg1, int arg2)
 				throws SAXException {
 			getTextNodeToInsert(getCurrentNode()).text.appendString(new String(arg0,arg1,arg2));
 		}
 
 		@Override
-		public void ignorableWhitespace(char[] arg0, int arg1, int arg2)
+		public  void ignorableWhitespace(char[] arg0, int arg1, int arg2)
 				throws SAXException {
 			getTextNodeToInsert(getCurrentNode()).text.appendString(new String(arg0,arg1,arg2));
 		}
 		@Override
-		public void endDocument() throws SAXException {
+		public  void endDocument() throws SAXException {
 			stopParsing();
-			super.endDocument();
 		}
 
 		@Override
-		public void endElement(String arg0, String arg1, String arg2)
+		public  void endElement(String arg0, String arg1, String arg2)
 				throws SAXException {
 			elements.remove(elements.size()-1);
 		}
 
 		@Override
-		public void processingInstruction(String arg0, String arg1)
+		public  void processingInstruction(String arg0, String arg1)
 				throws SAXException {
 			ProcessingInstruction pi=new ProcessingInstruction();
 			pi.target=arg0;
@@ -265,7 +265,7 @@ public class XhtmlParser {
 		}
 
 		@Override
-		public void startDTD(String name, String pubid, String sysid){
+		public  void startDTD(String name, String pubid, String sysid){
 			DocumentType doctype=new DocumentType();
 			doctype.name=name;
 			doctype.publicId=pubid;
@@ -285,7 +285,7 @@ public class XhtmlParser {
 		}
 
 		@Override
-		public void skippedEntity(String arg0) throws SAXException {
+		public  void skippedEntity(String arg0) throws SAXException {
 			DebugUtility.log(arg0);
 			if(useEntities){
 				int entity=HtmlEntities.getHtmlEntity(arg0);
@@ -311,7 +311,7 @@ public class XhtmlParser {
 		}
 
 		@Override
-		public void startElement(String uri, String localName, String arg2,
+		public  void startElement(String uri, String localName, String arg2,
 				Attributes arg3) throws SAXException {
 			String prefix=getPrefix(arg2);
 			Element element=new Element();
@@ -345,23 +345,27 @@ public class XhtmlParser {
 		}
 
 		@Override
-		public void comment(char[] arg0, int arg1, int arg2)
+		public  void comment(char[] arg0, int arg1, int arg2)
 				throws SAXException {
 			Comment cmt=new Comment();
-			cmt.data=new String(arg0,arg1,arg2);
+			cmt.setData(new String(arg0,arg1,arg2));
 			getCurrentNode().appendChild(cmt);
 		}
 	}
 
 	public XhtmlParser(InputStream s, String string) throws IOException {
-		this(s,string,null);
+		this(s,string,null,null);
+	}
+	public XhtmlParser(InputStream s, String string, String charset) throws IOException {
+		this(s,string,charset,null);
 	}
 
 	private final XhtmlContentHandler handler;
 	private final String encoding;
+	private final String[] contentLang;
 
 
-	public XhtmlParser(InputStream source, String address, String charset)
+	public XhtmlParser(InputStream source, String address, String charset, String lang)
 			throws IOException {
 		if(source==null)throw new IllegalArgumentException();
 		if(address!=null && address.length()>0){
@@ -369,6 +373,7 @@ public class XhtmlParser {
 			if(url==null || url.getScheme().length()==0)
 				throw new IllegalArgumentException();
 		}
+		this.contentLang=HeaderParser.getLanguages(lang);
 		this.address=address;
 		try {
 			this.reader=XMLReaderFactory.createXMLReader();
@@ -412,6 +417,9 @@ public class XhtmlParser {
 			if(e.getCause() instanceof IOException)
 				throw (IOException)(e.getCause());
 			throw new IOException(e);
+		}
+		if(contentLang.length==1){
+			doc.defaultLanguage=contentLang[0];
 		}
 		return handler.getDocument();
 	}

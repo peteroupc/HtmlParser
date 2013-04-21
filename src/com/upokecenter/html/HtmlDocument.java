@@ -44,10 +44,9 @@ public final class HtmlDocument {
 		@Override
 		public IDocument processResponse(String url, InputStream stream,
 				IHttpHeaders headers) throws IOException {
-			String charset=HeaderParser.getCharset(
-					headers.getHeaderField("content-type"),0);
-			HtmlParser parser=new HtmlParser(stream,headers.getUrl(),charset);
-			return parser.parse();
+			String contentType=headers.getHeaderField("content-type");
+			return HtmlDocument.parseStream(stream,headers.getUrl(),contentType,
+					headers.getHeaderField("content-language"));
 		}
 	}
 	/**
@@ -132,6 +131,12 @@ public final class HtmlDocument {
 		return parseStream(stream,"about:blank");
 	}
 
+	public static IDocument parseStream(
+			InputStream stream, String address, String contentType)
+					throws IOException {
+		return parseStream(stream,address,contentType,null);
+	}
+
 	/**
 	 * 
 	 * Parses an HTML document from an input stream, using the given
@@ -139,18 +144,44 @@ public final class HtmlDocument {
 	 * 
 	 * @param stream an input stream representing an HTML document.
 	 * @param address an absolute URL representing an address.
+	 * @param contentType Desired MIME media type of the document, including the
+	 *   charset parameter, if any.  Examples: "text/html" or
+	 *  "application/xhtml+xml; charset=utf-8".
+	 * @param contentLang Language tag from the Content-Language header
 	 * @return an IDocument representing the HTML document.
 	 * @throws IOException if an I/O error occurs
 	 * @throws IllegalArgumentException if the given address
 	 * is not an absolute URL.
 	 */
-	public static IDocument parseStream(InputStream stream, String address)
-			throws IOException {
+	public static IDocument parseStream(
+			InputStream stream, String address, String contentType, String contentLang)
+					throws IOException {
+		if((stream)==null)throw new NullPointerException("stream");
+		if((address)==null)throw new NullPointerException("address");
+		if((contentType)==null)throw new NullPointerException("contentType");
 		if(!stream.markSupported()){
 			stream=new BufferedInputStream(stream);
 		}
-		HtmlParser parser=new HtmlParser(stream,address,null);
-		return parser.parse();
+		String mediatype=HeaderParser.getMediaType(contentType);
+		String charset=HeaderParser.getCharset(contentType);
+		if(mediatype.equals("text/html")){
+			// TODO: add lang
+			HtmlParser parser=new HtmlParser(stream,address,charset,contentLang);
+			return parser.parse();
+		} else if(mediatype.equals("application/xhtml+xml") ||
+				mediatype.equals("application/xml") ||
+				mediatype.equals("image/svg+xml") ||
+				mediatype.equals("text/xml")){
+			XhtmlParser parser=new XhtmlParser(stream,address,charset,contentLang);
+			return parser.parse();
+		} else
+			throw new IllegalArgumentException("content type not supported: "+mediatype);
+	}
+
+	public static IDocument parseStream(
+			InputStream stream, String address)
+					throws IOException {
+		return parseStream(stream,address,"text/html");
 	}
 
 	/**

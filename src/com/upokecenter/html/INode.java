@@ -83,4 +83,8 @@ public interface INode {
 	 * be the same as the tag name.
 	 */
 	String getNodeName();
+	/**
+	 * Gets the language of this node.  Not defined in the DOM specification.
+	 */
+	String getLanguage();
 }

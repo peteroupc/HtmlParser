@@ -362,8 +362,7 @@ final class CharsetSniffer {
 	}
 
 	public static String sniffContentType(InputStream input, String mediaType) throws IOException{
-		if(mediaType!=null &&
-				HeaderParser.skipContentType(mediaType, 0)==mediaType.length()){
+		if(mediaType!=null && HeaderParser.isValidMediaType(mediaType)){
 			String type=HeaderParser.getMediaType(mediaType,0);
 			if(type.equals("text/xml") || type.equals("application/xml") ||
 					type.endsWith("+xml"))

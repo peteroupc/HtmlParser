@@ -25,11 +25,20 @@ THE SOFTWARE.
  */
 package com.upokecenter.net;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.upokecenter.util.DateTimeUtility;
 import com.upokecenter.util.StringUtility;
 
 
-
+/**
+ * 
+ * Contains methods useful for parsing header fields.
+ * 
+ * @author Peter
+ *
+ */
 public final class HeaderParser {
 
 	private HeaderParser(){}
@@ -265,67 +274,8 @@ public final class HeaderParser {
 			index+=3;
 		}
 		if(index!=length)return defaultValue;
-		// NOTE: Month is one-based
+		// NOTE: Here, the month is one-based
 		return DateTimeUtility.toGmtDate(year,month,day,hour,minute,second);
-	}
-
-	private static int skipQuotedString(String v, int index){
-		// assumes index points to quotation mark
-		index++;
-		int length=v.length();
-		char c=0;
-		while(index<length){
-			c=v.charAt(index);
-			if(c=='\\'){
-				if(index+1>=length)
-					return length;
-				else {
-					index++;
-				}
-			} else if(c=='"')
-				return index+1;
-			else if(c=='\r'){
-				if(index+2>=length ||
-						v.charAt(index+1)!='\n' ||
-						(v.charAt(index+2)!=' ' && v.charAt(index+2)!='\t'))
-					// ill-formed whitespace
-					return length;
-				index+=2;
-			} else if(c=='\n'){
-				if(index+1>=length ||
-						(v.charAt(index+1)!=' ' && v.charAt(index+1)!='\t'))
-					// ill-formed whitespace
-					return length;
-				index+=1;
-			} else if(c==127 || (c<32 && c!='\t' && c!=' '))
-				// ill-formed
-				return length;
-			index++;
-		}
-		return index;
-	}
-
-	private static int skipQuotedStringNoLws(String v, int index){
-		// assumes index points to quotation mark
-		index++;
-		int length=v.length();
-		char c=0;
-		while(index<length){
-			c=v.charAt(index);
-			if(c=='\\'){
-				if(index+1>=length)
-					return length;
-				else {
-					index++;
-				}
-			} else if(c=='"')
-				return index+1;
-			else if(c==127 || (c<32))
-				// ill-formed
-				return length;
-			index++;
-		}
-		return index;
 	}
 
 
@@ -385,7 +335,7 @@ public final class HeaderParser {
 		return num;
 	}
 
-	static int skipZeros(String v, int index){
+	private static int skipZeros(String v, int index){
 		char c=0;
 		int length=v.length();
 		while(index<length){
@@ -395,7 +345,7 @@ public final class HeaderParser {
 		}
 		return index;
 	}
-	static int skipDigits(String v, int index){
+	private static int skipDigits(String v, int index){
 		char c=0;
 		int length=v.length();
 		while(index<length){
@@ -405,53 +355,6 @@ public final class HeaderParser {
 		}
 		return index;
 	}
-	static int skipSpace(String v, int index){
-		char c=0;
-		int length=v.length();
-		while(index<length){
-			c=v.charAt(index);
-			if(c!=' ')return index;
-			index++;
-		}
-		return index;
-	}
-	static int skipSpaceOrTab(String v, int index){
-		char c=0;
-		int length=v.length();
-		while(index<length){
-			c=v.charAt(index);
-			if(c!=' ' && c!='\t')return index;
-			index++;
-		}
-		return index;
-	}
-	static int skipLinearWhitespace(String v, int index){
-		char c=0;
-		int length=v.length();
-		while(index<length){ // skip whitespace
-			c=v.charAt(index);
-			if(c=='\r'){
-				if(index+2>=length ||
-						v.charAt(index+1)!='\n' ||
-						(v.charAt(index+2)!=' ' && v.charAt(index+2)!='\t'))
-					return index;
-				index+=2;
-			} else if(c=='\n'){
-				// HTTP usually allows only '\r\n' in linear whitespace,
-				// but we're being tolerant here
-				if(index+1>=length ||
-						(v.charAt(index+1)!=' ' && v.charAt(index+1)!='\t'))
-					return index;
-				index+=1;
-
-			} else if(c!='\t' && c!=' ')
-				return index;
-			index++;
-		}
-		return index;
-	}
-
-
 	 static int skipDirective(String str, int io){
 		int length=str.length();
 		char c=0;
@@ -462,12 +365,12 @@ public final class HeaderParser {
 			}
 			io++;
 		}
-		io=skipLinearWhitespace(str,io);
+		io=skipLws(str,io,length,null);
 		if(io<length && str.charAt(io)=='='){
 			io++;
-			io=skipLinearWhitespace(str,io);
+			io=skipLws(str,io,length,null);
 			if(io<length && str.charAt(io)=='"') {
-				io=skipQuotedString(str,io);
+				io=skipQuotedString(str,io,length,null,true);
 			} else {
 				while(io<length){ // skip non-separator
 					c=str.charAt(io);
@@ -477,11 +380,11 @@ public final class HeaderParser {
 					io++;
 				}
 			}
-			io=skipLinearWhitespace(str,io);
+			io=skipLws(str,io,length,null);
 		}
 		if(io<length && str.charAt(io)==','){
 			io++;
-			io=skipLinearWhitespace(str,io);
+			io=skipLws(str,io,length,null);
 		} else {
 			io=length;
 		}
@@ -500,10 +403,10 @@ public final class HeaderParser {
 				return startIndex;
 		}
 		index+=token.length();
-		index=skipLinearWhitespace(str,index);
+		index=skipLws(str,index,length,null);
 		if(index<length && str.charAt(index)=='='){
 			index++;
-			index=skipLinearWhitespace(str,index);
+			index=skipLws(str,index,length,null);
 			int number=getPositiveNumber(str,index);
 			while(index<length){
 				char c=str.charAt(index);
@@ -515,13 +418,13 @@ public final class HeaderParser {
 			result[0]=number;
 			if(number<-1)
 				return startIndex;
-			index=skipLinearWhitespace(str,index);
+			index=skipLws(str,index,length,null);
 		} else
 			return startIndex;
 		if(index>=length)return index;
 		if(str.charAt(index)==','){
 			index++;
-			index=skipLinearWhitespace(str,index);
+			index=skipLws(str,index,length,null);
 			return index;
 		}
 		return startIndex;
@@ -538,150 +441,416 @@ public final class HeaderParser {
 				return startIndex;
 		}
 		index+=token.length();
-		index=skipLinearWhitespace(str,index);
+		index=skipLws(str,index,length,null);
 		if(optionalQuoted){
 			if(index<length && str.charAt(index)=='='){
 				index++;
-				index=skipLinearWhitespace(str,index);
+				index=skipLws(str,index,length,null);
 				if(index<length && str.charAt(index)=='"'){
-					index=skipQuotedString(str,index);
+					index=skipQuotedString(str,index,length,null,true);
 				} else return startIndex;
-				index=skipLinearWhitespace(str,index);
+				index=skipLws(str,index,length,null);
 			}
 		}
 		if(index>=length)return index;
 		if(str.charAt(index)==','){
 			index++;
-			index=skipLinearWhitespace(str,index);
+			index=skipLws(str,index,length,null);
 			return index;
 		}
 		return startIndex;
 	}
 
-	private static String getQuotedString(String v, int index){
-		// assumes index points to quotation mark
-		index++;
-		int length=v.length();
-		char c=0;
-		StringBuilder builder=new StringBuilder();
-		while(index<length){
-			c=v.charAt(index);
-			if(c=='\\'){
-				if(index+1>=length)
-					// ill-formed
-					return "";
-				builder.append(v.charAt(index+1));
-				index+=2;
-				continue;
-			} else if(c=='\r' || c=='\n' || c==' ' || c=='\t'){
-				int newIndex=skipLinearWhitespace(v,index);
-				if(newIndex==index)
-					// ill-formed whitespace
-					return "";
-				builder.append(' ');
-				index=newIndex;
-				continue;
-			} else if(c=='"')
-				// done
-				return builder.toString();
-			else if(c==127 || c<32)
-				// ill-formed
-				return "";
-			else {
-				builder.append(c);
+	private static int skipDataUrlParameters(
+			String str, int index, int endIndex, StringBuilder builder, boolean plain){
+		assert str!=null;
+		if(plain && builder!=null){
+			builder.append("text/plain");
+		}
+		StringBuilder tmpbuilder=(builder==null) ? null : new StringBuilder();
+		int builderStartPos=(builder==null) ? 0 : builder.length();
+		int retval=-1;
+		while(true){
+			int oldindex=index;
+			int builderOldPos=(builder==null) ? 0 : builder.length();
+			if(index>=endIndex){
+				retval=oldindex;
+				break;
+			}
+			char c=str.charAt(index);
+			if(c!=';'){
+				// reached end of content type
+				if(builder!=null && builder.length()==0){
+					// no content type given; provide default
+					builder.append("text/plain;charset=us-ascii");
+				}
+				retval=index;
+				break;
+			}
+			index++;
+			if(builder!=null) {
+				builder.append(';');
+			}
+			// get parameter name
+			int index2=skipEncodedMimeWord(str,index,endIndex,tmpbuilder,1);
+			if(index==index2){
+				if(builder!=null) {
+					builder.delete(builderOldPos,builder.length());
+				}
+				retval=oldindex;
+				break;
+			}
+			if(builder!=null){
+				// append parameter name to builder
+				builder.append(tmpbuilder.toString());
+				tmpbuilder.delete(0, tmpbuilder.length());
+			}
+			index=index2;
+			if(index>=endIndex || str.charAt(index)!='='){
+				if(builder!=null) {
+					builder.delete(builderOldPos,builder.length());
+				}
+				retval=oldindex;
+				break;
+			}
+			index++;
+			if(builder!=null) {
+				builder.append('=');
+			}
+			if(index>=endIndex){
+				if(builder!=null) {
+					builder.delete(builderOldPos,builder.length());
+				}
+				retval=oldindex;
+				break;
+			}
+			// get parameter value
+			index2=skipEncodedMimeWord(str,index,endIndex,tmpbuilder,2);
+			if(index==index2){
+				if(builder!=null) {
+					builder.delete(builderOldPos,builder.length());
+				}
+				retval=oldindex;
+				break;
+			}
+			if(builder!=null){
+				// append parameter value to builder
+				appendParameterValue(tmpbuilder.toString(),builder);
+				tmpbuilder.delete(0, tmpbuilder.length());
+			}
+			index=index2;
+		}
+		if(plain && builder!=null && builder.length()==builderStartPos){
+			// nothing, so append default charset
+			builder.append(";charset=us-ascii");
+		}
+		return retval;
+	}
+	public static int skipDataUrlContentType(
+			String str, int index, StringBuilder builder){
+		if(str==null)return index;
+		return skipDataUrlContentType(str,index,str.length(),builder);
+	}
+	/**
+	 * Extracts the MIME media type, including its parameters,
+	 * from a Data URL path (RFC2397). This function should be used
+	 * before calling getMediaType or getMimeParameter because
+	 * there are several differences in the MIME media type in
+	 * data URLs than in Content-Type headers:
+	 * <ul>
+	 * <li>Each part of a MIME content type can be URL-encoded
+	 * in a data URL, while they can't in a Content-Type header.</li>
+	 * <li>The type and subtype can be left out. If left out, the media
+	 * type "text/plain" is assumed.</li>
+	 * <li>No whitespace is allowed between semicolons of
+	 * a MIME media type in a data URL.</li>
+	 * </ul>
+	 * @param string a string containing the path of the data URL (after
+	 * the "data:"). Example: ",test" or "text/plain,test"
+	 * @param index the index into the string where the data URL path
+	 *  begins. To find the path, call URIUtility.splitIRI.
+	 * @param endIndex the index into the string where the data
+	 * URL path ends.
+	 * @param builder a string builder to append the MIME media
+	 * type to. Can be null.
+	 * @return the index into the string where the MIME media
+	 * type ends within the data URL.  If the MIME type is ill-formed
+	 * or <i>string</i> is null, the return value will
+	 * be equal to <i>index</i>, and nothing will be appended to
+	 * the string builder.  If
+	 * the MIME type is blank, the return value will be equal to
+	 * <i>index</i>, and the string "text/plain;charset=us-ascii" is
+	 * appended to the string builder, if any.
+	 */
+	public static int skipDataUrlContentType(
+			String str, int index, int endIndex, StringBuilder builder){
+		if(str==null)return index;
+		int startIndex=index;
+		int oldpos=(builder==null) ? 0 : builder.length();
+		StringBuilder tmpbuilder=(builder==null) ? null : new StringBuilder();
+		// Get the type
+		int i2=skipEncodedMimeWord(str,index,endIndex,tmpbuilder,0);
+		if(index!=i2){
+			index=i2;
+			if(index<endIndex && str.charAt(index)=='/'){
 				index++;
-				continue;
+				if(builder!=null){
+					// append type to builder
+					builder.append(tmpbuilder.toString());
+					builder.append('/');
+					tmpbuilder.delete(0, tmpbuilder.length());
+				}
+				// Get the subtype
+				i2=skipEncodedMimeWord(str,index,endIndex,tmpbuilder,0);
+				if(index!=i2){
+					index=i2;
+					if(builder!=null){
+						// append subtype to builder
+						builder.append(tmpbuilder.toString());
+						tmpbuilder.delete(0, tmpbuilder.length());
+					}
+					return skipDataUrlParameters(str,index,endIndex,builder,false);
+				} else {
+					// invalid media type
+					if(builder!=null) {
+						builder.delete(oldpos,builder.length());
+					}
+					return startIndex;
+				}
+			} else {
+				// invalid media type
+				if(builder!=null) {
+					builder.delete(oldpos,builder.length());
+				}
+				return startIndex;
+			}
+		} else {
+			// No media type, try checking if it really is blank
+			if(index<endIndex && (str.charAt(index)==',' || str.charAt(index)==';'))
+				// it's blank; assume text/plain
+				return skipDataUrlParameters(str,index,endIndex,builder,true);
+			else {
+				if(builder!=null) {
+					builder.delete(oldpos,builder.length());
+				}
+				return startIndex;
 			}
 		}
-		// ill-formed
-		return "";
 	}
 
-	private static String getDefaultCharset(String contentType){
-		if(contentType.length()>=5){
-			char c;
-			c=contentType.charAt(0);
-			if(c!='T' && c!='t')return "";
-			c=contentType.charAt(1);
-			if(c!='E' && c!='e')return "";
-			c=contentType.charAt(2);
-			if(c!='X' && c!='x')return "";
-			c=contentType.charAt(3);
-			if(c!='T' && c!='t')return "";
-			c=contentType.charAt(4);
-			if(c!='/')return "";
-			return "ISO-8859-1";
+	private static void appendParameterValue(String str, StringBuilder builder){
+		// if string is a valid MIME token, the return value
+		// will be the end of the string
+		if(skipMimeToken(str,0,str.length(),null)==str.length()){
+			// append the string as is
+			builder.append(str);
+			return;
+		} else {
+			// otherwise, we must quote the string
+			builder.append('"');
+			int endIndex=str.length();
+			for(int i=0;i<endIndex;i++){
+				char c=str.charAt(i);
+				if(c=='"' || c==0x7F || c<0x20){
+					builder.append('\\');
+				}
+				builder.append(c);
+			}
+			builder.append('"');
 		}
-		return "";
 	}
 
-	static int skipMimeToken(String str, int index){
+	 static int skipEncodedMimeWord(
+			String str, int index, int endIndex, 
+			StringBuilder builder, int kind
+			){
 		int i=index;
-		// type
-		while(i<str.length()){
+		boolean start=true;
+		boolean quoted=false;
+		int startIndex=index;
+		int count=0;
+		while(i<endIndex){
 			char c=str.charAt(i);
-			if(c<=0x20 || c>=0x7F || ((c&0x7F)==c && "()<>@,;:\\\"/[]?=".indexOf((char)c)>=0)) {
-				break;
+			// check for percent-encoded characters
+			if(i+2<endIndex && c=='%' && 
+					toHexNumber(str.charAt(i+1))>=0 &&
+					toHexNumber(str.charAt(i+2))>=0){
+				int c2=toHexNumber(str.charAt(i+1))*16+toHexNumber(str.charAt(i+2));
+				if(c2<=0x7F){ // this is an encoded ASCII character
+					c=(char)c2;
+					i+=2;
+				}
+			}
+			if(start && c==0x22 && kind==2){ // if kind is parameter value
+				// this is the start of a quoted string
+				i++;
+				start=false;
+				quoted=true;
+				continue;
+			}
+			start=false;
+			if(quoted){
+				// quoted string case
+				if(c=='\\'){
+					if(i+1>=endIndex)
+						return startIndex;
+					else {
+						// get the next character of the
+						// quoted pair
+						i++;
+						c=str.charAt(i);
+						// check for percent-encoded characters
+						if(i+2<endIndex && c=='%' && 
+								toHexNumber(str.charAt(i+1))>=0 &&
+								toHexNumber(str.charAt(i+2))>=0){
+							int c2=toHexNumber(str.charAt(i+1))*16+toHexNumber(str.charAt(i+2));
+							if(c2<=0x7F){ // this is an encoded ASCII character
+								c=(char)c2;
+								i+=2;
+							}
+						}
+						if(builder!=null) {
+							builder.append(c);
+						}
+					}
+				} else if(c=='"')
+					// end of quoted string
+					return i+1;
+				else if(c==127 || (c<32 && c!='\t'))
+					// ill-formed
+					return startIndex;
+				else {
+					if(builder!=null) {
+						builder.append(c);
+					}
+				}
+			} else {
+				if(kind==1 || kind==2){ // kind is parameter name or parameter value
+					// unquoted string case
+					if(c<=0x20 || c>=0x7F || ((c&0x7F)==c && "()<>@,;:\\\"/[]?=".indexOf(c)>=0)) {
+						break;
+					}
+					if(builder!=null) {
+						builder.append(c);
+					}
+				} else { // kind is 0, type or subtype
+					// See RFC6838
+					if((c>='A' && c<='Z') || (c>='a' && c<='z') || (c>='0' && c<='9')){
+						if(builder!=null) {
+							builder.append(c);
+						}
+						count++;
+					} else if(count>0 && ((c&0x7F)==c && "!#$&-^_.+".indexOf(c)>=0)){
+						if(builder!=null) {
+							builder.append(c);
+						}
+						count++;
+					} else {
+						break;
+					}
+					// type or subtype too long
+					if(count>127)return startIndex;
+				}
 			}
 			i++;
 		}
 		return i;
+	}
 
+
+	 static int skipMimeToken(String str, int index, int endIndex, StringBuilder builder){
+		int i=index;
+		while(i<endIndex){
+			char c=str.charAt(i);
+			if(c<=0x20 || c>=0x7F || ((c&0x7F)==c && "()<>@,;:\\\"/[]?=".indexOf(c)>=0)) {
+				break;
+			}
+			if(builder!=null) {
+				builder.append(c);
+			}
+			i++;
+		}
+		return i;
 	}
-	static String getMimeToken(String str, int index){
-		int i=skipMimeToken(str,index);
-		return str.substring(index,i);
+
+	private static int skipMimeTypeSubtype(String str, int index, int endIndex, StringBuilder builder){
+		int i=index;
+		int count=0;
+		while(i<str.length()){
+			char c=str.charAt(i);
+			// See RFC6838
+			if((c>='A' && c<='Z') || (c>='a' && c<='z') || (c>='0' && c<='9')){
+				if(builder!=null) {
+					builder.append(c);
+				}
+				i++;
+				count++;
+			} else if(count>0 && ((c&0x7F)==c && "!#$&-^_.+".indexOf(c)>=0)){
+				if(builder!=null) {
+					builder.append(c);
+				}
+				i++;
+				count++;
+			} else {
+				break;
+			}
+			// type or subtype too long
+			if(count>127)return index;
+		}
+		return i;
 	}
+
 	/**
 	 * Extracts the type and subtype from a MIME media
 	 * type.  For example, in the string "text/plain;charset=utf-8",
 	 * returns "text/plain".
-	 * 
+	 * <br><br>
+	 * Note that the default media type according to RFC2045
+	 * section 2 is "text/plain"; this function will not return that
+	 * value if the media type is ill-formed; rather, this function
+	 * is useful more to check if a media type is well-formed.
+	 * <br><br>
+	 * This function should not be used to extract the media
+	 * type from a data URL string; use skipDataUrlContentType
+	 * instead on those strings.
+	 *
 	 * @param str a string containing a MIME media type.
 	 * @param index the index into the string where the
 	 * media type begins. Specify 0 for the beginning of the
 	 * string.
+	 * @param endIndex the index for the end of the string.
 	 * @return the type and subtype, or an empty string
 	 * if the string is not a valid MIME media type.
 	 * The string will be normalized to ASCII lower-case.
 	 */
-	public static String getMediaType(String str, int index){
-		int i=skipMimeToken(str,index);
-		if(i>=str.length() || str.charAt(i)!='/')
+	public static String getMediaType(String str, int index, int endIndex){
+		if(str==null)return "";
+		int i=skipMimeTypeSubtype(str,index,endIndex,null);
+		if(i==index || i>=endIndex || str.charAt(i)!='/')
 			return "";
 		i++;
-		i=skipMimeToken(str,i);
-		return StringUtility.toLowerCaseAscii(str.substring(index,i));
-	}
-
-	public static int skipContentType(String data, int index){
-		String mediaType=getMediaType(data,index);
-		// NOTE: Media type can be omitted
-		index+=mediaType.length();
-		while(true){
-			int oldindex=index;
-			if(index>=data.length() || data.charAt(index)!=';')
-				return oldindex;
-			index++;
-			int index2=skipMimeToken(data,index);
-			if(index==index2)
-				return oldindex;
-			index=index2;
-			if(index>=data.length() || data.charAt(index)!='=')
-				return oldindex;
-			index++;
-			if(index>=data.length() || data.charAt(index)=='\"'){
-				index=skipQuotedStringNoLws(data,index);
-			} else {
-				index2=skipMimeToken(data,index);
-				if(index==index2)
-					return oldindex;
-				index=index2;
-			}
+		int i2=skipMimeTypeSubtype(str,i,endIndex,null);
+		if(i==i2)
+			return "";
+		if(i2<endIndex){
+			// if not at end
+			int i3=skipCFWS(str,i2,endIndex);
+			if(i3==endIndex || (i3<endIndex && str.charAt(i3)!=';' && str.charAt(i3)!=','))
+				// at end, or not followed by ";" or ",", so not a media type
+				return "";
 		}
+		return StringUtility.toLowerCaseAscii(str.substring(index,i2));
 	}
 
+	public static String getMediaType(String str, int index){
+		if(str==null)return "";
+		return getMediaType(str,index,str.length());
+	}
 
+	public static String getMediaType(String str){
+		if(str==null)return "";
+		return getMediaType(str,0,str.length());
+	}
 	 static int toHexNumber(int c) {
 		if(c>='A' && c<='Z')
 			return 10+c-'A';
@@ -692,257 +861,845 @@ public final class HeaderParser {
 		return -1;
 	}
 
-	private static int skipAndAppendQuoted(
-			String str, int index, StringBuilder builder){
-		int i=index;
-		boolean slash=false;
-		while(i<str.length()){
-			char c=str.charAt(i);
-			//DebugUtility.log(c);
-			if(c=='%' && i+2<str.length()){
-				int hex1=toHexNumber(str.charAt(i+1));
-				int hex2=toHexNumber(str.charAt(i+2));
-				c=(char)(hex1*16+hex2);
-				if(i==index && c!='"')
-					return index;
-				if(!slash){
-					if(i!=index && c=='"'){
-						builder.append('"');
-						return i+1;
-					}
-					if(c<=0x20 || c>=0x7F)
-						return index;
-				}
-				if(c=='\\' && !slash){
-					slash=true;
-				} else if(c=='\\'){
-					slash=false;
-				}
-				builder.append(c);
-				i+=3;
-				continue;
-			}
-			if(c<=0x20 || c>=0x7F)
-				return index;
-			if(!((c&0x7F)==c && "-_.!~*'()".indexOf((char)c)>=0) &&
-					!(c>='A' && c<='Z') &&
-					!(c>='a' && c<='z') &&
-					!(c>='0' && c<='9'))
-				return index;
-			// NOTE: Impossible for '"' and '\' to appear
-			// here
-			if(i==index)
-				return index;
-			builder.append(c);
-			i++;
-		}
-		return index;
-	}
-
-	private static boolean appendUnescapedValue(
-			String str, int index, int length, StringBuilder builder){
-		int i=index;
-		int io=str.indexOf('%',index);
-		boolean doquote=true;
-		if(io<0 || io>=index+length){
-			doquote=false;
-		}
-		if(doquote)
-		{
-			builder.append('\"'); // quote the string for convenience
-		}
-		while(i<str.length()){
-			char c=str.charAt(i);
-			//DebugUtility.log(c);
-			if(c=='%' && i+2<str.length()){
-				int hex1=toHexNumber(str.charAt(i+1));
-				int hex2=toHexNumber(str.charAt(i+2));
-				c=(char)(hex1*16+hex2);
-				if(c<=0x20 || c>=0x7F)
-					return false;
-				if(doquote && (c=='\\' || c=='"')) {
-					builder.append('\\');
-				}
-				builder.append(c);
-				i+=3;
-				continue;
-			}
-			if(c<=0x20 || c>=0x7F || ((c&0x7F)==c && "()<>@,;:\\\"/[]?=".indexOf((char)c)>=0)){
-				if(doquote) {
-					builder.append('\"');
-				}
-				return true;
-			}
-			if(!((c&0x7F)==c && "-_.!~*'()".indexOf((char)c)>=0) &&
-					!(c>='A' && c<='Z') &&
-					!(c>='a' && c<='z') &&
-					!(c>='0' && c<='9'))
-				return false;
-			builder.append(c);
-			i++;
-		}
-		if(doquote) {
-			builder.append('\"');
-		}
-		return true;
-	}
-
-	private static boolean appendUnescaped(
-			String str, int index, int length, StringBuilder builder){
-		int i=index;
-		// type
-		while(i<str.length()){
-			char c=str.charAt(i);
-			if(c=='%' && i+2<str.length()){
-				int hex1=toHexNumber(str.charAt(i+1));
-				int hex2=toHexNumber(str.charAt(i+2));
-				c=(char)(hex1*16+hex2);
-				builder.append(c);
-				if(c<=0x20 || c>=0x7F || ((c&0x7F)==c && "()<>@,;:\\\"/[]?=".indexOf((char)c)>=0))
-					return false;
-				i+=3;
-				continue;
-			}
-			if(c<=0x20 || c>=0x7F || ((c&0x7F)==c && "()<>@,;:\\\"/[]?=".indexOf((char)c)>=0))
-				return true;
-			if(!((c&0x7F)==c && "-_.!~*'()".indexOf((char)c)>=0) &&
-					!(c>='A' && c<='Z') &&
-					!(c>='a' && c<='z') &&
-					!(c>='0' && c<='9'))
-				return false;
-			builder.append(c);
-			i++;
-		}
-		return true;
-	}
-
-	public static String unescapeContentType(String data, int index){
-		int index2=skipMimeToken(data,index);
-		int indexlast=-1;
-		StringBuilder builder=new StringBuilder();
-		if(index2<data.length() && data.charAt(index2)=='/'){
-			index2++;
-			indexlast=index2;
-			index2=skipMimeToken(data,index2);
-		} else {
-			index2=index;
-		}
-		if(index!=index2){
-			if(!appendUnescaped(data,index,indexlast-1-index,builder))
-				return "";
-			builder.append('/');
-			if(!appendUnescaped(data,indexlast,index2-indexlast,builder))
-				return "";
-		}
-		index=index2;
-		while(true){
-			if(index>=data.length() || data.charAt(index)!=';')
-				return builder.toString();
-			index++;
-			index2=skipMimeToken(data,index);
-			if(index==index2)
-				return builder.toString();
-			int currentLength=builder.length();
-			builder.append(';');
-			if(!appendUnescaped(data,index,index2-index,builder)){
-				builder.setLength(currentLength);
-				return builder.toString();
-			}
-			index=index2;
-			if(index>=data.length() || data.charAt(index)!='='){
-				builder.setLength(currentLength);
-				return builder.toString();
-			}
-			builder.append('=');
-			index++;
-			if(data.startsWith("%22",index)){
-				index2=skipAndAppendQuoted(data,index,builder);
-				if(index==index2){
-					builder.setLength(currentLength);
-					return builder.toString();
-				}
-			} else {
-				index2=skipMimeToken(data,index);
-				if(index==index2){
-					builder.setLength(currentLength);
-					return builder.toString();
-				}
-				if(!appendUnescapedValue(data,index,index2-index,builder)){
-					builder.setLength(currentLength);
-					return builder.toString();
-				}
-				index=index2;
-			}
-		}
+	public static String getCharset(String data){
+		return getCharset(data, 0);
 	}
 
 	/**
 	 * Extracts the charset parameter from a MIME media
 	 * type.  For example, in the string "text/plain;charset=utf-8",
-	 * returns "utf-8". This method skips linear whitespace
-	 * where allowed in the HTTP/1.1 specification.  For example,
-	 * a string like "text/plain;\n  charset=utf-8" is allowed.
+	 * returns "utf-8".	This method skips folding whitespace and
+	 * comments where allowed under RFC5322.  For example,
+	 * a string like "text/plain;\r\n  charset=utf-8" is allowed.
 	 * 
 	 * @param str a string containing a MIME media type.
 	 * @param index the index into the string where the
 	 * media type begins.
-	 * @return the charset parameter, or "ISO-8859-1" if the string
-	 * is a "text" media type without a charset parameter
-	 * or if the media type is omitted and there is no charset
-	 * parameter, or an empty string otherwise.  
+	 * @return the charset parameter, converted to ASCII lower-case,
+	 * if it exists, or "us-ascii" if the media type is null, absent, or
+	 * ill-formed (RFC2045 sec. 5.2), or if the media type is
+	 * "text/plain" or "text/xml" without a charset parameter
+	 * (see RFC2046 and RFC3023, respectively),
+	 * or the empty string otherwise.
 	 */
 	public static String getCharset(String data, int index){
+		if(data==null)return "us-ascii";
+		return getCharset(data, index, data.length());
+	}
+	/**
+	 * Extracts the charset parameter from a MIME media
+	 * type.  For example, in the string "text/plain;charset=utf-8",
+	 * returns "utf-8".	This method skips folding whitespace and
+	 * comments where allowed under RFC5322.  For example,
+	 * a string like "text/plain;\r\n  charset=utf-8" is allowed.
+	 * @param index the index into the string where the
+	 * media type begins.
+	 * @param endIndex an index into the end of the string.
+	 * @param data a string containing a MIME media type.
+	 * 
+	 * @return the charset parameter, converted to ASCII lower-case,
+	 * if it exists, or "us-ascii" if the media type is null, absent, or
+	 * ill-formed (RFC2045 sec. 5.2), or if the media type is
+	 * "text/plain" or "text/xml" and doesn't have a charset parameter
+	 * (see RFC2046 and RFC3023, respectively),
+	 * or the empty string otherwise.
+	 */
+	public static String getCharset(String data, int index, int endIndex){
 		if(data==null)
-			return "";
+			return "us-ascii";
 		String mediaType=getMediaType(data,index);
-		// NOTE: if media type is omitted,
-		// text/plain is assumed by default
-		index+=mediaType.length();
-		while(true){
-			// Note that we skip linear whitespace here,
-			// since it doesn't appear to be disallowed
-			// in HTTP/1.1 (unlike whitespace between the
-			// type/subtype and between attribute/value
-			// of a media type)
-			index=skipLinearWhitespace(data,index);
-			if(index>=data.length() || data.charAt(index)!=';')
-				return getDefaultCharset(mediaType);
+		if(mediaType.length()==0)
+			return "us-ascii";
+		String charset=getMimeParameter(data,index,data.length(), "charset");
+		if(charset!=null)return StringUtility.toLowerCaseAscii(charset);
+		if("text/plain".equals(mediaType) || "text/xml".equals(mediaType))
+			return "us-ascii";
+		return "";
+	}
+
+	private static int skipCrLf(String s, int index, int endIndex){
+		if(index+1<endIndex && s.charAt(index)==0x0d && s.charAt(index+1)==0x0a)
+			return index+2;
+		else
+			return index;
+	}
+
+	private static int skipNewLine(String s, int index, int endIndex){
+		if(index+1<endIndex && s.charAt(index)==0x0d && s.charAt(index+1)==0x0a)
+			return index+2;
+		else if(index<endIndex && (s.charAt(index)==0x0d || s.charAt(index)==0x0a))
+			return index+1;
+		else
+			return index;
+	}
+
+	/* skip space and tab characters */
+	private static int skipWsp(String s, int index, int endIndex){
+		while(index<endIndex){
+			char c=s.charAt(index);
+			if(c!=0x20 && c!=0x09)return index;
 			index++;
-			index=skipLinearWhitespace(data,index);
-			String attribute=getMimeToken(data,index);
-			if(attribute.length()==0)
-				return getDefaultCharset(mediaType);
-			index+=attribute.length();
-			if(index>=data.length() || data.charAt(index)!='=')
-				return getDefaultCharset(mediaType);
-			boolean isCharset=(attribute.length()==7 &&
-					(attribute.charAt(0)=='c' || attribute.charAt(0)=='C') ||
-					(attribute.charAt(1)=='h' || attribute.charAt(1)=='H') ||
-					(attribute.charAt(2)=='a' || attribute.charAt(2)=='A') ||
-					(attribute.charAt(3)=='r' || attribute.charAt(3)=='R') ||
-					(attribute.charAt(4)=='s' || attribute.charAt(4)=='S') ||
-					(attribute.charAt(5)=='e' || attribute.charAt(5)=='E') ||
-					(attribute.charAt(6)=='t' || attribute.charAt(6)=='T')
-					);
-			index++;
-			if(index>=data.length() || data.charAt(index)=='\"'){
-				if(isCharset){
-					String str=getQuotedString(data,index);
-					return (str.length()>0) ? str :  getDefaultCharset(mediaType);
-				} else {
-					index=skipQuotedString(data,index);
-				}
-			} else {
-				if(isCharset){
-					String str=getMimeToken(data,index);
-					return (str.length()>0) ? str :  getDefaultCharset(mediaType);
-				} else {
-					int index2=skipMimeToken(data,index);
-					if(index==index2)
-						return getDefaultCharset(mediaType);
-					index=index2;
+		}
+		return index;
+	}
+	 static int skipLws(String s, int index, int endIndex, StringBuilder builder){
+		int ret;
+		// While HTTP usually only allows CRLF, it also allows
+		// us to be tolerant here
+		int i2=skipNewLine(s,index,endIndex);
+		ret=skipWsp(s,i2,endIndex);
+		if(ret!=i2){
+			if(builder!=null) {
+				// Note that folding LWS into a space is
+				// currently optional under HTTP/1.1 sec. 2.2
+				builder.append(' ');
+			}
+			return ret;
+		}
+		return index;
+	}
+
+	/* Folding white space (RFC5322 sec. 3.2.2) */
+	 static int skipFws(String s, int index, int endIndex, StringBuilder builder){
+		int ret=skipFws(s,index,endIndex);
+		if(builder!=null && ret!=index){
+			while(index<ret){
+				char c=s.charAt(index);
+				index++;
+				if(c!=0x0d && c!=0x0a) {
+					builder.append(c);
 				}
 			}
 		}
+		return ret;
 	}
+	private static int skipObsFws(String s, int index, int endIndex){
+		// parse obs-fws (according to errata)
+		while(true){
+			int i2=skipCrLf(s,index,endIndex);
+			if(i2<endIndex && (s.charAt(i2)==0x20 || s.charAt(i2)==0x09)){
+				index=i2+1;
+			} else
+				return index;
+		}
+	}
+	/* Folding white space (RFC5322 sec. 3.2.2) */
+	 static int skipFws(String s, int index, int endIndex){
+		int startIndex=index;
+		int i2=skipWsp(s,index,endIndex);
+		int i2crlf=skipCrLf(s,i2,endIndex);
+		if(i2crlf!=i2){// means a CRLF was seen
+			int i3=skipWsp(s,i2crlf,endIndex);
+			if(i3==i2crlf)
+				return skipObsFws(s,startIndex,endIndex);
+			else
+				return Math.max(i3,skipObsFws(s,startIndex,endIndex));
+		} else
+			return Math.max(i2,skipObsFws(s,startIndex,endIndex));
+	}
+	/* quoted-pair (RFC5322 sec. 3.2.1) */
+	 static int skipQuotedPair(String s, int index, int endIndex){
+		if(index+1<endIndex && s.charAt(index)=='\\'){
+			char c=s.charAt(index+1);
+			if(c==0x20 || c==0x09 || (c>=0x21 && c<=0x7e))
+				return index+2;
+			// obs-qp
+			if((c<0x20 && c!=0x09)  || c==0x7F)
+				return index+2;
+		}
+		return index;
+	}
+	/* quoted-string (RFC5322 sec. 3.2.4) */
+	 static int skipQuotedString(String s, int index,
+			int endIndex, StringBuilder builder){
+		return skipQuotedString(s,index,endIndex,builder,false);
+	}
+
+	private static int skipCtextOrQuotedPairOrComment(String s, int index, int endIndex){
+		if(index>=endIndex)return index;
+		int i2;
+		i2=skipCtext(s,index,endIndex);
+		if(index!=i2)return i2;
+		index=i2;
+		i2=skipQuotedPair(s,index,endIndex);
+		if(index!=i2)return i2;
+		index=i2;
+		i2=skipComment(s,index,endIndex);
+		if(index!=i2)return i2;
+		return i2;
+	}
+
+	private static int skipQtextOrQuotedPair(String s, int index, int endIndex, boolean httpRules){
+		if(index>=endIndex)return index;
+		int i2;
+		if(httpRules){
+			char c=s.charAt(index);
+			if(c<0x100 && c>=0x21 && c!='\\' && c!='"'){
+				return index+1;
+			}
+		} else {
+			i2=skipQtext(s,index,endIndex);
+			if(index!=i2)return i2;
+			index=i2;
+		}
+		i2=skipQuotedPair(s,index,endIndex);
+		if(index!=i2)return i2;
+		return i2;
+	}
+
+	 static int skipQuotedString(
+			String s,
+			int index,
+			int endIndex, StringBuilder builder,
+			boolean httpRules // true: use RFC2616 (HTTP/1.1) rules; false: use RFC5322 rules
+			){
+		int startIndex=index;
+		boolean haveString=false;
+		index=(httpRules) ? index : skipCFWS(s,index,endIndex);
+		if(!(index<endIndex && s.charAt(index)=='"'))
+			return startIndex; // not a valid quoted-string
+		index++;
+		while(index<endIndex){
+			int i2=(httpRules) ? skipLws(s,index,endIndex,builder) : skipFws(s,index,endIndex,builder);
+			if(i2!=index) {
+				haveString=true;
+			}
+			index=i2;
+			char c=s.charAt(index);
+			if(c=='"'){ // end of quoted-string
+				index++;
+				// RFC5322 requires at least one character in a quoted string
+				// (although the published production for quoted-string is wrong
+				// according to an erratum)
+				if(!haveString && !httpRules)return startIndex;
+				return (httpRules) ? index : skipCFWS(s,index,endIndex);
+			}
+			int oldIndex=index;
+			index=skipQtextOrQuotedPair(s,index,endIndex,httpRules);
+			if(index==oldIndex)return startIndex;
+			haveString=true;
+			if(builder!=null){
+				// this is a qtext or quoted-pair, so
+				// append the last character read
+				builder.append(s.charAt(index-1));
+			}
+		}
+		return startIndex; // not a valid quoted-string
+	}
+	/* atom (RFC5322 sec. 3.2.3) */
+	 static int skipAtom(String s, int index,
+			int endIndex, StringBuilder builder){
+		int startIndex=index;
+		index=skipCFWS(s,index,endIndex);
+		boolean haveAtom=false;
+		while(index<endIndex){
+			char c=s.charAt(index);
+			if((c>='A' && c<='Z') ||
+					(c>='a' && c<='z')  ||
+					((c&0x7F)==c && "0123456789!#$%&'*+-/=?^_`{}|~".indexOf(c)>=0)){
+				if(builder!=null) {
+					builder.append(c);
+				}
+				index++;
+				haveAtom=true;
+			}else {
+				if(!haveAtom)return startIndex;
+				return skipCFWS(s,index,endIndex);
+			}
+		}
+		return (haveAtom) ? index : startIndex;
+	}
+
+	/* dot-atom (RFC5322 sec. 3.2.3) */
+	/*  currently not used
+	 static int skipDotAtom(String s, int index,
+	 			int endIndex, StringBuilder builder){
+		int startIndex=index;
+		index=skipCFWS(s,index,endIndex);
+		boolean haveAtom=false;
+		boolean haveDot=false;
+		while(index<endIndex){
+			char c=s.charAt(index);
+			if(c=='.'){
+				// in case of "x..y"
+				if(haveDot){
+					builder.delete(builder.length()-1,1);
+					return index-1; // index of previous dot
+				}
+				// in case of ".y"
+				if(!haveAtom)return startIndex;
+				if(builder!=null)builder.append(c);
+				haveDot=true;
+				continue;
+			}
+			if((c>='A' && c<='Z') ||
+					(c>='a' && c<='z')  ||
+					((c&0x7F)==c && "0123456789!#$%&'*+-/=?^_`{}|~".indexOf((char)c)>=0)){
+				if(builder!=null)builder.append(c);
+				index++;
+				haveAtom=true;
+				haveDot=false;
+			}else {
+				if(!haveAtom)return startIndex;
+				if(haveDot){
+					// move index to the dot
+					builder.delete(builder.length()-1,1);
+					return index-1;
+				}
+				return skipCFWS(s,index,endIndex);
+			}
+		}
+		return (haveAtom) ? index : startIndex;
+	}
+	 */
+	/* ctext (RFC5322 sec. 3.2.1) */
+	 static int skipCtext(String s, int index, int endIndex){
+		if(index<endIndex){
+			char c=s.charAt(index);
+			if(c>=33 && c<=126 && c!='(' && c!=')' && c!='\\')
+				return index+1;
+			// obs-ctext
+			if((c<0x20 && c!=0x00 && c!=0x09 && c!=0x0a && c!=0x0d)  || c==0x7F)
+				return index+2;
+		}
+		return index;
+	}
+	/* ctext (RFC5322 sec. 3.2.1) */
+	 static int skipQtext(String s, int index, int endIndex){
+		if(index<endIndex){
+			char c=s.charAt(index);
+			if(c>=33 && c<=126 && c!='\\' && c!='"')
+				return index+1;
+			// obs-ctext
+			if((c<0x20 && c!=0x00 && c!=0x09 && c!=0x0a && c!=0x0d)  || c==0x7F)
+				return index+2;
+		}
+		return index;
+	}
+	/* comment (RFC5322 sec. 3.2.1) */
+	 static int skipComment(String s, int index, int endIndex){
+		if(!(index<endIndex && s.charAt(index)=='('))
+			return index;
+		index++;
+		int startIndex=0;
+		while(index<endIndex){
+			index=skipFws(s,index,endIndex);
+			char c=s.charAt(index);
+			if(c==')')return index+1;
+			int oldIndex=index;
+			index=skipCtextOrQuotedPairOrComment(s,index,endIndex);
+			if(index==oldIndex)return startIndex;
+		}
+		return startIndex;
+	}
+
+	private static int skipLanguageTag(String str, int index, int endIndex){
+		if(index==endIndex || str==null)return index;
+		char c=str.charAt(index);
+		if(!((c>='A' && c<='Z') || (c>='a' && c<='z')))
+			return index; // not a valid language tag
+		index++;
+		while(index<endIndex){
+			c=str.charAt(index);
+			if(!((c>='A' && c<='Z') || (c>='a' && c<='z') || (c>='0' && c<='9') || c=='-')){
+				break;
+			}
+			index++;
+		}
+		return index;
+	}
+
+	private static int lengthIfAllAlpha(String str){
+		int len=(str==null) ? 0 : str.length();
+		for(int i=0;i<len;i++){
+			char c1=str.charAt(i);
+			if(!((c1>='A' && c1<='Z') || (c1>='a' && c1<='z')))
+				return 0;
+		}
+		return len;
+	}
+	private static int lengthIfAllAlphaNum(String str){
+		int len=(str==null) ? 0 : str.length();
+		for(int i=0;i<len;i++){
+			char c1=str.charAt(i);
+			if(!((c1>='A' && c1<='Z') || (c1>='a' && c1<='z') || (c1>='0' && c1<='9')))
+				return 0;
+		}
+		return len;
+	}
+	private static int lengthIfAllDigit(String str){
+		int len=(str==null) ? 0 : str.length();
+		for(int i=0;i<len;i++){
+			char c1=str.charAt(i);
+			if(!((c1>='0' && c1<='9')))
+				return 0;
+		}
+		return len;
+	}
+
+	public static boolean isValidLanguageTag(String str){
+		int index=0;
+		int endIndex=str.length();
+		int startIndex=index;
+		if(index+1<endIndex){
+			char c1=str.charAt(index);
+			char c2=str.charAt(index+1);
+			if(
+					((c1>='A' && c1<='Z') || (c1>='a' && c1<='z')) &&
+					((c2>='A' && c2<='Z') || (c2>='a' && c2<='z'))
+					){
+				index+=2;
+				if(index==endIndex)return true; // case AA
+				index+=2;
+				// convert the language tag to lower case
+				// to simplify handling
+				str=StringUtility.toLowerCaseAscii(str);
+				c1=str.charAt(index);
+				// Straightforward cases
+				if((c1>='a' && c1<='z')){
+					index++;
+					// case AAA
+					if(index==endIndex)return true;
+					c1=str.charAt(index); // get the next character
+				}
+				if(c1=='-'){ // case AA- or AAA-
+					index++;
+					if(index+2==endIndex){ // case AA-?? or AAA-??
+						c1=str.charAt(index);
+						c2=str.charAt(index);
+						if(((c1>='a' && c1<='z')) && ((c2>='a' && c2<='z')))
+							return true; // case AA-BB or AAA-BB
+					}
+				}
+				// match grandfathered language tags
+				if(str.equals("sgn-be-fr") || str.equals("sgn-be-nl") || str.equals("sgn-ch-de") ||
+						str.equals("en-gb-oed"))return true;
+				// More complex cases
+				String[] splitString=StringUtility.splitAt(
+						str.substring(startIndex,endIndex),"-");
+				if(splitString.length==0)return false;
+				int splitIndex=0;
+				int splitLength=splitString.length;
+				int len=lengthIfAllAlpha(splitString[splitIndex]);
+				if(len<2 || len>8)return false;
+				if(len==2 || len==3){
+					splitIndex++;
+					// skip optional extended language subtags
+					for(int i=0;i<3;i++){
+						if(splitIndex<splitLength && lengthIfAllAlpha(splitString[splitIndex])==3){
+							if(i>=1)
+								// point 4 in section 2.2.2 renders two or
+								// more extended language subtags invalid
+								return false;
+							splitIndex++;
+						} else {
+							break;
+						}
+					}
+				}
+				// optional script
+				if(splitIndex<splitLength && lengthIfAllAlpha(splitString[splitIndex])==4) {
+					splitIndex++;
+				}
+				// optional region
+				if(splitIndex<splitLength && lengthIfAllAlpha(splitString[splitIndex])==2) {
+					splitIndex++;
+				} else if(splitIndex<splitLength && lengthIfAllDigit(splitString[splitIndex])==3) {
+					splitIndex++;
+				}
+				// variant, any number
+				List<String> variants=null;
+				while(splitIndex<splitLength){
+					String curString=splitString[splitIndex];
+					len=lengthIfAllAlphaNum(curString);
+					if(len>=5 && len<=8){
+						if(variants==null){
+							variants=new ArrayList<String>();
+						}
+						if(!variants.contains(curString)) {
+							variants.add(curString);
+						} else return false; // variant already exists; see point 5 in section 2.2.5
+						splitIndex++;
+					} else if(len==4 && (curString.charAt(0)>='0' && curString.charAt(0)<='9')){
+						if(variants==null){
+							variants=new ArrayList<String>();
+						}
+						if(!variants.contains(curString)) {
+							variants.add(curString);
+						} else return false; // variant already exists; see point 5 in section 2.2.5
+						splitIndex++;
+					} else {
+						break;
+					}
+				}
+				// extension, any number
+				if(variants!=null) {
+					variants.clear();
+				}
+				while(splitIndex<splitLength){
+					String curString=splitString[splitIndex];
+					int curIndex=splitIndex;
+					if(lengthIfAllAlphaNum(curString)==1 &&
+							!curString.equals("x")){
+						if(variants==null){
+							variants=new ArrayList<String>();
+						}
+						if(!variants.contains(curString)) {
+							variants.add(curString);
+						} else return false; // extension already exists
+						splitIndex++;
+						boolean havetoken=false;
+						while(splitIndex<splitLength){
+							curString=splitString[splitIndex];
+							len=lengthIfAllAlphaNum(curString);
+							if(len>=2 && len<=8){
+								havetoken=true;
+								splitIndex++;
+							} else {
+								break;
+							}
+						}
+						if(!havetoken){
+							splitIndex=curIndex;
+							break;
+						}
+					} else {
+						break;
+					}
+				}
+				// optional private use
+				if(splitIndex<splitLength){
+					int curIndex=splitIndex;
+					if(splitString[splitIndex].equals("x")){
+						splitIndex++;
+						boolean havetoken=false;
+						while(splitIndex<splitLength){
+							len=lengthIfAllAlphaNum(splitString[splitIndex]);
+							if(len>=1 && len<=8){
+								havetoken=true;
+								splitIndex++;
+							} else {
+								break;
+							}
+						}
+						if(!havetoken) {
+							splitIndex=curIndex;
+						}
+					}
+				}
+				// check if all the tokens were used
+				return (splitIndex==splitLength);
+			} else if(c2=='-' && (c1=='x' || c1=='X')){
+				// private use
+				index++;
+				while(index<endIndex){
+					int count=0;
+					if(str.charAt(index)!='-')return false;
+					index++;
+					while(index<endIndex){
+						c1=str.charAt(index);
+						if(((c1>='A' && c1<='Z') || (c1>='a' && c1<='z') || (c1>='0' && c1<='9'))){
+							count++;
+							if(count>8)return false;
+						} else if(c1=='-') {
+							break;
+						} else return false;
+						index++;
+					}
+					if(count<1)return false;
+				}
+				return true;
+			} else if(c2=='-' && (c1=='i' || c1=='I')){
+				// grandfathered language tags
+				str=StringUtility.toLowerCaseAscii(str);
+				return (str.equals("i-ami") || str.equals("i-bnn") ||
+						str.equals("i-default") || str.equals("i-enochian") ||
+						str.equals("i-hak") || str.equals("i-klingon") ||
+						str.equals("i-lux") || str.equals("i-navajo") ||
+						str.equals("i-mingo") || str.equals("i-pwn") ||
+						str.equals("i-tao") || str.equals("i-tay") ||
+						str.equals("i-tsu"));
+			} else return false;
+		} else
+			return false;
+	}
+
+	private static String[] emptyStringArray=new String[0];
+
+	/**
+	 * 
+	 * Parses a string consisting of language tags under
+	 * Best Current Practice 47.  Examples include "en"
+	 * for English, or "fr-ca" for Canadian French.
+	 * 
+	 * The string is treated as a Content-Language header
+	 * value under RFC 3282.
+	 * 
+	 * @param str a string.
+	 * @return an array of language tags within the given
+	 * string, or an empty
+	 * array if str is null, if there are no language tags,
+	 * or at least one language tag in the given
+	 * string is invalid under Best Current Practice 47.
+	 * The language tags will be converted to ASCII lower-case.
+	 */
+	public static String[] getLanguages(String str){
+		if(str==null)return emptyStringArray;
+		return getLanguages(str,0,str.length(),true);
+	}
+	private static String[] getLanguages(String str, int index, int endIndex, boolean httpRules){
+		if(index==endIndex || str==null)
+			return emptyStringArray;
+		List<String> strings=new ArrayList<String>();
+		index=(httpRules) ? skipLws(str,index,endIndex,null) : skipCFWS(str,index,endIndex);
+		while(true){
+			int i2=skipLanguageTag(str,index,endIndex);
+			if(i2==index){
+        if(httpRules){
+          // empty language tag, so check for an empty
+          // element and ignore it
+          if(index<endIndex && str.charAt(index)!=',')return emptyStringArray;
+          if(index<endIndex)index++;
+          index=skipLws(str,index,endIndex,null);
+          continue;
+        }
+        return emptyStringArray;
+      }
+			String tag=StringUtility.toLowerCaseAscii(str.substring(index,i2));
+			i2=index;
+			if(!isValidLanguageTag(tag))return emptyStringArray;
+			strings.add(tag);
+			index=(httpRules) ? skipLws(str,index,endIndex,null) : skipCFWS(str,index,endIndex);
+			if(index>=endIndex) {
+				break;
+			}
+			if(str.charAt(index)!=',')return emptyStringArray;
+			index=(httpRules) ? skipLws(str,index,endIndex,null) : skipCFWS(str,index,endIndex);
+		}
+		return strings.toArray(new String[]{});
+	}
+
+
+	/**
+	 * Skips comments and folding whitespace (CFWS) in a string,
+	 * as specified in RFC5322 section 3.2.1.
+	 *
+	 * @param index the index into the beginning of the string
+	 * for the purposes of this method.
+	 * @param endIndex the index into the end of the string
+	 * for the purposes of this method.
+	 * @param the index where CFWS ends.  Will be the same
+	 * as _index_ if _index_ doesn't point to a comment or folding
+	 * whitespace.
+	 */
+	 static int skipCFWS(String s, int index, int endIndex){
+		int retIndex=index;
+		while(index<endIndex){
+			index=skipFws(s,index,endIndex);
+			retIndex=index;
+			int oldIndex=index;
+			index=skipComment(s,index,endIndex);
+			if(index==oldIndex)return retIndex;
+			retIndex=index;
+		}
+		return retIndex;
+	}
+	/**
+	 * Extracts a parameter from a MIME media
+	 * type.  For example, in the string "text/plain;charset=utf-8",
+	 * returns "utf-8" if the parameter is "charset".
+	 * This method skips folding whitespace and comments
+	 * where allowed under RFC5322.  For example,
+	 * a string like "text/plain;\r\n  charset=utf-8" is allowed.
+	 * 
+	 * @param str a string containing a MIME media type.
+	 * Parameters are compared case-insensitively.
+	 * @param index the index into the string where the
+	 * media type begins.
+	 * @param parameter a parameter name.
+	 * @return the parameter, or null if the parameter
+	 * doesn't exist or the media type string is ill-formed.
+	 */
+	public static String getMimeParameter(String data, int index, String parameter){
+		if(data==null)return null;
+		return getMimeParameter(data, index, data.length(), parameter);
+	}
+	public static String getMimeParameter(String data, int index, int endIndex, String parameter){
+		if(data==null)return null;
+		return getMimeParameter(data, index, data.length(), parameter,false);
+	}
+	/**
+	 * Extracts a parameter from a MIME media
+	 * type.  For example, in the string "text/plain;charset=utf-8",
+	 * returns "utf-8" if the parameter is "charset".
+	 * This method either skips folding whitespace and comments
+	 * where allowed under RFC5322, or skips linear whitespace
+	 * where allowed under HTTP/1.1.  For example,
+	 * a string like "text/plain;\r\n  charset=utf-8" is allowed.
+	 * @param index the index into the string where the
+	 * media type begins.
+	 * @param endIndex an index into the end of the string.
+	 * @param parameter a parameter name.
+	 * @param str a string containing a MIME media type.
+	 * Parameters are compared case-insensitively.
+	 * @param httpRules If false, the whitespace rules of RFC5322
+	 * are used. If true, the whitespace rules of HTTP/1.1 (RFC2616)
+	 * are used, and parameter continuations under RFC2231 sec. 3
+	 * are supported.
+	 * @return the parameter, or null if the parameter
+	 * doesn't exist or the media type string is ill-formed.
+	 */
+	private static String getMimeParameter(
+			String data, int index, int endIndex, String parameter, boolean httpRules){
+		if(data==null || parameter==null)
+			return null;
+		String ret=getMimeParameterRaw(data,index,endIndex,parameter,httpRules);
+		if(!httpRules && ret==null){
+			ret=getMimeParameterRaw(data,index,endIndex,parameter+"*0",httpRules);
+			if(ret!=null){
+				int pindex=1;
+				// Support parameter continuations under RFC2184 sec. 3
+				while(true){
+					String ret2=getMimeParameterRaw(
+							data,index,endIndex,
+							parameter+"*"+Integer.toString(pindex),httpRules);
+					if(ret2==null) {
+						break;
+					}
+					pindex++;
+					ret+=ret2;
+				}
+			}
+		}
+		return ret;
+	}
+	private static String getMimeParameterRaw(
+			String data, int index, int endIndex, String parameter, boolean httpRules){
+		if(data==null || parameter==null)
+			return null;
+		if((endIndex-index)<parameter.length())
+			return null;
+		parameter=StringUtility.toLowerCaseAscii(parameter);
+		String mediaType=getMediaType(data,index);
+		index+=mediaType.length();
+		while(true){
+			// RFC5322 uses skipCFWS when skipping whitespace;
+			// HTTP currently uses skipLws, though that may change
+			// to skipWsp in a future revision of HTTP
+			if(httpRules) {
+				index=skipLws(data,index,endIndex,null);
+			} else {
+				index=skipCFWS(data,index,endIndex);
+			}
+			if(index>=endIndex || data.charAt(index)!=';')
+				return null;
+			index++;
+			if(httpRules) {
+				index=skipLws(data,index,endIndex,null);
+			} else {
+				index=skipCFWS(data,index,endIndex);
+			}
+			StringBuilder builder=new StringBuilder();
+			int afteratt=skipMimeToken(data,index,endIndex,builder);
+			if(afteratt==index) // ill-formed attribute
+				return null;
+			String attribute=builder.toString();
+			index=afteratt;
+			if(index>=endIndex)
+				return null;
+			if(data.charAt(index)!='=')
+				return null;
+			boolean isToken=StringUtility.toLowerCaseAscii(attribute).equals(parameter);
+			index++;
+			if(index>=endIndex)
+				return "";
+			builder.delete(0,builder.length());
+			// try getting the value quoted
+			int qs=skipQuotedString(data,index,endIndex,isToken ? builder : null,httpRules);
+			if(qs!=index){
+				if(isToken)
+					return builder.toString();
+				index=qs;
+				continue;
+			}
+			builder.delete(0,builder.length());
+			// try getting the value unquoted
+			// Note we don't use getAtom
+			qs=skipMimeToken(data,index,endIndex,isToken ? builder : null);
+			if(qs!=index){
+				if(isToken)
+					return builder.toString();
+				index=qs;
+				continue;
+			}
+			// no valid value, return
+			return null;
+		}
+	}
+
+	public static boolean isValidMediaType(String data){
+		if(data==null)
+			return false;
+		return isValidMediaType(data,0,data.length(),true);
+	}
+
+	public static boolean isValidMediaType(
+			String data,
+			int index,
+			int endIndex,
+			boolean httpRules // true: use RFC2616 (HTTP/1.1) rules; false: use RFC5322 rules
+			){
+		if(data==null)
+			return false;
+		String mediaType=getMediaType(data,index,endIndex);
+		index+=mediaType.length();
+		while(true){
+			if(index>=endIndex)
+				return true;
+			// RFC5322 uses skipCFWS when skipping whitespace;
+			// HTTP currently uses skipLws, though that may change
+			// to skipWsp in a future revision of HTTP
+			if(httpRules) {
+				index=skipLws(data,index,endIndex,null);
+			} else {
+				index=skipCFWS(data,index,endIndex);
+			}
+			if(index>=endIndex)
+				return false;
+			if(data.charAt(index)!=';')
+				return false;
+			index++;
+			if(httpRules) {
+				index=skipLws(data,index,endIndex,null);
+			} else {
+				index=skipCFWS(data,index,endIndex);
+			}
+			int afteratt=skipMimeToken(data,index,endIndex,null);
+			if(afteratt==index) // ill-formed attribute
+				return false;
+			index=afteratt;
+			if(index>=endIndex)
+				return false;
+			if(data.charAt(index)!='=')
+				return false;
+			index++;
+			if(index>=endIndex)
+				return false;
+			// try getting the value quoted
+			int qs=skipQuotedString(data,index,endIndex,null,httpRules);
+			if(qs!=index){
+				index=qs;
+				continue;
+			}
+			// try getting the value unquoted
+			qs=skipMimeToken(data,index,endIndex,null);
+			if(qs!=index){
+				index=qs;
+				continue;
+			}
+			// no valid value, return
+			return false;
+		}
+	}
+
 }

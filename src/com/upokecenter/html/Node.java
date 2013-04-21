@@ -150,4 +150,14 @@ class Node implements INode {
 	}
 
 
+	@Override public  String getLanguage(){
+		INode parent=getParentNode();
+		if(parent==null){
+			parent=getOwnerDocument();
+			if(parent==null)return "";
+			return parent.getLanguage();
+		} else
+			return parent.getLanguage();
+	}
+
 }
