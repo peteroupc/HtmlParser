@@ -4,6 +4,13 @@ Public domain dedication: http://creativecommons.org/publicdomain/zero/1.0/
  */
 package com.upokecenter.util;
 
+/**
+ * 
+ * Represents a list of integers or Unicode characters.
+ * 
+ * @author Peter
+ *
+ */
 public final class IntList {
 	int[] buffer;
 	int ptr;
@@ -16,6 +23,11 @@ public final class IntList {
 		return buffer[index];
 	}
 
+	/**
+	 * Sets the integer at a specified position to a new value.
+	 * @param index an index into the list.
+	 * @param value the integer's new value.
+	 */
 	public void set(int index, int value){
 		buffer[index]=value;
 	}

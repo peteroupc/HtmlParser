@@ -37,6 +37,8 @@ import java.util.List;
  *
  */
 public interface INode {
+
+
 	/**
 	 * Returns the base URL of this node.  URLs on this
 	 * node are resolved relative to this URL.

@@ -6,7 +6,13 @@ released to the public domain by Paul Schlyter, December 1992
 
 package com.upokecenter.util;
 
-
+/**
+ * Contains utility methods for calculating
+ * sunrise and sunset times.
+ * 
+ * @author Peter
+ *
+ */
 public final class SunriseSunset {
 
 	private SunriseSunset(){}
@@ -17,10 +23,43 @@ public final class SunriseSunset {
 		return  (367L*(y)-((7*((y)+(((m)+9)/12)))/4)+((275*(m))/9)+(d)-730530L);
 	}
 
+	/**
+	 * 
+	 * A rough time of day.
+	 * 
+	 * @author Peter
+	 *
+	 */
 	public enum DayState {
-		Day, DayToNight, Night, NightToDay
+		/**
+		 * Day light.
+		 */
+		Day,
+		/**
+		 * Approaching nighttime.
+		 */
+		DayToNight,
+		/**
+		 * Nighttime.
+		 */
+		Night,
+		/**
+		 * Approaching daytime.
+		 */
+		NightToDay
 	}
 
+	/**
+	 * 
+	 * Gets whether it's currently day or night at
+	 * the given geographic location.
+	 * 
+	 * @param lat a geographic latitude, in degrees.
+	 * South coordinates are negative.
+	 * @param lon a geographic longitude, in degrees.
+	 * West coordinates are negative.
+	 * @return A day state value.
+	 */
 	public static DayState getCurrentDayState(double lat, double lon){
 		int[] components=DateTimeUtility.getCurrentGmtDateComponents();
 		double trise[]=new double[1];

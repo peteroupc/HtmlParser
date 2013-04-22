@@ -13,7 +13,7 @@ package com.upokecenter.util;
  *
  */
 public final class URIUtility {
-	
+
 	private URIUtility(){}
 
 	private static int parseDecOctet(String s, int index,
@@ -503,19 +503,7 @@ public final class URIUtility {
 	 * @param ref an absolute or relative URI reference
 	 * @param base an absolute URI reference.
 	 * @param parseMode Specifies whether certain characters are allowed
-	 * in <i>ref</i> and <i>base</i>:
-	 * <ul>
-	 * <li>URIUtility.ParseMode.IRIStrict: The rules follow the syntax
-	 * for parsing IRIs.</li>
-	 * <li>URIUtility.ParseMode.URIStrict: Same as IRIStrict, 
-	 * except that non-ASCII characters are not allowed.</li>
-	 * <li>URIUtility.ParseMode.IRILenient: The rules only check for the appropriate
-	 * delimiters when splitting the path, without checking if all the characters
-	 * in each component are valid.  Even with this mode, strings with unpaired
-	 * surrogate code points are considered invalid.</li>
-	 * <li>URIUtility.ParseMode.URILenient: Same as IRILenient, 
-	 * except that non-ASCII characters are not allowed.</li>
-	 * </ul>
+	 * in <i>ref</i> and <i>base</i>.
 	 * @return the resolved IRI, or null if ref is null or is not a
 	 * valid IRI.  If base
 	 * is null or is not a valid IRI, returns ref.
@@ -640,12 +628,36 @@ public final class URIUtility {
 		return builder.toString();
 	}
 	/**
-* Specifies whether certain characters are allowed when parsing URIs and IRIs.
-*/
+	 * Specifies whether certain characters are allowed when
+	 * parsing IRIs and URIs.
+	 * @author Peter
+	 *
+	 */
 	public enum ParseMode {
+		/**
+		 * 	The rules follow the syntax for parsing IRIs.
+		 *  In particular, many internationalized characters
+		 *  are allowed.
+		 */
 		IRIStrict,
+		/**
+		 * The rules follow the syntax for parsing IRI,
+		 * except that non-ASCII characters are allowed.
+		 */
 		URIStrict,
+		/**
+		 * The rules only check for the appropriate
+		 * delimiters when splitting the path, without checking if all the characters
+		 * in each component are valid.  Even with this mode, strings with unpaired
+		 * surrogate code points are considered invalid.
+		 */
 		IRILenient,
+		/**
+		 * The rules only check for the appropriate
+		 * delimiters when splitting the path, without checking if all the characters
+		 * in each component are valid.  Non-ASCII characters
+		 * are not allowed.
+		 */
 		URILenient
 	}
 
@@ -969,12 +981,12 @@ public final class URIUtility {
 	 * <ul>
 	 * <li>URIUtility.ParseMode.IRIStrict: The rules follow the syntax
 	 * for parsing IRIs.</li>
-	 * <li>URIUtility.ParseMode.URIStrict: Same as IRIStrict, 
+	 * <li>URIUtility.ParseMode.URIStrict: Same as IRIStrict,
 	 * except that non-ASCII characters are not allowed.</li>
 	 * <li>URIUtility.ParseMode.IRILenient: The rules only check for the appropriate
 	 * delimiters when splitting the path, without checking if all the characters
 	 * in each component are valid.  Even with this mode</li>
-	 * <li>URIUtility.ParseMode.URILenient: Same as IRILenient, 
+	 * <li>URIUtility.ParseMode.URILenient: Same as IRILenient,
 	 * except that non-ASCII characters are not allowed.</li>
 	 * </ul>
 	 * @return If the string is a valid IRI reference, returns an array of 10

@@ -158,6 +158,15 @@ public final class HeaderParser {
 		return value;
 	}
 
+	/**
+	 * Parses a date string in one of the three formats
+	 * allowed by RFC2616 (HTTP/1.1).
+	 * 
+	 * @param v a string to parse.
+	 * @param defaultValue a value to return if the string
+	 * isn't a valid date.
+	 * @return number of milliseconds since midnight, January 1, 1970.
+	 */
 	public static long parseHttpDate(String v, long defaultValue){
 		if(v==null)return defaultValue;
 		int index=0;
@@ -568,7 +577,7 @@ public final class HeaderParser {
 	 * @param string a string containing the path of the data URL (after
 	 * the "data:"). Example: ",test" or "text/plain,test"
 	 * @param index the index into the string where the data URL path
-	 *  begins. To find the path, call URIUtility.splitIRI.
+	 *  begins.
 	 * @param endIndex the index into the string where the data
 	 * URL path ends.
 	 * @param builder a string builder to append the MIME media
@@ -661,7 +670,7 @@ public final class HeaderParser {
 	}
 
 	 static int skipEncodedMimeWord(
-			String str, int index, int endIndex, 
+			String str, int index, int endIndex,
 			StringBuilder builder, int kind
 			){
 		int i=index;
@@ -672,7 +681,7 @@ public final class HeaderParser {
 		while(i<endIndex){
 			char c=str.charAt(i);
 			// check for percent-encoded characters
-			if(i+2<endIndex && c=='%' && 
+			if(i+2<endIndex && c=='%' &&
 					toHexNumber(str.charAt(i+1))>=0 &&
 					toHexNumber(str.charAt(i+2))>=0){
 				int c2=toHexNumber(str.charAt(i+1))*16+toHexNumber(str.charAt(i+2));
@@ -700,7 +709,7 @@ public final class HeaderParser {
 						i++;
 						c=str.charAt(i);
 						// check for percent-encoded characters
-						if(i+2<endIndex && c=='%' && 
+						if(i+2<endIndex && c=='%' &&
 								toHexNumber(str.charAt(i+1))>=0 &&
 								toHexNumber(str.charAt(i+2))>=0){
 							int c2=toHexNumber(str.charAt(i+1))*16+toHexNumber(str.charAt(i+2));
@@ -842,11 +851,6 @@ public final class HeaderParser {
 		return StringUtility.toLowerCaseAscii(str.substring(index,i2));
 	}
 
-	public static String getMediaType(String str, int index){
-		if(str==null)return "";
-		return getMediaType(str,index,str.length());
-	}
-
 	public static String getMediaType(String str){
 		if(str==null)return "";
 		return getMediaType(str,0,str.length());
@@ -862,30 +866,10 @@ public final class HeaderParser {
 	}
 
 	public static String getCharset(String data){
-		return getCharset(data, 0);
+		if(data==null)return "us-ascii";
+		return getCharset(data, 0,data.length());
 	}
 
-	/**
-	 * Extracts the charset parameter from a MIME media
-	 * type.  For example, in the string "text/plain;charset=utf-8",
-	 * returns "utf-8".	This method skips folding whitespace and
-	 * comments where allowed under RFC5322.  For example,
-	 * a string like "text/plain;\r\n  charset=utf-8" is allowed.
-	 * 
-	 * @param str a string containing a MIME media type.
-	 * @param index the index into the string where the
-	 * media type begins.
-	 * @return the charset parameter, converted to ASCII lower-case,
-	 * if it exists, or "us-ascii" if the media type is null, absent, or
-	 * ill-formed (RFC2045 sec. 5.2), or if the media type is
-	 * "text/plain" or "text/xml" without a charset parameter
-	 * (see RFC2046 and RFC3023, respectively),
-	 * or the empty string otherwise.
-	 */
-	public static String getCharset(String data, int index){
-		if(data==null)return "us-ascii";
-		return getCharset(data, index, data.length());
-	}
 	/**
 	 * Extracts the charset parameter from a MIME media
 	 * type.  For example, in the string "text/plain;charset=utf-8",
@@ -907,7 +891,7 @@ public final class HeaderParser {
 	public static String getCharset(String data, int index, int endIndex){
 		if(data==null)
 			return "us-ascii";
-		String mediaType=getMediaType(data,index);
+		String mediaType=getMediaType(data,index,endIndex);
 		if(mediaType.length()==0)
 			return "us-ascii";
 		String charset=getMimeParameter(data,index,data.length(), "charset");
@@ -973,6 +957,7 @@ public final class HeaderParser {
 		}
 		return ret;
 	}
+	/* obs-fws under RFC5322, same as LWSP in RFC5234*/
 	private static int skipObsFws(String s, int index, int endIndex){
 		// parse obs-fws (according to errata)
 		while(true){
@@ -1034,9 +1019,8 @@ public final class HeaderParser {
 		int i2;
 		if(httpRules){
 			char c=s.charAt(index);
-			if(c<0x100 && c>=0x21 && c!='\\' && c!='"'){
+			if(c<0x100 && c>=0x21 && c!='\\' && c!='"')
 				return index+1;
-			}
 		} else {
 			i2=skipQtext(s,index,endIndex);
 			if(index!=i2)return i2;
@@ -1050,7 +1034,8 @@ public final class HeaderParser {
 	 static int skipQuotedString(
 			String s,
 			int index,
-			int endIndex, StringBuilder builder,
+			int endIndex,
+			StringBuilder builder, // receives the unescaped version of the string
 			boolean httpRules // true: use RFC2616 (HTTP/1.1) rules; false: use RFC5322 rules
 			){
 		int startIndex=index;
@@ -1236,6 +1221,7 @@ public final class HeaderParser {
 		}
 		return len;
 	}
+
 
 	public static boolean isValidLanguageTag(String str){
 		int index=0;
@@ -1445,36 +1431,41 @@ public final class HeaderParser {
 	 */
 	public static String[] getLanguages(String str){
 		if(str==null)return emptyStringArray;
-		return getLanguages(str,0,str.length(),true);
+		return getLanguages(str,0,str.length(),false);
 	}
 	private static String[] getLanguages(String str, int index, int endIndex, boolean httpRules){
 		if(index==endIndex || str==null)
 			return emptyStringArray;
 		List<String> strings=new ArrayList<String>();
-		index=(httpRules) ? skipLws(str,index,endIndex,null) : skipCFWS(str,index,endIndex);
+		if(!httpRules) {
+			index=skipCFWS(str,index,endIndex);
+		}
 		while(true){
 			int i2=skipLanguageTag(str,index,endIndex);
-			if(i2==index){
-        if(httpRules){
-          // empty language tag, so check for an empty
-          // element and ignore it
-          if(index<endIndex && str.charAt(index)!=',')return emptyStringArray;
-          if(index<endIndex)index++;
-          index=skipLws(str,index,endIndex,null);
-          continue;
-        }
-        return emptyStringArray;
-      }
+			if(i2==index)return emptyStringArray;
 			String tag=StringUtility.toLowerCaseAscii(str.substring(index,i2));
 			i2=index;
 			if(!isValidLanguageTag(tag))return emptyStringArray;
 			strings.add(tag);
-			index=(httpRules) ? skipLws(str,index,endIndex,null) : skipCFWS(str,index,endIndex);
-			if(index>=endIndex) {
-				break;
+			if(!httpRules){ // RFC 3282 rules
+				index=skipCFWS(str,index,endIndex);
+				if(index>=endIndex) {
+					break;
+				}
+				if(str.charAt(index)!=',')return emptyStringArray;
+				index++;
+				index=skipCFWS(str,index,endIndex);
+			} else { // HTTP/1.1 rules
+				i2=skipLws(str,index,endIndex,null);
+				if(i2!=index && i2>=endIndex)return emptyStringArray;
+				else if(i2>=endIndex) {
+					break;
+				}
+				index=i2;
+				if(str.charAt(index)!=',')return emptyStringArray;
+				index++;
+				index=skipLws(str,index,endIndex,null);
 			}
-			if(str.charAt(index)!=',')return emptyStringArray;
-			index=(httpRules) ? skipLws(str,index,endIndex,null) : skipCFWS(str,index,endIndex);
 		}
 		return strings.toArray(new String[]{});
 	}
@@ -1580,7 +1571,7 @@ public final class HeaderParser {
 		if((endIndex-index)<parameter.length())
 			return null;
 		parameter=StringUtility.toLowerCaseAscii(parameter);
-		String mediaType=getMediaType(data,index);
+		String mediaType=getMediaType(data,index,endIndex);
 		index+=mediaType.length();
 		while(true){
 			// RFC5322 uses skipCFWS when skipping whitespace;

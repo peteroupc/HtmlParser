@@ -37,6 +37,7 @@ import java.util.List;
  */
 public interface IElement extends INode {
 
+	String getInnerHTML();
 
 	/**
 	 * Gets a list of all attributes declared on this element.
@@ -101,7 +102,6 @@ public interface IElement extends INode {
 	 * 
 	 * Gets the namespace name of this element.  For HTML elements,
 	 * it will equal "http://www.w3.org/1999/xhtml".
-	 * 
 	 * 
 	 */
 	String getNamespaceURI();

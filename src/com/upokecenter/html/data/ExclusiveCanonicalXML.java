@@ -29,7 +29,7 @@ import com.upokecenter.util.URIUtility;
  * @author Peter
  *
  */
-public final class ExclusiveCanonicalXML {
+final class ExclusiveCanonicalXML {
 	private ExclusiveCanonicalXML(){}
 	private static final class NamespaceAttrComparer implements Comparator<IAttr> {
 		@Override

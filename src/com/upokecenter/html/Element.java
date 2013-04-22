@@ -329,4 +329,9 @@ class Element extends Node implements IElement {
 			return parent.getLanguage();
 	}
 
+	@Override
+	public  String getInnerHTML() {
+		return getInnerHtmlInternal();
+	}
+
 }

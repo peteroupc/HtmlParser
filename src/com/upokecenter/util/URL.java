@@ -15,6 +15,14 @@ import com.upokecenter.encoding.ITextEncoder;
 import com.upokecenter.encoding.TextEncoding;
 import com.upokecenter.io.MemoryOutputStream;
 
+/**
+ * 
+ * A URL object under the WHATWG's URL
+ * specification. See http://url.spec.whatwg.org/
+ * 
+ * @author Peter
+ *
+ */
 public final class URL {
 
 	@Override

@@ -9,6 +9,13 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+/**
+ * Contains utility methods for accessing and
+ * invoking the fields and methods of a class.
+ * 
+ * @author Peter
+ *
+ */
 public final class Reflection {
 	private Reflection(){}
 	private static Method getStaticMethod(Class<?> clazz, String name, int argCount){

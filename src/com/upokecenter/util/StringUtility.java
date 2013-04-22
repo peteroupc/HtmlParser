@@ -16,14 +16,34 @@ import java.util.ArrayList;
 public final class StringUtility {
 	private StringUtility(){}
 
-	public static boolean startsWith(String str, String o, int index){
-		if(str==null || o==null || index<0 || index>=str.length())
-			throw new IllegalArgumentException();
-		int endpos=o.length()+index;
-		if(endpos>str.length())return false;
-		return str.substring(index,endpos).equals(o);
+	/**
+	 * 
+	 * Compares two strings in an ASCII case-insensitive
+	 * manner.
+	 * 
+	 * @param a the first string
+	 * @param b the second string
+	 * @return true if both strings, when converted to ASCII
+	 * lower-case, compare as equal; otherwise, false.
+	 */
+	public static boolean equalsIgnoreCaseAscii(String a, String b){
+		return (a==null) ? (b==null) : toLowerCaseAscii(a).equals(toLowerCaseAscii(b));
 	}
 
+	public static boolean startsWith(String str, String prefix, int index){
+		if(str==null || prefix==null || index<0 || index>=str.length())
+			throw new IllegalArgumentException();
+		int endpos=prefix.length()+index;
+		if(endpos>str.length())return false;
+		return str.substring(index,endpos).equals(prefix);
+	}
+
+	/**
+	 * Returns a string with all ASCII upper-case letters
+	 * converted to lower-case.
+	 * 
+	 * @param s a string.
+	 */
 	public static String toLowerCaseAscii(String s){
 		if(s==null)return null;
 		int len=s.length();
@@ -64,22 +84,23 @@ public final class StringUtility {
 	 * @param s a string to split.
 	 * @param delimiter a string to signal where each substring
 	 * begins and ends.
-	 * 
+	 * @return An array containing strings that are split by the
+	 * delimiter. If s is null or empty, returns an array whose
+	 * sole element is the empty string.
 	 */
 	public static String[] splitAt(String s, String delimiter){
 		if(delimiter==null ||
 				delimiter.length()==0)throw new IllegalArgumentException();
-		if(s==null || s.length()==0)return emptyStringArray;
+		if(s==null || s.length()==0)return new String[]{""};
 		int index=0;
 		boolean first=true;
 		ArrayList<String> strings=null;
 		int delimLength=delimiter.length();
-		if(delimLength==0)return emptyStringArray;
 		while(true){
 			int index2=s.indexOf(delimiter,index);
 			if(index2<0){
 				if(first)return new String[]{s};
-        strings.add(s.substring(index));
+				strings.add(s.substring(index));
 				break;
 			} else {
 				if(first) {
@@ -251,6 +272,13 @@ public final class StringUtility {
 		return strings.toArray(emptyStringArray);
 	}
 
+	/**
+	 * Returns a string with all ASCII lower-case letters
+	 * converted to upper-case.
+	 * 
+	 * @param s a string.
+	 */
+
 	public static String toUpperCaseAscii(String s) {
 		if(s==null)return null;
 		int len=s.length();
@@ -280,14 +308,14 @@ public final class StringUtility {
 	/**
 	 * Compares two strings in Unicode code point order. Unpaired
 	 * surrogates are treated as individual code points.
-	 * @param a The first string
-	 * @param b The second string
+	 * @param a The first string.
+	 * @param b The second string.
 	 * @return A value indicating which string is "less" or "greater".
 	 *  0: Both strings are equal or null.
 	 *  Less than 0: a is null and b isn't; or the first code point that's
-	 *  different is less in A than in B; or b starts with a.
+	 *  different is less in A than in B; or b starts with a and is longer than a.
 	 *  Greater than 0: b is null and a isn't; or the first code point that's
-	 *  different is greater in A than in B; or a starts with b.
+	 *  different is greater in A than in B; or a starts with b and is longer than b.
 	 */
 	public static int codePointCompare(String a, String b){
 		if(a==null)return (b==null) ? 0 : -1;
