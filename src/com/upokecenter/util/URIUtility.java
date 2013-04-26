@@ -7,7 +7,9 @@ package com.upokecenter.util;
  * Contains utility methods for processing Uniform
  * Resource Identifiers (URIs) and Internationalized
  * Resource Identifiers (IRIs) under RFC3986 and RFC3987,
- * respectively.
+ * respectively.  In the following documentation, URIs
+ * and IRIs include URI references and IRI references,
+ * for convenience.
  * 
  * @author Peter
  *
@@ -219,6 +221,9 @@ public final class URIUtility {
 							} else return -1;
 							decOctet=parseDecOctet(s,index,endOffset,
 									(index<endOffset) ? s.charAt(index) : '\0',']');
+							if(decOctet<0)
+								decOctet=parseDecOctet(s,index,endOffset,
+										(index<endOffset) ? s.charAt(index) : '\0','%');
 							if(decOctet>=100) {
 								index+=3;
 							} else if(decOctet>=10) {
@@ -250,10 +255,42 @@ public final class URIUtility {
 					break;
 				}
 			}
-			if((phase1+(phased ? 1 : 0)+phase2)!=8 && !phased)
+			if((phase1+phase2)!=8 && !phased)
 				return -1;
-			if(index>=endOffset || s.charAt(index)!=']')
+			if((phase1+1+phase2)>8 && phased)
 				return -1;
+			if(index>=endOffset)return -1;
+			if(s.charAt(index)!=']' && s.charAt(index)!='%')
+				return -1;
+			if(s.charAt(index)=='%'){
+				if(index+2<endOffset && s.charAt(index+1)=='2' &&
+						s.charAt(index+2)=='5'){
+					// Zone identifier in an IPv6 address
+					// (see RFC6874)
+					index+=3;
+					boolean haveChar=false;
+					while(index<endOffset){
+						char c=s.charAt(index);
+						if(c==']'){
+							return (haveChar) ? index+1 : -1;
+						} else if(c=='%'){
+							if(index+2<endOffset && isHexChar(s.charAt(index+1)) &&
+									isHexChar(s.charAt(index+2))){
+								index+=3;
+								haveChar=true;
+								continue;
+							} else return -1;
+						} else if((c>='a' && c<='z') || (c>='A' && c<='Z') || 
+								(c>='0' && c<='9') || c=='.' || c=='_' || c=='-' || c=='~'){
+							// unreserved character under RFC3986
+							index++;
+							haveChar=true;
+							continue;
+						} else return -1;
+					}
+					return -1;
+				} else return -1;
+			}
 			index++;
 			return index;
 		} else
@@ -570,12 +607,14 @@ public final class URIUtility {
 	 * <li>0 - Non-ASCII characters and other characters that
 	 * cannot appear in a URI are
 	 * escaped, whether or not the string is a valid URI.
-	 * Unpaired surrogates are treated as U+FFFD.</li>
+	 * Unpaired surrogates are treated as U+FFFD (Replacement Character).
+   * (Note that square brackets "[" and "]" can only appear in the authority
+   * component of a URI or IRI; elsewhere they will be escaped.)</li>
 	 * <li>1 - Only non-ASCII characters are escaped. If the
 	 * string is not a valid IRI, returns null instead.</li>
 	 * <li>2 - Only non-ASCII characters are escaped, whether or
 	 * not the string is a valid IRI.  Unpaired surrogates
-	 * are treated as U+FFFD.</li>
+	 * are treated as U+FFFD (Replacement Character).</li>
 	 * <li>3 - Similar to 0, except that illegal percent encodings
 	 * are also escaped.</li>
 	 * </ul>
@@ -584,8 +623,13 @@ public final class URIUtility {
 	 */
 	public static String escapeURI(String s, int mode){
 		if(s==null)return null;
-		if(mode==1 && splitIRI(s)==null)
-			return null;
+    int[] components=null;
+    if(mode==1){
+      components=splitIRI(s,ParseMode.IRIStrict);
+      if(components==null)return null;
+    } else {
+      components=splitIRI(s,ParseMode.IRISurrogateLenient);      
+    }
 		int index=0;
 		int sLength=s.length();
 		StringBuilder builder=new StringBuilder();
@@ -613,13 +657,29 @@ public final class URIUtility {
 				}
 				if(c>=0x7F || c<=0x20 || ((c&0x7F)==c && "{}|^\\`<>\"".indexOf((char)c)>=0)){
 					percentEncodeUtf8(builder,c);
-				} else {
+				} else if(c=='[' || c==']'){
+          if(components!=null && index>=components[2] && index<components[3]){
+            // within the authority component, so don't percent-encode
+  					builder.appendCodePoint(c);
+          } else {
+            // percent encode
+  					percentEncodeUtf8(builder,c);
+          }
+        } else {
 					builder.appendCodePoint(c);
 				}
 			} else if(mode==1 || mode==2){
 				if(c>=0x80){
 					percentEncodeUtf8(builder,c);
-				} else {
+				} else if(c=='[' || c==']'){
+          if(components!=null && index>=components[2] && index<components[3]){
+            // within the authority component, so don't percent-encode
+  					builder.appendCodePoint(c);
+          } else {
+            // percent encode
+  					percentEncodeUtf8(builder,c);
+          }
+        } else {
 					builder.appendCodePoint(c);
 				}
 			}
@@ -637,12 +697,13 @@ public final class URIUtility {
 		/**
 		 * 	The rules follow the syntax for parsing IRIs.
 		 *  In particular, many internationalized characters
-		 *  are allowed.
+		 *  are allowed.  Strings with unpaired surrogate
+		 *  code points are considered invalid.
 		 */
 		IRIStrict,
 		/**
-		 * The rules follow the syntax for parsing IRI,
-		 * except that non-ASCII characters are allowed.
+		 * The rules follow the syntax for parsing IRIs,
+		 * except that non-ASCII characters are not allowed.
 		 */
 		URIStrict,
 		/**
@@ -658,7 +719,16 @@ public final class URIUtility {
 		 * in each component are valid.  Non-ASCII characters
 		 * are not allowed.
 		 */
-		URILenient
+		URILenient,
+		/**
+		 * The rules only check for the appropriate
+		 * delimiters when splitting the path, without checking if all the characters
+		 * in each component are valid.  Unpaired surrogate code points
+    * are treated as though they were replacement characters instead 
+    * for the purposes of these rules, so that strings with those code
+    * points are not considered invalid strings.
+		 */
+		IRISurrogateLenient
 	}
 
 	/**
@@ -742,9 +812,12 @@ public final class URIUtility {
 					// Get the Unicode code point for the surrogate pair
 					c=0x10000+(c-0xD800)*0x400+(s.charAt(index+1)-0xDC00);
 					index++;
-				} else if(c>=0xD800 && c<=0xDFFF)
-					// error
-					return null;
+				} else if(c>=0xD800 && c<=0xDFFF){
+          if(parseMode==ParseMode.IRISurrogateLenient)
+            c=0xFFFD;
+          else
+            return null;
+        }
 				if(c=='%' && (state==0 || state==1) && strict){
 					// Percent encoded character (except in port)
 					if(index+2<sLength && isHexChar(s.charAt(index+1)) &&
@@ -891,12 +964,9 @@ public final class URIUtility {
 	 * to check for a CURIE reference.
 	 * @param length Length of the substring to check for a
 	 * CURIE reference.
-	 * @param asciiOnly Specifies whether non-ASCII characters
-	 * are allowed in the string.
 	 * 
 	 */
-	public static boolean isValidCurieReference(String s,
-			int offset, int length, boolean asciiOnly){
+	public static boolean isValidCurieReference(String s, int offset, int length){
 		if(s==null)return false;
 		if(offset<0||length<0||offset+length>s.length())
 			throw new IndexOutOfBoundsException();
@@ -912,8 +982,6 @@ public final class URIUtility {
 		while(index<sLength){
 			// Get the next Unicode character
 			int c=s.charAt(index);
-			if(asciiOnly && c>=0x80)
-				return false;
 			if(c>=0xD800 && c<=0xDBFF && index+1<sLength &&
 					s.charAt(index+1)>=0xDC00 && s.charAt(index+1)<=0xDFFF){
 				// Get the Unicode code point for the surrogate pair
@@ -977,18 +1045,7 @@ public final class URIUtility {
 	 * 
 	 * @param s A string.
 	 * @param parseMode Specifies whether certain characters are allowed
-	 * in the string:
-	 * <ul>
-	 * <li>URIUtility.ParseMode.IRIStrict: The rules follow the syntax
-	 * for parsing IRIs.</li>
-	 * <li>URIUtility.ParseMode.URIStrict: Same as IRIStrict,
-	 * except that non-ASCII characters are not allowed.</li>
-	 * <li>URIUtility.ParseMode.IRILenient: The rules only check for the appropriate
-	 * delimiters when splitting the path, without checking if all the characters
-	 * in each component are valid.  Even with this mode</li>
-	 * <li>URIUtility.ParseMode.URILenient: Same as IRILenient,
-	 * except that non-ASCII characters are not allowed.</li>
-	 * </ul>
+	 * in the string.
 	 * @return If the string is a valid IRI reference, returns an array of 10
 	 * integers.  Each of the five pairs corresponds to the start
 	 * and end index of the IRI's scheme, authority, path, query,

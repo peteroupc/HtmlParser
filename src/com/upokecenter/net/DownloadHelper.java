@@ -38,8 +38,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.upokecenter.util.Base64;
-import com.upokecenter.util.ByteList;
 import com.upokecenter.util.DateTimeUtility;
 import com.upokecenter.util.StringUtility;
 import com.upokecenter.util.URL;
@@ -478,51 +476,7 @@ public final class DownloadHelper {
 		}
 	}
 
-	private static String getDataURLContentType(String data){
-		StringBuilder builder=new StringBuilder();
-		HeaderParser.skipDataUrlContentType(data,0,data.length(),builder);
-		return builder.toString();
-	}
-
-
-	private static byte[] getDataURLBytes(String data){
-		int index=HeaderParser.skipDataUrlContentType(data, 0,data.length(),null);
-		if(data.startsWith(";base64,",index)){
-			index+=8;
-			try {
-				data=data.substring(index);
-				return Base64.decode(data,Base64.DONT_GUNZIP);
-			} catch (IOException e) {
-				return null;
-			}
-		} else if(index<data.length() && data.charAt(index)==','){
-			index++;
-			ByteList mos=new ByteList();
-			int len=data.length();
-			for(int j=index;j<len;j++){
-				int c=data.charAt(j);
-				if(!((c&0x7F)==c && "-_.!~*'()".indexOf((char)c)>=0) &&
-						!(c>='A' && c<='Z') &&
-						!(c>='a' && c<='z') &&
-						!(c>='0' && c<='9'))
-					return null;
-				if(c=='%'){
-					if(index+2<len){
-						int a=HeaderParser.toHexNumber(data.charAt(index+1));
-						int b=HeaderParser.toHexNumber(data.charAt(index+2));
-						if(a>=0 && b>=0){
-							mos.append((byte) (a*16+b));
-							index+=2;
-							continue;
-						}
-					}
-				}
-				mos.append((byte) (c&0xFF));
-			}
-			return mos.toByteArray();
-		} else
-			return null;
-	}
+	
 
 
 
@@ -629,8 +583,7 @@ public final class DownloadHelper {
 		//
 		if("data".equals(uri.getScheme())){
 			// NOTE: Only "GET" is allowed here
-			String ssp=uri.getSchemeData();
-			byte[] bytes=getDataURLBytes(ssp);
+			byte[] bytes=HeaderParser.getDataURLBytes(uri.toString());
 			if(bytes==null){
 				if(!handleErrorResponses)
 					throw new IOException();
@@ -641,7 +594,7 @@ public final class DownloadHelper {
 						new ErrorHeader(urlString,400,"Bad Request"));
 				return ret;
 			} else {
-				String contentType=getDataURLContentType(ssp);
+				String contentType=HeaderParser.getDataURLContentType(uri.toString());
 				InputStream stream=null;
 				try {
 					stream = new BufferedInputStream(

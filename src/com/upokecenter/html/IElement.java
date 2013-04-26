@@ -37,6 +37,12 @@ import java.util.List;
  */
 public interface IElement extends INode {
 
+	/**
+	 * Gets a serialized form of this HTML element.
+	 * 
+	 * @return a string consisting of the serialized
+	 * form of this element's children, in HTML.
+	 */
 	String getInnerHTML();
 
 	/**

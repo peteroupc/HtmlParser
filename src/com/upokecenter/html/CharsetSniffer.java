@@ -250,8 +250,12 @@ final class CharsetSniffer {
 		int b=0;
 		// Skip attribute name
 		while(true){
-			if(position>=length)
+			if(position>=length){
+				// end of stream reached, so clear
+				// the attribute name to indicate failure
+				if(attrName!=null)attrName.setLength(0);
 				return position;
+			}
 			b=(data[position]&0xFF);
 			if(b==0x3D && !empty){
 				position++;
@@ -281,7 +285,12 @@ final class CharsetSniffer {
 				}
 				position++;
 			}
-			if(position>=length || (data[position]&0xFF)!=0x3D)
+			if(position>=length){
+				// end of stream reached, so clear
+				// the attribute name to indicate failure
+				if(attrName!=null)attrName.setLength(0);				
+			}				
+			if((data[position]&0xFF)!=0x3D)
 				return position;
 			position++;
 		}
@@ -293,13 +302,25 @@ final class CharsetSniffer {
 			position++;
 		}
 		// Skip value
-		if(position>=length)return position;
+		if(position>=length){
+			// end of stream reached, so clear
+			// the attribute name to indicate failure
+			if(attrName!=null)attrName.setLength(0);				
+		}				
 		b=(data[position]&0xFF);
-		if(b==0x22 || b==0x27){
+		if(b==0x22 || b==0x27){ // have quoted string
 			position++;
-			while(position<length){
+			while(true){
+				if(position>=length){
+					// end of stream reached, so clear
+					// the attribute name and value to indicate failure
+					if(attrName!=null)attrName.setLength(0);
+					if(attrValue!=null)attrValue.setLength(0);
+					return position;
+				}
 				int b2=(data[position]&0xFF);
-				if(b==b2) {
+				if(b==b2) { // quote mark reached
+					position++;
 					break;
 				}
 				if(attrValue!=null){
@@ -311,7 +332,6 @@ final class CharsetSniffer {
 				}
 				position++;
 			}
-			position++;
 			return position;
 		} else if(b==0x3E)
 			return position;
@@ -326,8 +346,13 @@ final class CharsetSniffer {
 			position++;
 		}
 		while(true){
-			if(position>=length)
+			if(position>=length){
+				// end of stream reached, so clear
+				// the attribute name and value to indicate failure
+				if(attrName!=null)attrName.setLength(0);
+				if(attrValue!=null)attrValue.setLength(0);
 				return position;
+			}
 			b=(data[position]&0xFF);
 			if(b==0x09 || b==0x0a || b==0x0c || b==0x0d || b==0x20 || b==0x3e)
 				return position;

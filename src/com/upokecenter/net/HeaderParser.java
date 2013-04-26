@@ -25,11 +25,15 @@ THE SOFTWARE.
  */
 package com.upokecenter.net;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.upokecenter.util.Base64;
+import com.upokecenter.util.ByteList;
 import com.upokecenter.util.DateTimeUtility;
 import com.upokecenter.util.StringUtility;
+import com.upokecenter.util.URIUtility;
 
 
 /**
@@ -42,6 +46,14 @@ import com.upokecenter.util.StringUtility;
 public final class HeaderParser {
 
 	private HeaderParser(){}
+	/**
+	 * Formats a date and time to a string that complies
+	 * with HTTP/1.1 (RFC2616).
+	 * 
+	 * @param date the number of milliseconds since midnight,
+	 * January 1, 1970 GMT.
+	 * @return a string formatted under the rules of HTTP/1.1. 
+	 */
 	public static String formatHttpDate(long date){
 		int[] components=DateTimeUtility.getGmtDateComponents(date);
 		int dow=components[7]; // 1 to 7
@@ -68,13 +80,13 @@ public final class HeaderParser {
 		else if(dow==7) {
 			dayofweek="Sat, ";
 		}
-		if(dayofweek==null)return "";
+		assert dayofweek!=null : Integer.toString(dow);
 		String[] months={
 				""," Jan "," Feb "," Mar "," Apr ",
 				" May "," Jun "," Jul "," Aug ",
 				" Sep "," Oct "," Nov "," Dec "
 		};
-		if(month<1||month>12)return "";
+		assert month>=1 && month<=12 : Integer.toString(month);
 		String monthstr=months[month];
 		StringBuilder builder=new StringBuilder();
 		builder.append(dayofweek);
@@ -379,7 +391,7 @@ public final class HeaderParser {
 			io++;
 			io=skipLws(str,io,length,null);
 			if(io<length && str.charAt(io)=='"') {
-				io=skipQuotedString(str,io,length,null,true);
+				io=skipQuotedString(str,io,length,null,QuotedStringRule.Http);
 			} else {
 				while(io<length){ // skip non-separator
 					c=str.charAt(io);
@@ -456,7 +468,8 @@ public final class HeaderParser {
 				index++;
 				index=skipLws(str,index,length,null);
 				if(index<length && str.charAt(index)=='"'){
-					index=skipQuotedString(str,index,length,null,true);
+					index=skipQuotedString(str,index,length,null,
+							QuotedStringRule.Http);
 				} else return startIndex;
 				index=skipLws(str,index,length,null);
 			}
@@ -555,14 +568,11 @@ public final class HeaderParser {
 		}
 		return retval;
 	}
-	public static int skipDataUrlContentType(
-			String str, int index, StringBuilder builder){
-		if(str==null)return index;
-		return skipDataUrlContentType(str,index,str.length(),builder);
-	}
+
+
 	/**
 	 * Extracts the MIME media type, including its parameters,
-	 * from a Data URL path (RFC2397). This function should be used
+	 * from a Data URL (RFC2397). This function should be used
 	 * before calling getMediaType or getMimeParameter because
 	 * there are several differences in the MIME media type in
 	 * data URLs than in Content-Type headers:
@@ -574,24 +584,114 @@ public final class HeaderParser {
 	 * <li>No whitespace is allowed between semicolons of
 	 * a MIME media type in a data URL.</li>
 	 * </ul>
-	 * @param string a string containing the path of the data URL (after
-	 * the "data:"). Example: ",test" or "text/plain,test"
-	 * @param index the index into the string where the data URL path
-	 *  begins.
-	 * @param endIndex the index into the string where the data
-	 * URL path ends.
-	 * @param builder a string builder to append the MIME media
-	 * type to. Can be null.
-	 * @return the index into the string where the MIME media
-	 * type ends within the data URL.  If the MIME type is ill-formed
-	 * or <i>string</i> is null, the return value will
-	 * be equal to <i>index</i>, and nothing will be appended to
-	 * the string builder.  If
-	 * the MIME type is blank, the return value will be equal to
-	 * <i>index</i>, and the string "text/plain;charset=us-ascii" is
-	 * appended to the string builder, if any.
+	 * @param string a string containing a data URL
+	 * Example: "data:,test" or "data:text/plain,test"
+	 * or "data:text/html;charset=utf-8,test"
+	 * @return the data URL's content type. If the string is null or
+	 *  is not a valid Internationalized Resource Identifier, if the
+	 *  string isn't a data URL, or the string's MIME media type
+	 *  is ill-formed, returns an empty string. If the data URL's
+	 * tMIME type is blank, the return value will be equal to
+	 * "text/plain;charset=us-ascii".
 	 */
-	public static int skipDataUrlContentType(
+	public static String getDataURLContentType(String dataURL){
+		int[] components=URIUtility.splitIRI(dataURL);
+		// check if the scheme is "data"
+		if(components==null || components[0]<0 || 
+				!StringUtility.equalsIgnoreCaseAscii(
+						"data",
+						dataURL.substring(components[0],components[1])))
+			return "";
+		// get just the path, not the query too
+		// (it's ambiguous whether the "data path" should consist of just a path
+		// or both a path and query, now that RFC3986 allows query strings
+		// in all URIs)
+		String path=dataURL.substring(components[4],components[5]);
+		return getDataURLContentTypeInternal(path);
+	}
+
+	public static byte[] getDataURLBytes(String dataURL){
+		int[] components=URIUtility.splitIRI(dataURL);
+		// check if the scheme is "data"
+		if(components==null || components[0]<0 || 
+				!StringUtility.equalsIgnoreCaseAscii(
+						"data",
+						dataURL.substring(components[0],components[1])))
+			return null;
+		// get just the path, not the query too
+		// (it's ambiguous whether the "data path" should consist of just a path
+		// or both a path and query, now that RFC3986 allows query strings
+		// in all URIs)
+		String path=dataURL.substring(components[4],components[5]);
+		return getDataURLBytesInternal(path);
+	}
+
+	private static String getDataURLContentTypeInternal(String dataPath){
+		StringBuilder builder=new StringBuilder();
+		HeaderParser.skipDataUrlContentType(dataPath,0,dataPath.length(),builder);
+		return builder.toString();
+	}
+
+
+	private static byte[] getDataURLBytesInternal(String dataPath){
+		// assumes "data" consists of just the path extracted from a URL/URI
+		int index=HeaderParser.skipDataUrlContentType(dataPath, 0,dataPath.length(),null);
+		boolean base64=false;
+		if(dataPath.startsWith(";base64,",index)){
+			index+=7;
+			base64=true;
+		}
+		if(index<dataPath.length() && dataPath.charAt(index)==','){
+			index++;
+			ByteList mos=new ByteList();
+			int len=dataPath.length();
+			for(int j=index;j<len;j++){
+				int c=dataPath.charAt(j);
+				// matches productions "unreserved" and
+				// "reserved" of RFC2396, including 
+				// '?' (even though it delimits
+				// a query string, which is allowed in all
+				// URIs as of RFC3986)
+				if(!((c&0x7F)==c && "-_.!~*'();/:@&=+$,?".indexOf((char)c)>=0) &&
+						!(c>='A' && c<='Z') &&
+						!(c>='a' && c<='z') &&
+						!(c>='0' && c<='9'))
+					return null;
+				// matches percent-encoded characters
+				// (production "escaped" of RFC2396)
+				if(c=='%'){
+					if(index+2<len){
+						int a=HeaderParser.toHexNumber(dataPath.charAt(index+1));
+						int b=HeaderParser.toHexNumber(dataPath.charAt(index+2));
+						if(a>=0 && b>=0){
+							mos.append((byte) (a*16+b));
+							index+=2;
+							continue;
+						}
+					}
+				}
+				mos.append((byte) (c&0xFF));
+			}
+			byte[] retval=mos.toByteArray();
+			if(base64){
+				try {
+					return Base64.decode(retval);
+				} catch (IOException e) {
+					return null;
+				}
+			}
+			return retval;
+		} else
+			return null;
+	}
+
+	 static int skipDataUrlContentType(
+			String str, int index, StringBuilder builder){
+		if(str==null)return index;
+		return skipDataUrlContentType(str,index,str.length(),builder);
+	}
+
+	 static int skipDataUrlContentType(
 			String str, int index, int endIndex, StringBuilder builder){
 		if(str==null)return index;
 		int startIndex=index;
@@ -994,10 +1094,18 @@ public final class HeaderParser {
 		}
 		return index;
 	}
+	 static int skipQuotedPairSMTP(String s, int index, int endIndex){
+		if(index+1<endIndex && s.charAt(index)=='\\'){
+			char c=s.charAt(index+1);
+			if((c>=0x20 && c<=0x7e))
+				return index+2;
+		}
+		return index;
+	}
 	/* quoted-string (RFC5322 sec. 3.2.4) */
 	 static int skipQuotedString(String s, int index,
 			int endIndex, StringBuilder builder){
-		return skipQuotedString(s,index,endIndex,builder,false);
+		return skipQuotedString(s,index,endIndex,builder,QuotedStringRule.Rfc5322);
 	}
 
 	private static int skipCtextOrQuotedPairOrComment(String s, int index, int endIndex){
@@ -1013,22 +1121,72 @@ public final class HeaderParser {
 		if(index!=i2)return i2;
 		return i2;
 	}
+	
+	private static int skipSubdomain(
+			String s, int index, int endIndex, StringBuilder builder,
+			boolean canBeginWithHyphen){		
+		if(index>=endIndex)return index;
+		boolean hyphen=false;
+		boolean haveString=false;
+		while(index<endIndex){
+			char c=s.charAt(index);
+			if(c=='-'){
+				hyphen=true;
+				if(!haveString && !canBeginWithHyphen)return index;
+				if(builder!=null)builder.append(c);
+				index++;
+				haveString=true;
+			} else if((c>='A' && c<='Z') || (c>='a' && c<='z') || (c>='0' && c<='9')){
+				hyphen=false;
+				if(builder!=null)builder.append(c);
+				index++;
+				haveString=true;
+			} else {
+				break;
+			}
+		}
+		if(hyphen){
+			if(builder!=null)builder.setLength(builder.length()-1);
+			index--;
+		}
+		return index;
+	}
 
-	private static int skipQtextOrQuotedPair(String s, int index, int endIndex, boolean httpRules){
+	private static int skipQtextOrQuotedPair(
+			String s, int index, int endIndex, QuotedStringRule rule){
 		if(index>=endIndex)return index;
 		int i2;
-		if(httpRules){
+		if(rule==QuotedStringRule.Http){
 			char c=s.charAt(index);
 			if(c<0x100 && c>=0x21 && c!='\\' && c!='"')
 				return index+1;
-		} else {
+			i2=skipQuotedPair(s,index,endIndex);
+			if(index!=i2)return i2;
+			return i2;
+		} else if(rule==QuotedStringRule.Rfc5322){
 			i2=skipQtext(s,index,endIndex);
 			if(index!=i2)return i2;
 			index=i2;
+			i2=skipQuotedPair(s,index,endIndex);
+			if(index!=i2)return i2;
+			return i2;
+		} else if(rule==QuotedStringRule.Smtp){
+			char c=s.charAt(index);
+			if(c>=0x20 && c<=0x7E && c!='\\' && c!='"')
+				return index+1;
+			i2=skipQuotedPairSMTP(s,index,endIndex);
+			if(index!=i2)return i2;
+			return i2;			
+		} else {
+			throw new IllegalArgumentException(rule==null ? "" : rule.toString());
 		}
-		i2=skipQuotedPair(s,index,endIndex);
-		if(index!=i2)return i2;
-		return i2;
+	}
+	
+	
+	private enum QuotedStringRule {
+		Http,
+		Rfc5322,
+		Smtp // RFC5321
 	}
 
 	 static int skipQuotedString(
@@ -1036,41 +1194,53 @@ public final class HeaderParser {
 			int index,
 			int endIndex,
 			StringBuilder builder, // receives the unescaped version of the string
-			boolean httpRules // true: use RFC2616 (HTTP/1.1) rules; false: use RFC5322 rules
-			){
+			QuotedStringRule rule // rule to follow for quoted string
+	){
 		int startIndex=index;
-		boolean haveString=false;
-		index=(httpRules) ? index : skipCFWS(s,index,endIndex);
-		if(!(index<endIndex && s.charAt(index)=='"'))
+		int bLength=(builder==null) ? 0 : builder.length();
+		index=(rule!=QuotedStringRule.Rfc5322) ? index : skipCFWS(s,index,endIndex);
+		if(!(index<endIndex && s.charAt(index)=='"')){
+			if(builder!=null)builder.delete(bLength,builder.length());
 			return startIndex; // not a valid quoted-string
+		}
 		index++;
 		while(index<endIndex){
-			int i2=(httpRules) ? skipLws(s,index,endIndex,builder) : skipFws(s,index,endIndex,builder);
-			if(i2!=index) {
-				haveString=true;
-			}
+			int i2=index;
+			if(rule==QuotedStringRule.Http)
+				i2=skipLws(s,index,endIndex,builder);
+			else if(rule==QuotedStringRule.Rfc5322)
+				i2=skipFws(s,index,endIndex,builder);
 			index=i2;
 			char c=s.charAt(index);
 			if(c=='"'){ // end of quoted-string
 				index++;
-				// RFC5322 requires at least one character in a quoted string
-				// (although the published production for quoted-string is wrong
-				// according to an erratum)
-				if(!haveString && !httpRules)return startIndex;
-				return (httpRules) ? index : skipCFWS(s,index,endIndex);
+				if(rule==QuotedStringRule.Rfc5322)
+					return skipCFWS(s,index,endIndex);
+				else 
+					return index;
 			}
 			int oldIndex=index;
-			index=skipQtextOrQuotedPair(s,index,endIndex,httpRules);
-			if(index==oldIndex)return startIndex;
-			haveString=true;
+			index=skipQtextOrQuotedPair(s,index,endIndex,rule);
+			if(index==oldIndex){
+				if(builder!=null)builder.delete(bLength,builder.length());
+				return startIndex;
+			}
 			if(builder!=null){
 				// this is a qtext or quoted-pair, so
 				// append the last character read
 				builder.append(s.charAt(index-1));
 			}
 		}
+		if(builder!=null)builder.delete(bLength,builder.length());
 		return startIndex; // not a valid quoted-string
 	}
+
+	private static boolean isAtext(char c){
+		return (c>='A' && c<='Z') ||
+				(c>='a' && c<='z')  ||
+				((c&0x7F)==c && "0123456789!#$%&'*+-/=?^_`{}|~".indexOf(c)>=0);
+	}
+
 	/* atom (RFC5322 sec. 3.2.3) */
 	 static int skipAtom(String s, int index,
 			int endIndex, StringBuilder builder){
@@ -1079,9 +1249,7 @@ public final class HeaderParser {
 		boolean haveAtom=false;
 		while(index<endIndex){
 			char c=s.charAt(index);
-			if((c>='A' && c<='Z') ||
-					(c>='a' && c<='z')  ||
-					((c&0x7F)==c && "0123456789!#$%&'*+-/=?^_`{}|~".indexOf(c)>=0)){
+			if(isAtext(c)){
 				if(builder!=null) {
 					builder.append(c);
 				}
@@ -1094,13 +1262,531 @@ public final class HeaderParser {
 		}
 		return (haveAtom) ? index : startIndex;
 	}
-
-	/* dot-atom (RFC5322 sec. 3.2.3) */
-	/*  currently not used
-	 static int skipDotAtom(String s, int index,
-	 			int endIndex, StringBuilder builder){
+	/*
+	 */
+	/* domain-literal (RFC5322 sec. 3.2.3) */
+	 static int skipDomainLiteral(String s, int index,
+			int endIndex, StringBuilder builder, boolean allowObsolete){
 		int startIndex=index;
+		int bLength=(builder==null) ? 0 : builder.length();
 		index=skipCFWS(s,index,endIndex);
+		if(index>=endIndex || s.charAt(index)!='['){
+			return startIndex;
+		}
+		if(builder!=null)builder.append('[');
+		index++;
+		while(index<endIndex){
+			index=skipFws(s,index,endIndex);
+			char c=s.charAt(index);
+			if(c==']'){
+				if(builder!=null)builder.append(']');
+				return skipCFWS(s,index,endIndex);
+			}
+			// dtext
+			if((c>=33 && c<=90) ||
+					(c>=94 && c<=126) ){
+				if(builder!=null) {
+					builder.append(c);
+				}
+				index++;
+				continue;
+			}
+			if(allowObsolete){
+				// obs-dtext
+				if(c=='\\'){
+					int i2=skipQuotedPair(s,index,endIndex);
+					if(index==i2){
+						if(builder!=null) {
+							builder.setLength(bLength);
+						}
+						return startIndex;  
+					}
+					if(builder!=null) {
+						c=s.charAt(i2-1); // get quoted character
+						// escape '[', ']', whitespace, control
+						// characters, and '\'
+						if(c<33 || c==127 || c=='[' || c==']' || c=='\\'){
+							builder.append('\\');
+						}
+						builder.append(c);
+					}
+					index=i2;
+					continue;
+				} else if(c==127 || (c<0x20 && c!=9 && c!=10 && c!=13)){
+					// control character other than whitespace
+					if(builder!=null) {
+						builder.append('\\'); // would be escaped
+						builder.append(c);
+					}
+					index++;
+					continue;        
+				}
+			}
+			// not a valid domain-literal
+			break;
+		}
+		// not a valid domain-literal
+		if(builder!=null) {
+			builder.setLength(bLength);
+		}
+		return startIndex;
+	}
+
+	/* word (RFC5322 sec 3.2.5) */
+	static int skipWord(String s, int index,
+			int endIndex, StringBuilder builder){
+		int i2=skipAtom(s,index,endIndex,builder);
+		if(i2!=index)return i2;
+		i2=skipQuotedString(s,index,endIndex,builder,QuotedStringRule.Rfc5322);
+		return i2;
+	}
+	
+	static int skipMailboxRfc5321(String s, int index, int endIndex, StringBuilder builder){
+		int i2=index;
+		int startIndex=index;
+		int bLength=(builder==null) ? 0 : builder.length();
+		i2=skipLocalPartSMTP(s,index,endIndex,builder);
+		if(i2==index){
+			if(builder!=null)builder.setLength(bLength);
+			return startIndex;
+		}
+		if(i2-index>64){
+			// local part too long
+			if(builder!=null)builder.setLength(bLength);
+			return startIndex;
+		}
+		if(i2>=endIndex || s.charAt(i2)!='@'){
+			if(builder!=null)builder.setLength(bLength);
+			return startIndex;
+		}
+		i2++;
+		index=i2;
+		if(builder!=null)builder.append('@');
+		i2=skipDomainSMTP(s,index,endIndex,builder);
+		if(i2!=index){
+			if(i2-index>255){
+				// domain too long
+				if(builder!=null)builder.setLength(bLength);
+				return startIndex;
+			}
+			return i2;
+		}
+		int afterAt=i2;
+		if(i2>=endIndex || s.charAt(i2)!='['){
+			if(builder!=null)builder.setLength(bLength);
+			return startIndex;
+		}
+		i2++;
+		index=i2;
+		i2=parseIPLiteral(s,index,endIndex);
+		if(i2<0){
+			if(builder!=null)builder.setLength(bLength);
+			return startIndex;
+		}
+		if(i2-afterAt>255){
+			// domain too long
+			if(builder!=null)builder.setLength(bLength);
+			return startIndex;
+		}
+		if(builder!=null){
+			// append domain literal
+			builder.append('[');
+			builder.append(s.substring(index,i2));
+		}
+		return i2;
+	}
+	
+	/**
+	 * Determines whether the string is a well-formed
+	 * email address under the Simple Mail Transfer Protocol,
+	 * RFC5321 (matching the production "Mailbox" in section
+	 * 4.1.2).  Note that only ASCII characters are allowed
+	 * in a mailbox string under that specification.
+	 * Length restrictions on "local parts" and "domains"
+	 * are checked under section 4.5.3.
+	 * 
+	 * @param s a string to check
+	 * @return true if the string is a well-formed
+	 * mailbox under SMTP, or false otherwise.
+	 */
+	public static boolean isWellFormedMailbox(String s){
+		if(s==null)return false;
+		int idx=skipMailboxRfc5321(s,0,s.length(),null);
+		return (idx==s.length());
+	}
+	
+	static boolean isValidAddrSpecRfc5322(String s){
+		if(s==null)return false;
+		StringBuilder loc=new StringBuilder();
+		StringBuilder dom=new StringBuilder();
+		int index=skipAddrSpec(s,0,s.length(),loc,dom);
+		if(index!=s.length())return false;
+		String locString=loc.toString();
+		String domString=dom.toString();
+		if(locString.length()==0)
+			return false;
+		if(domString.length()==0)
+			return false;
+		return true;
+	}
+
+	/* obs-domain (RFC5322 sec 4.4) */
+	static int skipObsDomain(String s, int index, int endIndex, StringBuilder builder){
+		int startIndex=index;
+		int i2=skipAtom(s,index,endIndex,builder);
+		if(i2==index)return startIndex;
+		StringBuilder tmpbuilder=(builder==null) ? null : new StringBuilder();
+		while(true){
+			index=i2;
+			if(index>=endIndex || s.charAt(index)!='.'){
+				return index;
+			}
+			int i3=index+1;
+			if(tmpbuilder!=null)tmpbuilder.setLength(0);
+			i2=skipAtom(s,i3,endIndex,tmpbuilder);
+			if(i2==i3)return index;
+			if(builder!=null){
+				builder.append('.');
+				builder.append(tmpbuilder.toString());
+			}
+		}
+	}
+
+	/* obs-local-part (RFC5322 sec 4.4) */
+	static int skipObsLocalPart(String s, int index, int endIndex, StringBuilder builder){
+		int startIndex=index;
+		int i2=skipWord(s,index,endIndex,builder);
+		if(i2==index)return startIndex;
+		StringBuilder tmpbuilder=(builder==null) ? null : new StringBuilder();
+		while(true){
+			index=i2;
+			if(index>=endIndex || s.charAt(index)!='.'){
+				return index;
+			}
+			int i3=index+1;
+			if(tmpbuilder!=null)tmpbuilder.setLength(0);
+			i2=skipWord(s,i3,endIndex,tmpbuilder);
+			if(i2==i3)return index;
+			if(builder!=null){
+				builder.append('.');
+				builder.append(tmpbuilder.toString());
+			}
+		}
+	}
+	
+
+	static int skipDomainSMTP(String s, int index, int endIndex, StringBuilder builder){
+		int startIndex=index;
+		int i2=skipSubdomain(s,index,endIndex,builder,false);
+		if(i2==index)return startIndex;
+		StringBuilder tmpbuilder=(builder==null) ? null : new StringBuilder();
+		while(true){
+			index=i2;
+			if(index>=endIndex || s.charAt(index)!='.'){
+				return index;
+			}
+			int i3=index+1;
+			if(tmpbuilder!=null)tmpbuilder.setLength(0);
+			i2=skipSubdomain(s,i3,endIndex,tmpbuilder,false);
+			if(i2==i3)return index;
+			if(builder!=null){
+				builder.append('.');
+				builder.append(tmpbuilder.toString());
+			}
+		}
+	}
+
+	private static int getDecOctetSMTPLength(String s, int index,
+			int endOffset, int c, int delim){
+		if(c>='0' && c<='9' && index+2<endOffset &&
+				(s.charAt(index+1)>='0' && s.charAt(index+1)<='9') &&
+				s.charAt(index+2)==delim){
+			return 3;
+		}
+		else if(c=='2' && index+3<endOffset &&
+				(s.charAt(index+1)=='5') &&
+				(s.charAt(index+2)>='0' && s.charAt(index+2)<='5') &&
+				s.charAt(index+3)==delim)
+			return 4;
+		else if(c=='2' && index+3<endOffset &&
+				(s.charAt(index+1)>='0' && s.charAt(index+1)<='4') &&
+				(s.charAt(index+2)>='0' && s.charAt(index+2)<='9') &&
+				s.charAt(index+3)==delim)
+			return 4;
+		else if((c=='0' || c=='1') && index+3<endOffset &&
+				(s.charAt(index+1)>='0' && s.charAt(index+1)<='9') &&
+				(s.charAt(index+2)>='0' && s.charAt(index+2)<='9') &&
+				s.charAt(index+3)==delim)
+			return 4;
+		else if(c>='0' && c<='9' && index+1<endOffset &&
+				s.charAt(index+1)==delim)
+			return 2;
+		else return 0;
+	}
+
+	private static int parseDecOctetSMTP(String s, int index,
+			int endOffset, int c, int delim){
+		if(c>='0' && c<='9' && index+2<endOffset &&
+				(s.charAt(index+1)>='0' && s.charAt(index+1)<='9') &&
+				s.charAt(index+2)==delim){
+			return (c-'0')*10+(s.charAt(index+1)-'0');
+		}
+		else if(c=='2' && index+3<endOffset &&
+				(s.charAt(index+1)=='5') &&
+				(s.charAt(index+2)>='0' && s.charAt(index+2)<='5') &&
+				s.charAt(index+3)==delim)
+			return 250+(s.charAt(index+2)-'0');
+		else if(c=='2' && index+3<endOffset &&
+				(s.charAt(index+1)>='0' && s.charAt(index+1)<='4') &&
+				(s.charAt(index+2)>='0' && s.charAt(index+2)<='9') &&
+				s.charAt(index+3)==delim)
+			return 200+(s.charAt(index+1)-'0')*10+(s.charAt(index+2)-'0');
+		else if((c=='0' || c=='1') && index+3<endOffset &&
+				(s.charAt(index+1)>='0' && s.charAt(index+1)<='9') &&
+				(s.charAt(index+2)>='0' && s.charAt(index+2)<='9') &&
+				s.charAt(index+3)==delim)
+			return 100+(s.charAt(index+1)-'0')*10+(s.charAt(index+2)-'0');
+		else if(c>='0' && c<='9' && index+1<endOffset &&
+				s.charAt(index+1)==delim)
+			return (c-'0');
+		else return -1;
+	}
+
+	private static boolean isHexChar(char c) {
+		return ((c>='a' && c<='f') ||
+				(c>='A' && c<='F') ||
+				(c>='0' && c<='9'));
+	}
+
+	 static int parseIPLiteral(String s, int offset, int endOffset){
+		int index=offset;
+		if(offset==endOffset)
+			return -1;
+		// Assumes that the character before offset
+		// is a '['
+		if(index+5<endOffset &&
+				(s.charAt(index)=='i' ||s.charAt(index)=='I') &&
+				(s.charAt(index+1)=='p' ||s.charAt(index+1)=='P') &&
+				(s.charAt(index+2)=='v' ||s.charAt(index+2)=='V') &&
+				(s.charAt(index+3)=='6' ||s.charAt(index+3)=='6') &&
+				(s.charAt(index+4)==':') &&
+				(s.charAt(index+5)==':' || isHexChar(s.charAt(index+5)))){
+			// IPv6 Address
+			int phase1=0;
+			int phase2=0;
+			boolean phased=false;
+			boolean expectHex=false;
+			boolean expectColon=false;
+			index+=5;
+			while(index<endOffset){
+				char c=s.charAt(index);
+				//DebugUtility.log("%c %d",c,(phase1+(phased ? 1 : 0)+phase2));
+				if(c==':' && !expectHex){
+					if((phase1+(phased ? 2 : 0)+phase2)>=8)
+						return -1;
+					index++;
+					if(index<endOffset && s.charAt(index)==':'){
+						if(phased)return -1;
+						phased=true;
+						index++;
+					}
+					expectHex=true;
+					expectColon=false;
+					//		DebugUtility.log("colon %d [%d %d] %s",
+						//		phase1+(phased ? 1 : 0)+phase2,phase1,phase2,s.substring(index));
+					continue;
+				} else if((c>='0' && c<='9') && !expectColon &&
+						(phased || (phase1+(phased ? 2 : 0)+phase2)==6)){
+					// Check for IPv4 address
+					int decOctet=parseDecOctetSMTP(s,index,endOffset,c,'.');
+					if(decOctet>=0){
+						if((phase1+(phased ? 2 : 0)+phase2)>6)
+							// IPv4 address illegal at this point
+							//DebugUtility.log("Illegal IPv4");
+							return -1;
+						else {
+							// Parse the rest of the IPv4 address
+							phase2+=2;
+							if(decOctet>=100) {
+								index+=4;
+							} else if(decOctet>=10) {
+								index+=3;
+							} else {
+								index+=2;
+							}
+							decOctet=parseDecOctetSMTP(s,index,endOffset,
+									(index<endOffset) ? s.charAt(index) : '\0','.');
+							if(decOctet>=100) {
+								index+=4;
+							} else if(decOctet>=10) {
+								index+=3;
+							} else if(decOctet>=0) {
+								index+=2;
+							} else return -1;
+							decOctet=parseDecOctetSMTP(s,index,endOffset,
+									(index<endOffset) ? s.charAt(index) : '\0','.');
+							if(decOctet>=100) {
+								index+=4;
+							} else if(decOctet>=10) {
+								index+=3;
+							} else if(decOctet>=0) {
+								index+=2;
+							} else return -1;
+							decOctet=parseDecOctetSMTP(s,index,endOffset,
+									(index<endOffset) ? s.charAt(index) : '\0',']');
+							if(decOctet>=100) {
+								index+=3;
+							} else if(decOctet>=10) {
+								index+=2;
+							} else if(decOctet>=0) {
+								index+=1;
+							} else return -1;
+							break;
+						}
+					}
+				}
+				if(isHexChar(c) && !expectColon){
+					if(phased){
+						phase2++;
+					} else {
+						phase1++;
+					}
+					index++;
+					for(int i=0;i<3;i++){
+						if(index<endOffset && isHexChar(s.charAt(index))) {
+							index++;
+						} else {
+							break;
+						}
+					}
+					expectHex=false;
+					expectColon=true;
+				} else {
+					break;
+				}
+			}
+			//DebugUtility.log("%s %s %s | %s",phased,phase1,phase2,s);
+			if((phase1+phase2)!=8 && !phased)
+				return -1;
+			if((phase1+2+phase2)>8 && phased)
+				return -1;
+			if(index>=endOffset)return -1;
+			if(s.charAt(index)!=']')
+				return -1;
+			index++;
+			return index;
+		}
+		int i2=skipSubdomain(s,index,endOffset,null,true);
+		if(i2!=index){
+			if(i2<endOffset && s.charAt(i2)==':'){
+				i2=i2+1;
+				// future extension
+				boolean haveString=false;
+				while(i2<endOffset){
+					char c=s.charAt(i2);
+					if(c==']'){
+						if(haveString)return i2+1;
+						break;
+					} else if((c>=33 && c<=90) || (c>=94 && c<=126)){
+						haveString=true;
+						i2++;
+					} else {
+						break;
+					}
+				}
+			}
+		}
+		if(s.charAt(index)>='0' && s.charAt(index)<='9'){
+			// IPv4 address
+			char c=s.charAt(index);
+			int decOctet=parseDecOctetSMTP(s,index,endOffset,c,'.');
+			if(decOctet<0)return -1;
+			index+=getDecOctetSMTPLength(s,index,endOffset,c,'.');
+			decOctet=parseDecOctetSMTP(s,index,endOffset,
+					(index<endOffset) ? s.charAt(index) : '\0','.');
+			if(decOctet<0)return -1;
+			index+=getDecOctetSMTPLength(s,index,endOffset,
+					(index<endOffset) ? s.charAt(index) : '\0','.');
+			decOctet=parseDecOctetSMTP(s,index,endOffset,
+					(index<endOffset) ? s.charAt(index) : '\0','.');
+			if(decOctet<0)return -1;
+			index+=getDecOctetSMTPLength(s,index,endOffset,
+					(index<endOffset) ? s.charAt(index) : '\0','.');
+			decOctet=parseDecOctetSMTP(s,index,endOffset,
+					(index<endOffset) ? s.charAt(index) : '\0',']');
+			if(decOctet<0)return -1;
+			index+=getDecOctetSMTPLength(s,index,endOffset,
+					(index<endOffset) ? s.charAt(index) : '\0',']');
+			return index;
+		}
+		return -1;
+	}
+
+	
+	/* addr-spec (RFC5322 sec 3.41) */
+	 static int skipAddrSpec(
+			String s, 
+			int index, 
+			int endIndex, 
+			StringBuilder builderLocal,
+			StringBuilder builderDomain
+			){
+		int startIndex=index;
+		int bLength=(builderLocal==null) ? 0 : builderLocal.length();
+		int domLength=(builderDomain==null) ? 0 : builderDomain.length();
+		int i2=skipLocalPart(s,index,endIndex,builderLocal);
+		if(i2==index)return startIndex;
+		index=i2;
+		if(index>=endIndex || s.charAt(index)!='@'){
+			if(builderLocal!=null)builderLocal.setLength(bLength);
+			if(builderDomain!=null)builderDomain.setLength(domLength);
+			return startIndex;
+		}
+		index++;
+		// NOTE: if builderDomain contains a domain literal,
+		// the "\\" escapes characters not allowed in the
+		// production "dtext" (except obs-dtext) under RFC5322
+		i2=skipDomain(s,index,endIndex,builderDomain);
+		if(i2==index){
+			if(builderLocal!=null)builderLocal.setLength(bLength);
+			if(builderDomain!=null)builderDomain.setLength(domLength);
+			return startIndex;
+		}
+		return i2;
+	}
+	/* domain (RFC5322 sec 3.4.1) */
+	static int skipDomain(String s, int index, int endIndex, StringBuilder builder){
+		int i2=skipDomainLiteral(s,index,endIndex,builder,true);
+		if(i2!=index)return i2;
+		// NOTE: obs-domain includes dot-atom
+		i2=skipObsDomain(s,index,endIndex,builder);
+		return i2;
+	}
+
+	/* local-part (RFC5322 sec 3.4.1) */
+	static int skipLocalPart(String s, int index, int endIndex, StringBuilder builder){
+		int i2=skipDotAtom(s,index,endIndex,builder);
+		if(i2!=index)return i2;
+		// NOTE: obs-local-part includes quoted-string
+		i2=skipObsLocalPart(s,index,endIndex,builder);
+		return i2;
+	}
+	/* Local-part (RFC5321 sec 4.1.2) */
+	static int skipLocalPartSMTP(String s, int index, int endIndex, StringBuilder builder){
+		int i2=skipDotAtom(s,index,endIndex,builder,false);
+		if(i2!=index)return i2;
+		i2=skipQuotedString(s,index,endIndex,builder,QuotedStringRule.Smtp);
+		return i2;
+	}
+	static int skipDotAtom(String s, int index,
+			int endIndex, StringBuilder builder){
+		return skipDotAtom(s,index,endIndex,builder,true);
+	}
+	/* dot-atom (RFC5322 sec. 3.2.3) */
+	static int skipDotAtom(String s, int index,
+			int endIndex, StringBuilder builder,boolean withCFWS){
+		int startIndex=index;
+		index=(withCFWS) ? skipCFWS(s,index,endIndex) : index;
 		boolean haveAtom=false;
 		boolean haveDot=false;
 		while(index<endIndex){
@@ -1108,35 +1794,37 @@ public final class HeaderParser {
 			if(c=='.'){
 				// in case of "x..y"
 				if(haveDot){
-					builder.delete(builder.length()-1,1);
+					if(builder!=null)builder.delete(builder.length()-1,builder.length());
 					return index-1; // index of previous dot
 				}
 				// in case of ".y"
 				if(!haveAtom)return startIndex;
 				if(builder!=null)builder.append(c);
 				haveDot=true;
+				index++;
 				continue;
 			}
-			if((c>='A' && c<='Z') ||
-					(c>='a' && c<='z')  ||
-					((c&0x7F)==c && "0123456789!#$%&'*+-/=?^_`{}|~".indexOf((char)c)>=0)){
+			if(isAtext(c)){
 				if(builder!=null)builder.append(c);
 				index++;
 				haveAtom=true;
 				haveDot=false;
-			}else {
+			} else {
 				if(!haveAtom)return startIndex;
 				if(haveDot){
 					// move index to the dot
-					builder.delete(builder.length()-1,1);
+					if(builder!=null)builder.delete(builder.length()-1,builder.length());
 					return index-1;
 				}
-				return skipCFWS(s,index,endIndex);
+				return (withCFWS) ? skipCFWS(s,index,endIndex) : index;
 			}
+		}
+		if(haveDot && haveAtom){
+			if(builder!=null)builder.delete(builder.length()-1,builder.length());
+			index--;
 		}
 		return (haveAtom) ? index : startIndex;
 	}
-	 */
 	/* ctext (RFC5322 sec. 3.2.1) */
 	 static int skipCtext(String s, int index, int endIndex){
 		if(index<endIndex){
@@ -1163,10 +1851,10 @@ public final class HeaderParser {
 	}
 	/* comment (RFC5322 sec. 3.2.1) */
 	 static int skipComment(String s, int index, int endIndex){
+		int startIndex=index;
 		if(!(index<endIndex && s.charAt(index)=='('))
 			return index;
 		index++;
-		int startIndex=0;
 		while(index<endIndex){
 			index=skipFws(s,index,endIndex);
 			char c=s.charAt(index);
@@ -1485,11 +2173,14 @@ public final class HeaderParser {
 	 */
 	 static int skipCFWS(String s, int index, int endIndex){
 		int retIndex=index;
+		int startIndex=index;
 		while(index<endIndex){
 			index=skipFws(s,index,endIndex);
+			assert index>=startIndex;
 			retIndex=index;
 			int oldIndex=index;
 			index=skipComment(s,index,endIndex);
+			assert index>=startIndex;
 			if(index==oldIndex)return retIndex;
 			retIndex=index;
 		}
@@ -1565,7 +2256,8 @@ public final class HeaderParser {
 		return ret;
 	}
 	private static String getMimeParameterRaw(
-			String data, int index, int endIndex, String parameter, boolean httpRules){
+			String data, int index, int endIndex, 
+			String parameter, boolean httpRules){
 		if(data==null || parameter==null)
 			return null;
 		if((endIndex-index)<parameter.length())
@@ -1606,7 +2298,9 @@ public final class HeaderParser {
 				return "";
 			builder.delete(0,builder.length());
 			// try getting the value quoted
-			int qs=skipQuotedString(data,index,endIndex,isToken ? builder : null,httpRules);
+			int qs=skipQuotedString(
+					data,index,endIndex,isToken ? builder : null,
+							httpRules ? QuotedStringRule.Http : QuotedStringRule.Rfc5322);
 			if(qs!=index){
 				if(isToken)
 					return builder.toString();
@@ -1677,7 +2371,8 @@ public final class HeaderParser {
 			if(index>=endIndex)
 				return false;
 			// try getting the value quoted
-			int qs=skipQuotedString(data,index,endIndex,null,httpRules);
+			int qs=skipQuotedString(data,index,endIndex,null,
+					httpRules ? QuotedStringRule.Http : QuotedStringRule.Rfc5322);
 			if(qs!=index){
 				index=qs;
 				continue;

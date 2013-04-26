@@ -286,7 +286,7 @@ public class RDFa implements IRDFParser {
 		return true;
 	}
 	private static boolean isValidCurieReference(String s, int offset, int length){
-		return URIUtility.isValidCurieReference(s, offset, length, false);
+		return URIUtility.isValidCurieReference(s, offset, length);
 	}
 
 	private static String[] splitPrefixList(String s){
