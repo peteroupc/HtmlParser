@@ -36,6 +36,10 @@ class Document extends Node implements IDocument {
 	 String encoding;
 	private DocumentMode docmode=DocumentMode.NoQuirksMode;
 
+	 String address;
+
+	 String defaultLanguage;
+
 	 Document() {
 		super(NodeType.DOCUMENT_NODE);
 	}
@@ -51,6 +55,7 @@ class Document extends Node implements IDocument {
 			collectElements(node,s,nodes);
 		}
 	}
+
 
 	private void collectElementsHtml(INode c, String s,
 			String sLowercase, List<IElement> nodes){
@@ -75,11 +80,11 @@ class Document extends Node implements IDocument {
 		return (encoding==null) ? "utf-8" : encoding;
 	}
 
-
 	@Override
 	public IDocumentType getDoctype(){
 		return doctype;
 	}
+
 
 	@Override
 	public IElement getDocumentElement() {
@@ -104,8 +109,6 @@ class Document extends Node implements IDocument {
 		}
 		return null;
 	}
-
-
 	@Override
 	public List<IElement> getElementsByTagName(String tagName) {
 		if(tagName==null)
@@ -123,14 +126,28 @@ class Document extends Node implements IDocument {
 		return ret;
 	}
 
+	@Override public  String getLanguage(){
+		return (defaultLanguage==null) ? "" : defaultLanguage;
+	}
+
 	 DocumentMode getMode() {
 		return docmode;
 	}
+
+	@Override
+	public  String getNodeName(){
+		return "#document";
+	}
+
 	@Override
 	public  IDocument getOwnerDocument(){
 		return null;
 	}
 
+	@Override
+	public String getURL() {
+		return address;
+	}
 	 boolean isHtmlDocument(){
 		return true;
 	}
@@ -161,23 +178,6 @@ class Document extends Node implements IDocument {
 			}
 		}
 		return builder.toString();
-	}
-
-	@Override
-	public  String getNodeName(){
-		return "#document";
-	}
-
-	 String address;
-	 String defaultLanguage;
-
-	@Override
-	public String getURL() {
-		return address;
-	}
-
-	@Override public  String getLanguage(){
-		return (defaultLanguage==null) ? "" : defaultLanguage;
 	}
 
 }

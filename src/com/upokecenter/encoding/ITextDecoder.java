@@ -35,6 +35,32 @@ import java.io.InputStream;
  */
 public interface ITextDecoder {
 	/**
+	 * Gets a single Unicode character from the input stream.
+	 * @param stream an input stream.
+	 * @return a Unicode character, or -1 if the end of the
+	 * stream is reached.
+	 * @throws IOException if the stream's current input cannot
+	 * be converted to a Unicode character, or if another I/O error
+	 * occurs
+	 */
+	public int decode(InputStream stream) throws IOException;
+	/**
+	 * Gets a single Unicode character from the input stream.
+	 * @param stream an input stream.
+	 * @param error an error handler to use if the stream's
+	 * current input cannot be converted to a Unicode character.
+	 * When that happens, this object's emitDecoderError method is called.
+	 * Currently, for objects provided in this package that implement
+	 * this interface, if emitDecoderError emits more than one Unicode
+	 * character, this method returns only the first of those characters;
+	 * the remaining characters are ignored.  If that method emits
+	 * no characters, this method goes on with the next bytes in the input.
+	 * @return a Unicode character, or -1 if the end of the
+	 * stream is reached.
+	 * @throws IOException if an I/O error occurs.
+	 */
+	public int decode(InputStream stream, IEncodingError error) throws IOException;
+	/**
 	 * Converts bytes from a byte stream into Unicode characters.
 	 * @param stream an input stream containing the encoded bytes
 	 * @param buffer an array
@@ -68,30 +94,4 @@ public interface ITextDecoder {
 	 * @throws IOException if an I/O error occurs.
 	 */
 	public int decode(InputStream stream, int[] buffer, int offset, int length, IEncodingError error) throws IOException;
-	/**
-	 * Gets a single Unicode character from the input stream.
-	 * @param stream an input stream.
-	 * @return a Unicode character, or -1 if the end of the
-	 * stream is reached.
-	 * @throws IOException if the stream's current input cannot
-	 * be converted to a Unicode character, or if another I/O error
-	 * occurs
-	 */
-	public int decode(InputStream stream) throws IOException;
-	/**
-	 * Gets a single Unicode character from the input stream.
-	 * @param stream an input stream.
-	 * @param error an error handler to use if the stream's
-	 * current input cannot be converted to a Unicode character.
-	 * When that happens, this object's emitDecoderError method is called.
-	 * Currently, for objects provided in this package that implement
-	 * this interface, if emitDecoderError emits more than one Unicode
-	 * character, this method returns only the first of those characters;
-	 * the remaining characters are ignored.  If that method emits
-	 * no characters, this method goes on with the next bytes in the input.
-	 * @return a Unicode character, or -1 if the end of the
-	 * stream is reached.
-	 * @throws IOException if an I/O error occurs.
-	 */
-	public int decode(InputStream stream, IEncodingError error) throws IOException;
 }

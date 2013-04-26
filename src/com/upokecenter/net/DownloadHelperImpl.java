@@ -49,13 +49,16 @@ import com.upokecenter.util.Reflection;
 import com.upokecenter.util.StringUtility;
 
 final class DownloadHelperImpl {
-	private DownloadHelperImpl(){}
-
 	private static class HttpHeaders implements IHttpHeaders {
 
 		URLConnection connection;
 		public HttpHeaders(URLConnection connection){
 			this.connection=connection;
+		}
+
+		@Override
+		public String getHeaderField(int name) {
+			return connection.getHeaderField(name);
 		}
 
 		@Override
@@ -75,30 +78,13 @@ final class DownloadHelperImpl {
 		}
 
 		@Override
-		public String getHeaderField(int name) {
-			return connection.getHeaderField(name);
+		public long getHeaderFieldDate(String field, long defaultValue) {
+			return connection.getHeaderFieldDate(field,defaultValue);
 		}
 
 		@Override
 		public String getHeaderFieldKey(int name) {
 			return connection.getHeaderFieldKey(name);
-		}
-
-		@Override
-		public int getResponseCode() {
-			try {
-				if(connection instanceof HttpURLConnection)
-					return (((HttpURLConnection)connection).getResponseCode());
-				else
-					return 0;
-			} catch (IOException e) {
-				return -1;
-			}
-		}
-
-		@Override
-		public long getHeaderFieldDate(String field, long defaultValue) {
-			return connection.getHeaderFieldDate(field,defaultValue);
 		}
 
 		@Override
@@ -115,10 +101,42 @@ final class DownloadHelperImpl {
 		}
 
 		@Override
+		public int getResponseCode() {
+			try {
+				if(connection instanceof HttpURLConnection)
+					return (((HttpURLConnection)connection).getResponseCode());
+				else
+					return 0;
+			} catch (IOException e) {
+				return -1;
+			}
+		}
+
+		@Override
 		public String getUrl() {
 			return connection.getURL().toString();
 		}
 
+	}
+
+	private static class LegacyHttpCacheResponse extends CacheResponse {
+
+		IHttpHeaders headers;
+		InputStream body;
+		public LegacyHttpCacheResponse(InputStream body, IHttpHeaders headers){
+			this.body=body;
+			this.headers=headers;
+		}
+
+		@Override
+		public InputStream getBody() throws IOException {
+			return body;
+		}
+
+		@Override
+		public Map<String, List<String>> getHeaders() throws IOException {
+			return headers.getHeaderFields();
+		}
 	}
 
 	private static class LegacyHttpResponseCache extends ResponseCache {
@@ -191,31 +209,6 @@ final class DownloadHelperImpl {
 		}
 
 	}
-
-	public static Object newCacheResponse(InputStream body, IHttpHeaders headers){
-		return new LegacyHttpCacheResponse(body,headers);
-	}
-
-	private static class LegacyHttpCacheResponse extends CacheResponse {
-
-		IHttpHeaders headers;
-		InputStream body;
-		public LegacyHttpCacheResponse(InputStream body, IHttpHeaders headers){
-			this.body=body;
-			this.headers=headers;
-		}
-
-		@Override
-		public InputStream getBody() throws IOException {
-			return body;
-		}
-
-		@Override
-		public Map<String, List<String>> getHeaders() throws IOException {
-			return headers.getHeaderFields();
-		}
-	}
-
 
 	public static <T> T downloadUrl(
 			String urlString,
@@ -324,10 +317,17 @@ final class DownloadHelperImpl {
 		}
 	}
 
+	public static Object newCacheResponse(InputStream body, IHttpHeaders headers){
+		return new LegacyHttpCacheResponse(body,headers);
+	}
+
 
 	public static Object newResponseCache(File cachePath) {
 		return new LegacyHttpResponseCache(cachePath);
 	}
+
+
+	private DownloadHelperImpl(){}
 
 
 }

@@ -23,23 +23,6 @@ public class Utf8CharacterInput implements ICharacterInput {
 	}
 
 	@Override
-	public int read(int[] buf, int offset, int unitCount)
-			throws IOException {
-		if((buf)==null)throw new NullPointerException("buf");
-		if((offset)<0)throw new IndexOutOfBoundsException("offset"+" not greater or equal to "+"0"+" ("+Integer.toString(offset)+")");
-		if((unitCount)<0)throw new IndexOutOfBoundsException("unitCount"+" not greater or equal to "+"0"+" ("+Integer.toString(unitCount)+")");
-		if((offset+unitCount)>buf.length)throw new IndexOutOfBoundsException("offset+unitCount"+" not less or equal to "+Integer.toString(buf.length)+" ("+Integer.toString(offset+unitCount)+")");
-		if(unitCount==0)return 0;
-		for(int i=0;i<unitCount;i++){
-			int c=read();
-			if(c<0)
-				return i==0 ? -1 : i;
-			buf[offset++]=c;
-		}
-		return unitCount;
-	}
-
-	@Override
 	public int read() throws IOException {
 		int cp=0;
 		int bytesSeen=0;
@@ -98,5 +81,22 @@ public class Utf8CharacterInput implements ICharacterInput {
 			bytesNeeded=0;
 			return ret;
 		}
+	}
+
+	@Override
+	public int read(int[] buf, int offset, int unitCount)
+			throws IOException {
+		if((buf)==null)throw new NullPointerException("buf");
+		if((offset)<0)throw new IndexOutOfBoundsException("offset"+" not greater or equal to "+"0"+" ("+Integer.toString(offset)+")");
+		if((unitCount)<0)throw new IndexOutOfBoundsException("unitCount"+" not greater or equal to "+"0"+" ("+Integer.toString(unitCount)+")");
+		if((offset+unitCount)>buf.length)throw new IndexOutOfBoundsException("offset+unitCount"+" not less or equal to "+Integer.toString(buf.length)+" ("+Integer.toString(offset+unitCount)+")");
+		if(unitCount==0)return 0;
+		for(int i=0;i<unitCount;i++){
+			int c=read();
+			if(c<0)
+				return i==0 ? -1 : i;
+			buf[offset++]=c;
+		}
+		return unitCount;
 	}
 }

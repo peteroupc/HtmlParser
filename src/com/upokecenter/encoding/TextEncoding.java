@@ -89,9 +89,8 @@ public final class TextEncoding {
 	 * 
 	 */
 	public static final IEncodingError ENCODING_ERROR_REPLACE = new EncodingErrorReplace();
-	private TextEncoding(){};
+	private static Map<String,String> encodingMap=new HashMap<String,String>();;
 
-	private static Map<String,String> encodingMap=new HashMap<String,String>();
 	private static Map<String,ITextEncoder> indexEncodingMap=new HashMap<String,ITextEncoder>();
 	static {
 		encodingMap.put("unicode-1-1-utf-8","utf-8");
@@ -311,42 +310,7 @@ public final class TextEncoding {
 		encodingMap.put("utf-16le","utf-16le");
 		encodingMap.put("x-user-defined","x-user-defined");
 	}
-
 	private static Object syncRoot=new Object();
-
-	/**
-	 * Converts a name to a supported character encoding.
-	 * In this implementation, the return value will be the name preferred in the
-	 * WHATWG's Encoding specification.
-	 * 
-	 * @param encoding the name of an encoding
-	 * @return a character encoding, or null if the name
-	 * does not resolve to a supported encoding
-	 */
-	public static String resolveEncoding(String encoding){
-		if(encoding==null)return null;
-		int index=0;
-		int length=encoding.length();
-		while(index<length){
-			char c=encoding.charAt(index);
-			if(c!=0x09 && c!=0x0c && c!=0x0d && c!=0x0a && c!=0x20) {
-				break;
-			}
-			index++;
-		}
-		int lastIndex=length-1;
-		while(lastIndex>=0){
-			char c=encoding.charAt(lastIndex);
-			if(c!=0x09 && c!=0x0c && c!=0x0d && c!=0x0a && c!=0x20) {
-				break;
-			}
-			lastIndex--;
-		}
-		encoding=StringUtility.toLowerCaseAscii(encoding.substring(index,lastIndex+1));
-		if(encodingMap.get(encoding)!=null)
-			return encodingMap.get(encoding);
-		return null;
-	}
 
 	/**
 	 * Utility method to decode an input byte stream into a string.
@@ -428,6 +392,90 @@ public final class TextEncoding {
 		}
 	}
 
+	/**
+	 * Gets a character decoder for a given character
+	 * encoding.
+	 * @param name a name of a character encoding
+	 * @return a character encoder, or null if the name
+	 * does not resolve to a supported encoding, or if
+	 * no decoder is supported for that encoding.
+	 */
+	public static ITextDecoder getDecoder(String name){
+		name=resolveEncoding(name);
+		if(name==null)
+			return null;
+		ITextEncoder encoder=getIndexEncoding(name);
+		if(encoder!=null)return (ITextDecoder)encoder;
+		if(name.equals("replacement"))
+			return new ReplacementDecoder();
+		if(name.equals("utf-8"))
+			return new Utf8Encoding();
+		if(name.equals("utf-16le"))
+			return new Utf16Encoding(false);
+		if(name.equals("utf-16be"))
+			return new Utf16Encoding(true);
+		if(name.equals("gbk"))
+			return new GbkEncoding(false);
+		if(name.equals("gb18030"))
+			return new GbkEncoding(true);
+		if(name.equals("hz-gb-2312"))
+			return new HzGb2312Encoding();
+		if(name.equals("big5"))
+			return new Big5Encoding();
+		if(name.equals("shift_jis"))
+			return new ShiftJISEncoding();
+		if(name.equals("iso-2022-jp"))
+			return new Iso2022JPEncoding();
+		if(name.equals("euc-jp"))
+			return new JapaneseEUCEncoding();
+		if(name.equals("euc-kr"))
+			return new KoreanEUCEncoding();
+		if(name.equals("iso-2022-kr"))
+			return new Iso2022KREncoding();
+		return null;
+	}
+
+	/**
+	 * Gets a character encoder for a given character
+	 * encoding.
+	 * @param name a name of a character encoding
+	 * @return a character encoder, or null if the name
+	 * does not resolve to a supported encoding, or if
+	 * no encoder is supported for that encoding.
+	 */
+	public static ITextEncoder getEncoder(String name){
+		name=resolveEncoding(name);
+		if(name==null)
+			return null;
+		ITextEncoder encoder=getIndexEncoding(name);
+		if(encoder!=null)return encoder;
+		if(name.equals("utf-8") || name.equals("replacement"))
+			return new Utf8Encoding();
+		if(name.equals("utf-16le"))
+			return new Utf16Encoding(false);
+		if(name.equals("utf-16be"))
+			return new Utf16Encoding(true);
+		if(name.equals("gbk"))
+			return new GbkEncoding(false);
+		if(name.equals("gb18030"))
+			return new GbkEncoding(true);
+		if(name.equals("hz-gb-2312"))
+			return new HzGb2312Encoding();
+		if(name.equals("big5"))
+			return new Big5Encoding();
+		if(name.equals("shift_jis"))
+			return new ShiftJISEncoding();
+		if(name.equals("iso-2022-jp"))
+			return new Iso2022JPEncoding();
+		if(name.equals("euc-jp"))
+			return new JapaneseEUCEncoding();
+		if(name.equals("euc-kr"))
+			return new KoreanEUCEncoding();
+		if(name.equals("iso-2022-kr"))
+			return new Iso2022KREncoding();
+		return null;
+	}
+
 	private static ITextEncoder getIndexEncoding(String name){
 		synchronized(syncRoot){
 			ITextEncoder encoder=indexEncodingMap.get(name);
@@ -475,55 +523,6 @@ public final class TextEncoding {
 		return values.toArray(new String[]{});
 	}
 
-	private static ITextEncoder setIndexEncoding(String name, ITextEncoder enc){
-		synchronized(syncRoot){
-			indexEncodingMap.put(name,enc);
-		}
-		return enc;
-	}
-
-	/**
-	 * Gets a character encoder for a given character
-	 * encoding.
-	 * @param name a name of a character encoding
-	 * @return a character encoder, or null if the name
-	 * does not resolve to a supported encoding, or if
-	 * no encoder is supported for that encoding.
-	 */
-	public static ITextEncoder getEncoder(String name){
-		name=resolveEncoding(name);
-		if(name==null)
-			return null;
-		ITextEncoder encoder=getIndexEncoding(name);
-		if(encoder!=null)return encoder;
-		if(name.equals("utf-8") || name.equals("replacement"))
-			return new Utf8Encoding();
-		if(name.equals("utf-16le"))
-			return new Utf16Encoding(false);
-		if(name.equals("utf-16be"))
-			return new Utf16Encoding(true);
-		if(name.equals("gbk"))
-			return new GbkEncoding(false);
-		if(name.equals("gb18030"))
-			return new GbkEncoding(true);
-		if(name.equals("hz-gb-2312"))
-			return new HzGb2312Encoding();
-		if(name.equals("big5"))
-			return new Big5Encoding();
-		if(name.equals("shift_jis"))
-			return new ShiftJISEncoding();
-		if(name.equals("iso-2022-jp"))
-			return new Iso2022JPEncoding();
-		if(name.equals("euc-jp"))
-			return new JapaneseEUCEncoding();
-		if(name.equals("euc-kr"))
-			return new KoreanEUCEncoding();
-		if(name.equals("iso-2022-kr"))
-			return new Iso2022KREncoding();
-		return null;
-	}
-
-
 	/**
 	 * Gets whether an encoding is ASCII compatible
 	 * within the meaning of the WHATWG's HTML specification.
@@ -543,45 +542,46 @@ public final class TextEncoding {
 	}
 
 	/**
-	 * Gets a character decoder for a given character
-	 * encoding.
-	 * @param name a name of a character encoding
-	 * @return a character encoder, or null if the name
-	 * does not resolve to a supported encoding, or if
-	 * no decoder is supported for that encoding.
+	 * Converts a name to a supported character encoding.
+	 * In this implementation, the return value will be the name preferred in the
+	 * WHATWG's Encoding specification.
+	 * 
+	 * @param encoding the name of an encoding
+	 * @return a character encoding, or null if the name
+	 * does not resolve to a supported encoding
 	 */
-	public static ITextDecoder getDecoder(String name){
-		name=resolveEncoding(name);
-		if(name==null)
-			return null;
-		ITextEncoder encoder=getIndexEncoding(name);
-		if(encoder!=null)return (ITextDecoder)encoder;
-		if(name.equals("replacement"))
-			return new ReplacementDecoder();
-		if(name.equals("utf-8"))
-			return new Utf8Encoding();
-		if(name.equals("utf-16le"))
-			return new Utf16Encoding(false);
-		if(name.equals("utf-16be"))
-			return new Utf16Encoding(true);
-		if(name.equals("gbk"))
-			return new GbkEncoding(false);
-		if(name.equals("gb18030"))
-			return new GbkEncoding(true);
-		if(name.equals("hz-gb-2312"))
-			return new HzGb2312Encoding();
-		if(name.equals("big5"))
-			return new Big5Encoding();
-		if(name.equals("shift_jis"))
-			return new ShiftJISEncoding();
-		if(name.equals("iso-2022-jp"))
-			return new Iso2022JPEncoding();
-		if(name.equals("euc-jp"))
-			return new JapaneseEUCEncoding();
-		if(name.equals("euc-kr"))
-			return new KoreanEUCEncoding();
-		if(name.equals("iso-2022-kr"))
-			return new Iso2022KREncoding();
+	public static String resolveEncoding(String encoding){
+		if(encoding==null)return null;
+		int index=0;
+		int length=encoding.length();
+		while(index<length){
+			char c=encoding.charAt(index);
+			if(c!=0x09 && c!=0x0c && c!=0x0d && c!=0x0a && c!=0x20) {
+				break;
+			}
+			index++;
+		}
+		int lastIndex=length-1;
+		while(lastIndex>=0){
+			char c=encoding.charAt(lastIndex);
+			if(c!=0x09 && c!=0x0c && c!=0x0d && c!=0x0a && c!=0x20) {
+				break;
+			}
+			lastIndex--;
+		}
+		encoding=StringUtility.toLowerCaseAscii(encoding.substring(index,lastIndex+1));
+		if(encodingMap.get(encoding)!=null)
+			return encodingMap.get(encoding);
 		return null;
 	}
+
+
+	private static ITextEncoder setIndexEncoding(String name, ITextEncoder enc){
+		synchronized(syncRoot){
+			indexEncodingMap.put(name,enc);
+		}
+		return enc;
+	}
+
+	private TextEncoding(){}
 }

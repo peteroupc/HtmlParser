@@ -3,20 +3,19 @@
 package com.upokecenter.rdf;
 
 public final class RDFTriple {
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((object == null) ? 0 : object.hashCode());
-		result = prime * result
-				+ ((predicate == null) ? 0 : predicate.hashCode());
-		result = prime * result + ((subject == null) ? 0 : subject.hashCode());
-		return result;
+	private RDFTerm subject, predicate, object;
+
+	public RDFTriple(RDFTerm subject, RDFTerm predicate, RDFTerm object) {
+		setSubject(subject);
+		setPredicate(predicate);
+		setObject(object);
 	}
 
-	@Override
-	public String toString(){
-		return subject.toString()+" "+predicate.toString()+" "+object.toString()+" .";
+	public RDFTriple(RDFTriple triple){
+		if(triple==null)throw new NullPointerException("triple");
+		setSubject(triple.subject);
+		setPredicate(triple.predicate);
+		setObject(triple.object);
 	}
 
 	@Override
@@ -46,21 +45,38 @@ public final class RDFTriple {
 		return true;
 	}
 
-	public RDFTriple(RDFTerm subject, RDFTerm predicate, RDFTerm object) {
-		setSubject(subject);
-		setPredicate(predicate);
-		setObject(object);
+	public RDFTerm getObject() {
+		return object;
 	}
 
-	public RDFTriple(RDFTriple triple){
-		if(triple==null)throw new NullPointerException("triple");
-		setSubject(triple.subject);
-		setPredicate(triple.predicate);
-		setObject(triple.object);
+	public RDFTerm getPredicate() {
+		return predicate;
 	}
 
 	public RDFTerm getSubject() {
 		return subject;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((object == null) ? 0 : object.hashCode());
+		result = prime * result
+				+ ((predicate == null) ? 0 : predicate.hashCode());
+		result = prime * result + ((subject == null) ? 0 : subject.hashCode());
+		return result;
+	}
+
+	private void setObject(RDFTerm object) {
+		if((object)==null)throw new NullPointerException("object");
+		this.object = object;
+	}
+
+	private void setPredicate(RDFTerm predicate) {
+		if((predicate)==null)throw new NullPointerException("predicate");
+		if(!(predicate.getKind()==RDFTerm.IRI))throw new IllegalArgumentException("doesn't satisfy predicate.kind==RDFTerm.IRI");
+		this.predicate = predicate;
 	}
 
 	private void setSubject(RDFTerm subject) {
@@ -70,24 +86,8 @@ public final class RDFTriple {
 		this.subject = subject;
 	}
 
-	public RDFTerm getPredicate() {
-		return predicate;
+	@Override
+	public String toString(){
+		return subject.toString()+" "+predicate.toString()+" "+object.toString()+" .";
 	}
-
-	private void setPredicate(RDFTerm predicate) {
-		if((predicate)==null)throw new NullPointerException("predicate");
-		if(!(predicate.getKind()==RDFTerm.IRI))throw new IllegalArgumentException("doesn't satisfy predicate.kind==RDFTerm.IRI");
-		this.predicate = predicate;
-	}
-
-	public RDFTerm getObject() {
-		return object;
-	}
-
-	private void setObject(RDFTerm object) {
-		if((object)==null)throw new NullPointerException("object");
-		this.object = object;
-	}
-
-	private RDFTerm subject, predicate, object;
 }

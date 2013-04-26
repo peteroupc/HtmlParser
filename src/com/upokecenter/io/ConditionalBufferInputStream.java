@@ -37,27 +37,6 @@ public final class ConditionalBufferInputStream extends InputStream {
 	}
 
 	@Override
-	public synchronized void close() throws IOException{
-		disabled=true;
-		pos=0;
-		endpos=0;
-		buffer=null;
-		markpos=-1;
-		stream.close();
-	}
-
-	private boolean isDisabled(){
-		if(disabled){
-			if(markpos>=0 && markpos<marklimit)
-				return false;
-			if(pos<endpos)
-				return false;
-			return true;
-		}
-		return false;
-	}
-
-	@Override
 	public int available() throws IOException{
 		if(isDisabled())
 			return stream.available();
@@ -65,8 +44,13 @@ public final class ConditionalBufferInputStream extends InputStream {
 	}
 
 	@Override
-	public boolean markSupported(){
-		return true;
+	public synchronized void close() throws IOException{
+		disabled=true;
+		pos=0;
+		endpos=0;
+		buffer=null;
+		markpos=-1;
+		stream.close();
 	}
 
 	/**
@@ -84,18 +68,36 @@ public final class ConditionalBufferInputStream extends InputStream {
 		}
 	}
 
-	/**
-	 * 
-	 * Resets the stream to the beginning of the input.  This will
-	 * invalidate the mark placed on the stream, if any.
-	 * 
-	 * @throws IOException if disableBuffer() was already called.
-	 */
-	public synchronized void rewind() throws IOException {
-		if(disabled)
-			throw new IOException();
-		pos=0;
-		markpos=-1;
+	public synchronized int doRead(byte[] buffer, int offset, int byteCount) throws IOException{
+		if(markpos<0)
+			return readInternal(buffer,offset,byteCount);
+		else {
+			if(isDisabled())
+				return stream.read(buffer,offset,byteCount);
+			int c=readInternal(buffer,offset,byteCount);
+			if(c>0 && markpos>=0){
+				markpos+=c;
+				if(markpos>marklimit){
+					marklimit=0;
+					markpos=-1;
+					if(this.buffer!=null && isDisabled()){
+						this.buffer=null;
+					}
+				}
+			}
+			return c;
+		}
+	}
+
+	private boolean isDisabled(){
+		if(disabled){
+			if(markpos>=0 && markpos<marklimit)
+				return false;
+			if(pos<endpos)
+				return false;
+			return true;
+		}
+		return false;
 	}
 
 	@Override
@@ -110,6 +112,71 @@ public final class ConditionalBufferInputStream extends InputStream {
 		markpos=0;
 		posAtMark=pos;
 		marklimit=limit;
+	}
+
+	@Override
+	public boolean markSupported(){
+		return true;
+	}
+
+	@Override
+	public synchronized int read() throws IOException{
+		if(markpos<0)
+			return readInternal();
+		else {
+			if(isDisabled())
+				return stream.read();
+			int c=readInternal();
+			if(c>=0 && markpos>=0){
+				markpos++;
+				if(markpos>marklimit){
+					marklimit=0;
+					markpos=-1;
+					if(buffer!=null && isDisabled()){
+						buffer=null;
+					}
+				}
+			}
+			return c;
+		}
+	}
+
+	@Override
+	public synchronized int read(byte[] buffer, int offset, int byteCount) throws IOException{
+		return doRead(buffer,offset,byteCount);
+	}
+
+	private int readInternal() throws IOException {
+		// Read from buffer
+		if(pos<endpos)
+			return (buffer[pos++]&0xFF);
+		//if(buffer!=null)
+		//DebugUtility.log("buffer %s end=%s len=%s",pos,endpos,buffer.length);
+		if(disabled)
+			// Buffering disabled, so read directly from stream
+			return stream.read();
+		// End pos is smaller than buffer size, fill
+		// entire buffer if possible
+		if(endpos<buffer.length){
+			int count=stream.read(buffer,endpos,buffer.length-endpos);
+			if(count>0) {
+				endpos+=count;
+			}
+		}
+		// Try reading from buffer again
+		if(pos<endpos)
+			return (buffer[pos++]&0xFF);
+		// No room, read next byte and put it in buffer
+		int c=stream.read();
+		if(c<0)return c;
+		if(pos>=buffer.length){
+			byte[] newBuffer=new byte[buffer.length*2];
+			System.arraycopy(buffer,0,newBuffer,0,buffer.length);
+			buffer=newBuffer;
+		}
+		buffer[pos++]=(byte)c;
+		endpos++;
+		return c;
 	}
 
 	private int readInternal(byte[] buf, int offset, int unitCount) throws IOException{
@@ -184,59 +251,31 @@ public final class ConditionalBufferInputStream extends InputStream {
 		return (total==0) ? -1 : total;
 	}
 
-	private int readInternal() throws IOException {
-		// Read from buffer
-		if(pos<endpos)
-			return (buffer[pos++]&0xFF);
-		//if(buffer!=null)
-		//DebugUtility.log("buffer %s end=%s len=%s",pos,endpos,buffer.length);
-		if(disabled)
-			// Buffering disabled, so read directly from stream
-			return stream.read();
-		// End pos is smaller than buffer size, fill
-		// entire buffer if possible
-		if(endpos<buffer.length){
-			int count=stream.read(buffer,endpos,buffer.length-endpos);
-			if(count>0) {
-				endpos+=count;
-			}
-		}
-		// Try reading from buffer again
-		if(pos<endpos)
-			return (buffer[pos++]&0xFF);
-		// No room, read next byte and put it in buffer
-		int c=stream.read();
-		if(c<0)return c;
-		if(pos>=buffer.length){
-			byte[] newBuffer=new byte[buffer.length*2];
-			System.arraycopy(buffer,0,newBuffer,0,buffer.length);
-			buffer=newBuffer;
-		}
-		buffer[pos++]=(byte)c;
-		endpos++;
-		return c;
-	}
+
 
 	@Override
-	public synchronized int read() throws IOException{
-		if(markpos<0)
-			return readInternal();
-		else {
-			if(isDisabled())
-				return stream.read();
-			int c=readInternal();
-			if(c>=0 && markpos>=0){
-				markpos++;
-				if(markpos>marklimit){
-					marklimit=0;
-					markpos=-1;
-					if(buffer!=null && isDisabled()){
-						buffer=null;
-					}
-				}
-			}
-			return c;
+	public synchronized void reset() throws IOException {
+		//DebugUtility.log("reset: %s",isDisabled());
+		if(isDisabled()){
+			stream.reset();
+			return;
 		}
+		if(markpos<0)
+			throw new IOException();
+		pos=posAtMark;
+	}
+	/**
+	 * 
+	 * Resets the stream to the beginning of the input.  This will
+	 * invalidate the mark placed on the stream, if any.
+	 * 
+	 * @throws IOException if disableBuffer() was already called.
+	 */
+	public synchronized void rewind() throws IOException {
+		if(disabled)
+			throw new IOException();
+		pos=0;
+		markpos=-1;
 	}
 
 	@Override
@@ -255,44 +294,5 @@ public final class ConditionalBufferInputStream extends InputStream {
 			byteCount-=c;
 		}
 		return ret;
-	}
-
-
-
-	public synchronized int doRead(byte[] buffer, int offset, int byteCount) throws IOException{
-		if(markpos<0)
-			return readInternal(buffer,offset,byteCount);
-		else {
-			if(isDisabled())
-				return stream.read(buffer,offset,byteCount);
-			int c=readInternal(buffer,offset,byteCount);
-			if(c>0 && markpos>=0){
-				markpos+=c;
-				if(markpos>marklimit){
-					marklimit=0;
-					markpos=-1;
-					if(this.buffer!=null && isDisabled()){
-						this.buffer=null;
-					}
-				}
-			}
-			return c;
-		}
-	}
-	@Override
-	public synchronized int read(byte[] buffer, int offset, int byteCount) throws IOException{
-		return doRead(buffer,offset,byteCount);
-	}
-
-	@Override
-	public synchronized void reset() throws IOException {
-		//DebugUtility.log("reset: %s",isDisabled());
-		if(isDisabled()){
-			stream.reset();
-			return;
-		}
-		if(markpos<0)
-			throw new IOException();
-		pos=posAtMark;
 	}
 }

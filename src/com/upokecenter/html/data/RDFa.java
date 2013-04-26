@@ -26,17 +26,6 @@ public class RDFa implements IRDFParser {
 		None, Forward, Reverse
 	}
 
-	 static class IncompleteTriple {
-		@Override
-		public String toString() {
-			return "IncompleteTriple [list=" + list + ", predicate="
-					+ predicate + ", direction=" + direction + "]";
-		}
-		public List<RDFTerm> list;
-		public RDFTerm predicate;
-		public ChainingDirection direction;
-	}
-
 	 static class EvalContext {
 		public String baseURI;
 		public RDFTerm parentSubject;
@@ -63,112 +52,18 @@ public class RDFa implements IRDFParser {
 		}
 	}
 
-	private IRDFParser parser;
-	private EvalContext context;
-	private final Set<RDFTriple> outputGraph;
-	private final IDocument document;
-	private static boolean xhtml_rdfa11=false;
-
-	public RDFa(IDocument document){
-		this.document=document;
-		this.parser=null;
-		this.context=new EvalContext();
-		this.context.defaultVocab=null;
-		this.context.baseURI=document.getBaseURI();
-		if(!URIUtility.hasScheme(this.context.baseURI))
-			throw new IllegalArgumentException("baseURI: "+this.context.baseURI);
-		this.context.parentSubject=RDFTerm.fromIRI(this.context.baseURI);
-		this.context.parentObject=null;
-		this.context.namespaces=new HashMap<String,String>();
-		this.context.iriMap=new HashMap<String,String>();
-		this.context.listMap=new HashMap<String,List<RDFTerm>>();
-		this.context.termMap=new HashMap<String,String>();
-		this.context.incompleteTriples=new ArrayList<IncompleteTriple>();
-		this.context.language=null;
-		this.outputGraph=new HashSet<RDFTriple>();
-		this.context.termMap.put("describedby","http://www.w3.org/2007/05/powder-s#describedby");
-		this.context.termMap.put("license","http://www.w3.org/1999/xhtml/vocab#license");
-		this.context.termMap.put("role","http://www.w3.org/1999/xhtml/vocab#role");
-		this.context.iriMap.put("cc","http://creativecommons.org/ns#");
-		this.context.iriMap.put("ctag","http://commontag.org/ns#");
-		this.context.iriMap.put("dc","http://purl.org/dc/terms/");
-		this.context.iriMap.put("dcterms","http://purl.org/dc/terms/");
-		this.context.iriMap.put("dc11","http://purl.org/dc/elements/1.1/");
-		this.context.iriMap.put("foaf","http://xmlns.com/foaf/0.1/");
-		this.context.iriMap.put("gr","http://purl.org/goodrelations/v1#");
-		this.context.iriMap.put("ical","http://www.w3.org/2002/12/cal/icaltzd#");
-		this.context.iriMap.put("og","http://ogp.me/ns#");
-		this.context.iriMap.put("schema","http://schema.org/");
-		this.context.iriMap.put("rev","http://purl.org/stuff/rev#");
-		this.context.iriMap.put("sioc","http://rdfs.org/sioc/ns#");
-		this.context.iriMap.put("grddl","http://www.w3.org/2003/g/data-view#");
-		this.context.iriMap.put("ma","http://www.w3.org/ns/ma-ont#");
-		this.context.iriMap.put("owl","http://www.w3.org/2002/07/owl#");
-		this.context.iriMap.put("prov","http://www.w3.org/ns/prov#");
-		this.context.iriMap.put("rdf","http://www.w3.org/1999/02/22-rdf-syntax-ns#");
-		this.context.iriMap.put("rdfa","http://www.w3.org/ns/rdfa#");
-		this.context.iriMap.put("rdfs","http://www.w3.org/2000/01/rdf-schema#");
-		this.context.iriMap.put("rif","http://www.w3.org/2007/rif#");
-		this.context.iriMap.put("rr","http://www.w3.org/ns/r2rml#");
-		this.context.iriMap.put("sd","http://www.w3.org/ns/sparql-service-description#");
-		this.context.iriMap.put("skos","http://www.w3.org/2004/02/skos/core#");
-		this.context.iriMap.put("skosxl","http://www.w3.org/2008/05/skos-xl#");
-		this.context.iriMap.put("v","http://rdf.data-vocabulary.org/#");
-		this.context.iriMap.put("vcard","http://www.w3.org/2006/vcard/ns#");
-		this.context.iriMap.put("void","http://rdfs.org/ns/void#");
-		this.context.iriMap.put("wdr","http://www.w3.org/2007/05/powder#");
-		this.context.iriMap.put("wdrs","http://www.w3.org/2007/05/powder-s#");
-		this.context.iriMap.put("xhv","http://www.w3.org/1999/xhtml/vocab#");
-		this.context.iriMap.put("xml","http://www.w3.org/XML/1998/namespace");
-		this.context.iriMap.put("xsd","http://www.w3.org/2001/XMLSchema#");
-		IElement docElement=document.getDocumentElement();
-		if(docElement!=null && isHtmlElement(docElement,"html")){
-			xhtml_rdfa11=true;
-			String version=docElement.getAttribute("version");
-			if(version!=null && "XHTML+RDFa 1.1".equals(version)){
-				xhtml_rdfa11=true;
-				String[] terms=new String[]{
-						"alternate","appendix","cite",
-						"bookmark","chapter","contents",
-						"copyright","first","glossary",
-						"help","icon","index","last",
-						"license","meta","next","prev",
-						"previous","section","start",
-						"stylesheet","subsection","top",
-						"up","p3pv1"
-				};
-				for(String term : terms){
-					this.context.termMap.put(term,"http://www.w3.org/1999/xhtml/vocab#"+term);
-				}
-			}
-			if(version!=null && "XHTML+RDFa 1.0".equals(version)){
-				parser=new RDFa1(document);
-			}
+	 static class IncompleteTriple {
+		public List<RDFTerm> list;
+		public RDFTerm predicate;
+		public ChainingDirection direction;
+		@Override
+		public String toString() {
+			return "IncompleteTriple [list=" + list + ", predicate="
+					+ predicate + ", direction=" + direction + "]";
 		}
-		extraContext();
 	}
 
-	private void extraContext(){
-		this.context.iriMap.put("bibo","http://purl.org/ontology/bibo/");
-		this.context.iriMap.put("dbp","http://dbpedia.org/property/");
-		this.context.iriMap.put("dbp-owl","http://dbpedia.org/ontology/");
-		this.context.iriMap.put("dbr","http://dbpedia.org/resource/");
-		this.context.iriMap.put("ex","http://example.org/");
-	}
-
-	private static boolean isHtmlElement(IElement element, String name){
-		return element!=null &&
-				"http://www.w3.org/1999/xhtml".equals(element.getNamespaceURI()) &&
-				name.equals(element.getLocalName());
-	}
-
-	private static final RDFTerm RDFA_USES_VOCABULARY=
-			RDFTerm.fromIRI("http://www.w3.org/ns/rdfa#usesVocabulary");
-
-	private static final String RDF_XMLLITERAL="http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral";
-
-	private static final String[] emptyStringArray=new String[]{};
-
+	private static final String RDFA_DEFAULT_PREFIX = "http://www.w3.org/1999/xhtml/vocab#";
 	private static String getTextNodeText(INode node){
 		StringBuilder builder=new StringBuilder();
 		for(INode child : node.getChildNodes()){
@@ -180,24 +75,10 @@ public class RDFa implements IRDFParser {
 		}
 		return builder.toString();
 	}
-
-
-	private static boolean isNCNameStartChar(int c){
-		return (c>='a' && c<='z') ||
-				(c>='A' && c<='Z') ||
-				c=='_' ||
-				(c>=0xc0 && c<=0xd6) ||
-				(c>=0xd8 && c<=0xf6) ||
-				(c>=0xf8 && c<=0x2ff) ||
-				(c>=0x370 && c<=0x37d) ||
-				(c>=0x37f && c<=0x1fff) ||
-				(c>=0x200c && c<=0x200d) ||
-				(c>=0x2070 && c<=0x218f) ||
-				(c>=0x2c00 && c<=0x2fef) ||
-				(c>=0x3001 && c<=0xd7ff) ||
-				(c>=0xf900 && c<=0xfdcf) ||
-				(c>=0xfdf0 && c<=0xfffd) ||
-				(c>=0x10000 && c<=0xeffff);
+	private static boolean isHtmlElement(IElement element, String name){
+		return element!=null &&
+				"http://www.w3.org/1999/xhtml".equals(element.getNamespaceURI()) &&
+				name.equals(element.getLocalName());
 	}
 	private static boolean isNCNameChar(int c){
 		return (c>='a' && c<='z') ||
@@ -219,6 +100,24 @@ public class RDFa implements IRDFParser {
 				(c>=0xfdf0 && c<=0xfffd) ||
 				(c>=0x10000 && c<=0xeffff);
 	}
+	private static boolean isNCNameStartChar(int c){
+		return (c>='a' && c<='z') ||
+				(c>='A' && c<='Z') ||
+				c=='_' ||
+				(c>=0xc0 && c<=0xd6) ||
+				(c>=0xd8 && c<=0xf6) ||
+				(c>=0xf8 && c<=0x2ff) ||
+				(c>=0x370 && c<=0x37d) ||
+				(c>=0x37f && c<=0x1fff) ||
+				(c>=0x200c && c<=0x200d) ||
+				(c>=0x2070 && c<=0x218f) ||
+				(c>=0x2c00 && c<=0x2fef) ||
+				(c>=0x3001 && c<=0xd7ff) ||
+				(c>=0xf900 && c<=0xfdcf) ||
+				(c>=0xfdf0 && c<=0xfffd) ||
+				(c>=0x10000 && c<=0xeffff);
+	}
+
 	private static boolean isTermChar(int c){
 		return (c>='a' && c<='z') ||
 				(c>='A' && c<='Z') ||
@@ -240,6 +139,22 @@ public class RDFa implements IRDFParser {
 				(c>=0x10000 && c<=0xeffff);
 	}
 
+	private IRDFParser parser;
+
+	private EvalContext context;
+
+	private final Set<RDFTriple> outputGraph;
+
+	private final IDocument document;
+
+	private static boolean xhtml_rdfa11=false;
+
+	private static final RDFTerm RDFA_USES_VOCABULARY=
+			RDFTerm.fromIRI("http://www.w3.org/ns/rdfa#usesVocabulary");
+
+
+	private static final String RDF_XMLLITERAL="http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral";
+	private static final String[] emptyStringArray=new String[]{};
 	private static int getCuriePrefixLength(String s, int offset, int length){
 		if(s==null || length==0)return -1;
 		if(s.charAt(offset)==':')return 0;
@@ -264,6 +179,23 @@ public class RDFa implements IRDFParser {
 		return -1;
 	}
 
+	private static <T> T getValueCaseInsensitive(
+			Map<String,T> map,
+			String key
+			){
+		if(key==null)
+			return map.get(null);
+		key=StringUtility.toLowerCaseAscii(key);
+		for(String k : map.keySet()){
+			if(key.equals(StringUtility.toLowerCaseAscii(k)))
+				return map.get(k);
+		}
+		return null;
+	}
+
+	private static boolean isValidCurieReference(String s, int offset, int length){
+		return URIUtility.isValidCurieReference(s, offset, length);
+	}
 	private static boolean isValidTerm(String s){
 		if(s==null || s.length()==0)return false;
 		if(!isNCNameStartChar(s.charAt(0)))return false;
@@ -284,9 +216,6 @@ public class RDFa implements IRDFParser {
 			index++;
 		}
 		return true;
-	}
-	private static boolean isValidCurieReference(String s, int offset, int length){
-		return URIUtility.isValidCurieReference(s, offset, length);
 	}
 
 	private static String[] splitPrefixList(String s){
@@ -389,10 +318,91 @@ public class RDFa implements IRDFParser {
 	private int blankNode;
 	private final Map<String,RDFTerm> bnodeLabels=new HashMap<String,RDFTerm>();
 
-	private RDFTerm getNamedBlankNode(String str){
-		RDFTerm term=RDFTerm.fromBlankNode(str);
-		bnodeLabels.put(str,term);
-		return term;
+	public RDFa(IDocument document){
+		this.document=document;
+		this.parser=null;
+		this.context=new EvalContext();
+		this.context.defaultVocab=null;
+		this.context.baseURI=document.getBaseURI();
+		if(!URIUtility.hasScheme(this.context.baseURI))
+			throw new IllegalArgumentException("baseURI: "+this.context.baseURI);
+		this.context.parentSubject=RDFTerm.fromIRI(this.context.baseURI);
+		this.context.parentObject=null;
+		this.context.namespaces=new HashMap<String,String>();
+		this.context.iriMap=new HashMap<String,String>();
+		this.context.listMap=new HashMap<String,List<RDFTerm>>();
+		this.context.termMap=new HashMap<String,String>();
+		this.context.incompleteTriples=new ArrayList<IncompleteTriple>();
+		this.context.language=null;
+		this.outputGraph=new HashSet<RDFTriple>();
+		this.context.termMap.put("describedby","http://www.w3.org/2007/05/powder-s#describedby");
+		this.context.termMap.put("license","http://www.w3.org/1999/xhtml/vocab#license");
+		this.context.termMap.put("role","http://www.w3.org/1999/xhtml/vocab#role");
+		this.context.iriMap.put("cc","http://creativecommons.org/ns#");
+		this.context.iriMap.put("ctag","http://commontag.org/ns#");
+		this.context.iriMap.put("dc","http://purl.org/dc/terms/");
+		this.context.iriMap.put("dcterms","http://purl.org/dc/terms/");
+		this.context.iriMap.put("dc11","http://purl.org/dc/elements/1.1/");
+		this.context.iriMap.put("foaf","http://xmlns.com/foaf/0.1/");
+		this.context.iriMap.put("gr","http://purl.org/goodrelations/v1#");
+		this.context.iriMap.put("ical","http://www.w3.org/2002/12/cal/icaltzd#");
+		this.context.iriMap.put("og","http://ogp.me/ns#");
+		this.context.iriMap.put("schema","http://schema.org/");
+		this.context.iriMap.put("rev","http://purl.org/stuff/rev#");
+		this.context.iriMap.put("sioc","http://rdfs.org/sioc/ns#");
+		this.context.iriMap.put("grddl","http://www.w3.org/2003/g/data-view#");
+		this.context.iriMap.put("ma","http://www.w3.org/ns/ma-ont#");
+		this.context.iriMap.put("owl","http://www.w3.org/2002/07/owl#");
+		this.context.iriMap.put("prov","http://www.w3.org/ns/prov#");
+		this.context.iriMap.put("rdf","http://www.w3.org/1999/02/22-rdf-syntax-ns#");
+		this.context.iriMap.put("rdfa","http://www.w3.org/ns/rdfa#");
+		this.context.iriMap.put("rdfs","http://www.w3.org/2000/01/rdf-schema#");
+		this.context.iriMap.put("rif","http://www.w3.org/2007/rif#");
+		this.context.iriMap.put("rr","http://www.w3.org/ns/r2rml#");
+		this.context.iriMap.put("sd","http://www.w3.org/ns/sparql-service-description#");
+		this.context.iriMap.put("skos","http://www.w3.org/2004/02/skos/core#");
+		this.context.iriMap.put("skosxl","http://www.w3.org/2008/05/skos-xl#");
+		this.context.iriMap.put("v","http://rdf.data-vocabulary.org/#");
+		this.context.iriMap.put("vcard","http://www.w3.org/2006/vcard/ns#");
+		this.context.iriMap.put("void","http://rdfs.org/ns/void#");
+		this.context.iriMap.put("wdr","http://www.w3.org/2007/05/powder#");
+		this.context.iriMap.put("wdrs","http://www.w3.org/2007/05/powder-s#");
+		this.context.iriMap.put("xhv","http://www.w3.org/1999/xhtml/vocab#");
+		this.context.iriMap.put("xml","http://www.w3.org/XML/1998/namespace");
+		this.context.iriMap.put("xsd","http://www.w3.org/2001/XMLSchema#");
+		IElement docElement=document.getDocumentElement();
+		if(docElement!=null && isHtmlElement(docElement,"html")){
+			xhtml_rdfa11=true;
+			String version=docElement.getAttribute("version");
+			if(version!=null && "XHTML+RDFa 1.1".equals(version)){
+				xhtml_rdfa11=true;
+				String[] terms=new String[]{
+						"alternate","appendix","cite",
+						"bookmark","chapter","contents",
+						"copyright","first","glossary",
+						"help","icon","index","last",
+						"license","meta","next","prev",
+						"previous","section","start",
+						"stylesheet","subsection","top",
+						"up","p3pv1"
+				};
+				for(String term : terms){
+					this.context.termMap.put(term,"http://www.w3.org/1999/xhtml/vocab#"+term);
+				}
+			}
+			if(version!=null && "XHTML+RDFa 1.0".equals(version)){
+				parser=new RDFa1(document);
+			}
+		}
+		extraContext();
+	}
+
+	private void extraContext(){
+		this.context.iriMap.put("bibo","http://purl.org/ontology/bibo/");
+		this.context.iriMap.put("dbp","http://dbpedia.org/property/");
+		this.context.iriMap.put("dbp-owl","http://dbpedia.org/ontology/");
+		this.context.iriMap.put("dbr","http://dbpedia.org/resource/");
+		this.context.iriMap.put("ex","http://example.org/");
 	}
 
 	private RDFTerm generateBlankNode(){
@@ -407,6 +417,131 @@ public class RDFa implements IRDFParser {
 		return term;
 	}
 
+	private String getCurie(
+			String attribute, int offset, int length,
+			Map<String,String> prefixMapping) {
+		int refIndex=offset;
+		int refLength=length;
+		int prefix=getCuriePrefixLength(attribute,refIndex,refLength);
+		String prefixIri=null;
+		if(prefix>=0){
+			String prefixName=StringUtility.toLowerCaseAscii(
+					attribute.substring(refIndex,refIndex+prefix));
+			refIndex+=(prefix+1);
+			refLength-=(prefix+1);
+			prefixIri=prefixMapping.get(prefixName);
+			if(prefix==0) {
+				prefixIri=RDFA_DEFAULT_PREFIX;
+			} else {
+				prefixIri=prefixMapping.get(prefixName);
+			}
+			if(prefixIri==null || "_".equals(prefixName))
+				return null;
+		} else
+			// RDFa doesn't define a mapping for an absent prefix
+			return null;
+		if(!isValidCurieReference(attribute,refIndex,refLength))
+			return null;
+		if(prefix>=0)
+			return relativeResolve(prefixIri+attribute.substring(refIndex,refIndex+refLength)).getValue();
+		else
+			return null;
+	}
+
+	private RDFTerm getCurieOrBnode(
+			String attribute, int offset, int length,
+			Map<String,String> prefixMapping) {
+		int refIndex=offset;
+		int refLength=length;
+		int prefix=getCuriePrefixLength(attribute,refIndex,refLength);
+		String prefixIri=null;
+		String prefixName=null;
+		if(prefix>=0){
+			prefixName=StringUtility.toLowerCaseAscii(
+					attribute.substring(refIndex,refIndex+prefix));
+			refIndex+=(prefix+1);
+			refLength-=(prefix+1);
+			if(prefix==0) {
+				prefixIri=RDFA_DEFAULT_PREFIX;
+			} else {
+				prefixIri=prefixMapping.get(prefixName);
+			}
+			if(prefixIri==null && !"_".equals(prefixName))return null;
+		} else
+			// RDFa doesn't define a mapping for an absent prefix
+			return null;
+		if(!isValidCurieReference(attribute,refIndex,refLength))
+			return null;
+		if(prefix>=0){
+			if("_".equals(prefixName)){
+				assert refIndex>=0 : attribute;
+				assert refIndex+refLength<=attribute.length() : attribute;
+				if(refLength==0)
+					// use an empty blank node: the CURIE syntax
+					// allows an empty reference; see the comment
+					// in generateBlankNode for why "//" appears
+					// at the beginning
+					return getNamedBlankNode("//empty");
+				return getNamedBlankNode(attribute.substring(refIndex,refIndex+refLength));
+			}
+			assert refIndex>=0 : attribute;
+			assert refIndex+refLength<=attribute.length() : attribute;
+			return relativeResolve(prefixIri+attribute.substring(refIndex,refIndex+refLength));
+		} else
+			return null;
+	}
+	private RDFTerm getNamedBlankNode(String str){
+		RDFTerm term=RDFTerm.fromBlankNode(str);
+		bnodeLabels.put(str,term);
+		return term;
+	}
+
+	private RDFTerm getSafeCurieOrCurieOrIri(
+			String attribute, Map<String,String> prefixMapping) {
+		if(attribute==null)return null;
+		int lastIndex=attribute.length()-1;
+		if(attribute.length()>=2 && attribute.charAt(0)=='[' && attribute.charAt(lastIndex)==']'){
+			RDFTerm curie=getCurieOrBnode(attribute,1,attribute.length()-2,
+					prefixMapping);
+			return curie;
+		} else {
+			RDFTerm curie=getCurieOrBnode(attribute,0,attribute.length(),
+					prefixMapping);
+			if(curie==null)
+				// evaluate as IRI
+				return relativeResolve(attribute);
+			return curie;
+		}
+	}
+
+	private String getTermOrCurieOrAbsIri(
+			String attribute,
+			Map<String,String> prefixMapping,
+			Map<String,String> termMapping,
+			String defaultVocab) {
+		if(attribute==null)return null;
+		if(isValidTerm(attribute)){
+			if(defaultVocab!=null)
+				return relativeResolve(defaultVocab+attribute).getValue();
+			else if(termMapping.containsKey(attribute))
+				return termMapping.get(attribute);
+			else {
+				String value=getValueCaseInsensitive(termMapping,attribute);
+				return value;
+			}
+		}
+		String curie=getCurie(attribute,0,attribute.length(),
+				prefixMapping);
+		if(curie==null){
+			// evaluate as IRI if it's absolute
+			if(URIUtility.hasScheme(attribute))
+				//DebugUtility.log("has scheme: %s",attribute);
+				return relativeResolve(attribute).getValue();
+			return null;
+		}
+		return curie;
+	}
+
 	@Override
 	public Set<RDFTriple> parse() throws IOException {
 		if(parser!=null)
@@ -414,13 +549,6 @@ public class RDFa implements IRDFParser {
 		process(document.getDocumentElement(),true);
 		RDFInternal.replaceBlankNodes(outputGraph, bnodeLabels);
 		return outputGraph;
-	}
-
-	private RDFTerm relativeResolve(String iri){
-		if(iri==null)return null;
-		if(URIUtility.splitIRI(iri)==null)
-			return null;
-		return RDFTerm.fromIRI(URIUtility.relativeResolve(iri, context.baseURI));
 	}
 
 	private void process(IElement node, boolean root){
@@ -922,139 +1050,11 @@ public class RDFa implements IRDFParser {
 			}
 		}
 	}
-	private String getCurie(
-			String attribute, int offset, int length,
-			Map<String,String> prefixMapping) {
-		int refIndex=offset;
-		int refLength=length;
-		int prefix=getCuriePrefixLength(attribute,refIndex,refLength);
-		String prefixIri=null;
-		if(prefix>=0){
-			String prefixName=StringUtility.toLowerCaseAscii(
-					attribute.substring(refIndex,refIndex+prefix));
-			refIndex+=(prefix+1);
-			refLength-=(prefix+1);
-			prefixIri=prefixMapping.get(prefixName);
-			if(prefix==0) {
-				prefixIri=RDFA_DEFAULT_PREFIX;
-			} else {
-				prefixIri=prefixMapping.get(prefixName);
-			}
-			if(prefixIri==null || "_".equals(prefixName))
-				return null;
-		} else
-			// RDFa doesn't define a mapping for an absent prefix
-			return null;
-		if(!isValidCurieReference(attribute,refIndex,refLength))
-			return null;
-		if(prefix>=0)
-			return relativeResolve(prefixIri+attribute.substring(refIndex,refIndex+refLength)).getValue();
-		else
-			return null;
-	}
 
-	private static final String RDFA_DEFAULT_PREFIX = "http://www.w3.org/1999/xhtml/vocab#";
-
-	private RDFTerm getCurieOrBnode(
-			String attribute, int offset, int length,
-			Map<String,String> prefixMapping) {
-		int refIndex=offset;
-		int refLength=length;
-		int prefix=getCuriePrefixLength(attribute,refIndex,refLength);
-		String prefixIri=null;
-		String prefixName=null;
-		if(prefix>=0){
-			prefixName=StringUtility.toLowerCaseAscii(
-					attribute.substring(refIndex,refIndex+prefix));
-			refIndex+=(prefix+1);
-			refLength-=(prefix+1);
-			if(prefix==0) {
-				prefixIri=RDFA_DEFAULT_PREFIX;
-			} else {
-				prefixIri=prefixMapping.get(prefixName);
-			}
-			if(prefixIri==null && !"_".equals(prefixName))return null;
-		} else
-			// RDFa doesn't define a mapping for an absent prefix
+	private RDFTerm relativeResolve(String iri){
+		if(iri==null)return null;
+		if(URIUtility.splitIRI(iri)==null)
 			return null;
-		if(!isValidCurieReference(attribute,refIndex,refLength))
-			return null;
-		if(prefix>=0){
-			if("_".equals(prefixName)){
-				assert refIndex>=0 : attribute;
-				assert refIndex+refLength<=attribute.length() : attribute;
-				if(refLength==0)
-					// use an empty blank node: the CURIE syntax
-					// allows an empty reference; see the comment
-					// in generateBlankNode for why "//" appears
-					// at the beginning
-					return getNamedBlankNode("//empty");
-				return getNamedBlankNode(attribute.substring(refIndex,refIndex+refLength));
-			}
-			assert refIndex>=0 : attribute;
-			assert refIndex+refLength<=attribute.length() : attribute;
-			return relativeResolve(prefixIri+attribute.substring(refIndex,refIndex+refLength));
-		} else
-			return null;
-	}
-
-	private static <T> T getValueCaseInsensitive(
-			Map<String,T> map,
-			String key
-			){
-		if(key==null)
-			return map.get(null);
-		key=StringUtility.toLowerCaseAscii(key);
-		for(String k : map.keySet()){
-			if(key.equals(StringUtility.toLowerCaseAscii(k)))
-				return map.get(k);
-		}
-		return null;
-	}
-
-	private String getTermOrCurieOrAbsIri(
-			String attribute,
-			Map<String,String> prefixMapping,
-			Map<String,String> termMapping,
-			String defaultVocab) {
-		if(attribute==null)return null;
-		if(isValidTerm(attribute)){
-			if(defaultVocab!=null)
-				return relativeResolve(defaultVocab+attribute).getValue();
-			else if(termMapping.containsKey(attribute))
-				return termMapping.get(attribute);
-			else {
-				String value=getValueCaseInsensitive(termMapping,attribute);
-				return value;
-			}
-		}
-		String curie=getCurie(attribute,0,attribute.length(),
-				prefixMapping);
-		if(curie==null){
-			// evaluate as IRI if it's absolute
-			if(URIUtility.hasScheme(attribute))
-				//DebugUtility.log("has scheme: %s",attribute);
-				return relativeResolve(attribute).getValue();
-			return null;
-		}
-		return curie;
-	}
-
-	private RDFTerm getSafeCurieOrCurieOrIri(
-			String attribute, Map<String,String> prefixMapping) {
-		if(attribute==null)return null;
-		int lastIndex=attribute.length()-1;
-		if(attribute.length()>=2 && attribute.charAt(0)=='[' && attribute.charAt(lastIndex)==']'){
-			RDFTerm curie=getCurieOrBnode(attribute,1,attribute.length()-2,
-					prefixMapping);
-			return curie;
-		} else {
-			RDFTerm curie=getCurieOrBnode(attribute,0,attribute.length(),
-					prefixMapping);
-			if(curie==null)
-				// evaluate as IRI
-				return relativeResolve(attribute);
-			return curie;
-		}
+		return RDFTerm.fromIRI(URIUtility.relativeResolve(iri, context.baseURI));
 	}
 }

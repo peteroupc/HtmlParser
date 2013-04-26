@@ -33,6 +33,26 @@ class ReplacementDecoder implements ITextDecoder {
 	boolean endofstream=false;
 
 	@Override
+	public int decode(InputStream stream) throws IOException {
+		return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public int decode(InputStream stream, IEncodingError error) throws IOException {
+		if(!endofstream){
+			endofstream=true;
+			if(error.equals(TextEncoding.ENCODING_ERROR_REPLACE))
+				return 0xFFFD;
+			else {
+				int[] data=new int[1];
+				int o=error.emitDecoderError(data,0,1);
+				return (o==0) ? -1 : data[0];
+			}
+		}
+		return -1;
+	}
+
+	@Override
 	public int decode(InputStream stream, int[] buffer, int offset, int length)
 			throws IOException {
 		return decode(stream, buffer, offset, length, TextEncoding.ENCODING_ERROR_THROW);
@@ -49,26 +69,6 @@ class ReplacementDecoder implements ITextDecoder {
 			endofstream=true;
 			int o=error.emitDecoderError(buffer, offset, length);
 			return o;
-		}
-		return -1;
-	}
-
-	@Override
-	public int decode(InputStream stream) throws IOException {
-		return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
-	}
-
-	@Override
-	public int decode(InputStream stream, IEncodingError error) throws IOException {
-		if(!endofstream){
-			endofstream=true;
-			if(error.equals(TextEncoding.ENCODING_ERROR_REPLACE))
-				return 0xFFFD;
-			else {
-				int[] data=new int[1];
-				int o=error.emitDecoderError(data,0,1);
-				return (o==0) ? -1 : data[0];
-			}
 		}
 		return -1;
 	}

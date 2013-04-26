@@ -25,152 +25,32 @@ import com.upokecenter.io.MemoryOutputStream;
  */
 public final class URL {
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result
-				+ ((fragment == null) ? 0 : fragment.hashCode());
-		result = prime * result + ((host == null) ? 0 : host.hashCode());
-		result = prime * result
-				+ ((password == null) ? 0 : password.hashCode());
-		result = prime * result + ((path == null) ? 0 : path.hashCode());
-		result = prime * result + ((port == null) ? 0 : port.hashCode());
-		result = prime * result + ((query == null) ? 0 : query.hashCode());
-		result = prime * result + ((scheme == null) ? 0 : scheme.hashCode());
-		result = prime * result
-				+ ((schemeData == null) ? 0 : schemeData.hashCode());
-		result = prime * result
-				+ ((username == null) ? 0 : username.hashCode());
-		return result;
+	private static final class EncodingError implements IEncodingError {
+		@Override
+		public int emitDecoderError(int[] buffer, int offset, int length)
+				throws IOException {
+			return 0;
+		}
+
+		@Override
+		public void emitEncoderError(OutputStream stream, int codePoint) throws IOException {
+			stream.write('?');
+		}
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		URL other = (URL) obj;
-		if (fragment == null) {
-			if (other.fragment != null)
-				return false;
-		} else if (!fragment.equals(other.fragment))
-			return false;
-		if (host == null) {
-			if (other.host != null)
-				return false;
-		} else if (!host.equals(other.host))
-			return false;
-		if (password == null) {
-			if (other.password != null)
-				return false;
-		} else if (!password.equals(other.password))
-			return false;
-		if (path == null) {
-			if (other.path != null)
-				return false;
-		} else if (!path.equals(other.path))
-			return false;
-		if (port == null) {
-			if (other.port != null)
-				return false;
-		} else if (!port.equals(other.port))
-			return false;
-		if (query == null) {
-			if (other.query != null)
-				return false;
-		} else if (!query.equals(other.query))
-			return false;
-		if (scheme == null) {
-			if (other.scheme != null)
-				return false;
-		} else if (!scheme.equals(other.scheme))
-			return false;
-		if (schemeData == null) {
-			if (other.schemeData != null)
-				return false;
-		} else if (!schemeData.equals(other.schemeData))
-			return false;
-		if (username == null) {
-			if (other.username != null)
-				return false;
-		} else if (!username.equals(other.username))
-			return false;
-		return true;
-	}
-
-	private String scheme="";
-	private String schemeData="";
-	private String username="";
-	private String password=null;
-	private String host=null;
-	private String path="";
-	private String query=null;
-	private String fragment=null;
-	private String port="";
-
-	public String getScheme(){
-		return scheme;
-	}
-
-	public String getSchemeData(){
-		return schemeData;
-	}
-
-	public String getPath(){
-		return path;
-	}
-
-	public String getPort(){
-		return port;
-	}
-
-	public String getProtocol(){
-		return scheme + ":";
-	}
-
-	public String getUsername(){
-		return username==null ? "" : username;
-	}
-
-	public String getPassword(){
-		return password==null ? "" : password;
-	}
-
-	public String getQueryString(){
-		return query==null ? "" : query;
-	}
-
-	public String getFragment(){
-		return fragment==null ? "" : fragment;
-	}
-
-	public String getHash(){
-		return (fragment==null || fragment.length()==0) ? "" : "#" + fragment;
-	}
-
-	public String getSearch(){
-		return (query==null || query.length()==0) ? "" : "?" + query;
-	}
-
-	public String getHost(){
-		if(port.length()==0)
-			return hostSerialize(host);
-		return hostSerialize(host) + ":" + port;
-	}
-
-	public String getHostname(){
-		return hostSerialize(host);
-	}
-
-	public String getPathname(){
-		if(schemeData.length()>0)
-			return schemeData;
-		else
-			return path;
+	private enum ParseState {
+		SchemeStart,
+		Scheme,
+		SchemeData,
+		NoScheme,
+		RelativeOrAuthority,
+		Relative,
+		RelativeSlash,
+		AuthorityFirstSlash,
+		AuthoritySecondSlash,
+		AuthorityIgnoreSlashes,
+		Authority, Query, Fragment, Host, FileHost,
+		RelativePathStart, RelativePath, HostName, Port
 	}
 
 	private static final class QuerySerializerError implements IEncodingError {
@@ -203,114 +83,9 @@ public final class URL {
 			stream.write(0x3B);
 		}
 	}
-
-	private static final class EncodingError implements IEncodingError {
-		@Override
-		public int emitDecoderError(int[] buffer, int offset, int length)
-				throws IOException {
-			return 0;
-		}
-
-		@Override
-		public void emitEncoderError(OutputStream stream, int codePoint) throws IOException {
-			stream.write('?');
-		}
-	}
-
-	private enum ParseState {
-		SchemeStart,
-		Scheme,
-		SchemeData,
-		NoScheme,
-		RelativeOrAuthority,
-		Relative,
-		RelativeSlash,
-		AuthorityFirstSlash,
-		AuthoritySecondSlash,
-		AuthorityIgnoreSlashes,
-		Authority, Query, Fragment, Host, FileHost,
-		RelativePathStart, RelativePath, HostName, Port
-	}
-
 	private static String hex="0123456789ABCDEF";
-
 	private static IEncodingError encodingError=new EncodingError();
-
 	private static IEncodingError querySerializerError=new QuerySerializerError();
-
-	private static void percentEncode(IntList buffer, int b){
-		buffer.appendInt('%');
-		buffer.appendInt(hex.charAt((b>>4)&0x0F));
-		buffer.appendInt(hex.charAt((b)&0x0F));
-	}
-
-	private static void percentEncodeUtf8(IntList buffer, int cp){
-		if(cp<=0x7F){
-			buffer.appendInt('%');
-			buffer.appendInt(hex.charAt((cp>>4)&0x0F));
-			buffer.appendInt(hex.charAt((cp)&0x0F));
-		} else if(cp<=0x7FF){
-			percentEncode(buffer,(0xC0|((cp>>6)&0x1F)));
-			percentEncode(buffer,(0x80|(cp   &0x3F)));
-		} else if(cp<=0xFFFF){
-			percentEncode(buffer,(0xE0|((cp>>12)&0x0F)));
-			percentEncode(buffer,(0x80|((cp>>6 )&0x3F)));
-			percentEncode(buffer,(0x80|(cp      &0x3F)));
-		} else {
-			percentEncode(buffer,(0xF0|((cp>>18)&0x07)));
-			percentEncode(buffer,(0x80|((cp>>12)&0x3F)));
-			percentEncode(buffer,(0x80|((cp>>6 )&0x3F)));
-			percentEncode(buffer,(0x80|(cp      &0x3F)));
-		}
-	}
-
-	@Override
-	public String toString(){
-		StringBuilder builder=new StringBuilder();
-		builder.append(scheme);
-		builder.append(':');
-		if(scheme.equals("file") ||
-				scheme.equals("http") ||
-				scheme.equals("https") ||
-				scheme.equals("ftp") ||
-				scheme.equals("gopher") ||
-				scheme.equals("ws") ||
-				scheme.equals("wss")){
-			// NOTE: We check relative schemes here
-			// rather than have a relative flag,
-			// as specified in the URL Standard
-			// (since the protocol can't be changed
-			// as this class is immutable, we can
-			// do this variation).
-			builder.append("//");
-			if(username.length()!=0 || password!=null){
-				builder.append(username);
-				if(password!=null){
-					builder.append(':');
-					builder.append(password);
-				}
-				builder.append('@');
-			}
-			builder.append(hostSerialize(host));
-			if(port.length()>0){
-				builder.append(':');
-				builder.append(port);
-			}
-			builder.append(path);
-		} else {
-			builder.append(schemeData);
-		}
-		if(query!=null){
-			builder.append('?');
-			builder.append(query);
-		}
-		if(fragment!=null){
-			builder.append('#');
-			builder.append(fragment);
-		}
-		return builder.toString();
-	}
-
 	private static void appendOutputBytes(StringBuilder builder,
 			MemoryOutputStream baos){
 		for(int i=0;i<baos.length();i++){
@@ -329,144 +104,155 @@ public final class URL {
 			}
 		}
 	}
-	private static String percentDecode(String str, String encoding)
-			throws IOException{
-		int len=str.length();
-		boolean percent=false;
-		for(int i=0;i<len;i++){
-			char c=str.charAt(i);
-			if(c=='%') {
-				percent=true;
-			} else if(c>=0x80) // Non-ASCII characters not allowed
-				return null;
-		}
-		if(!percent)return str;
-		ITextDecoder decoder=TextEncoding.getDecoder(encoding);
-		ByteList mos=new ByteList();
-		for(int i=0;i<len;i++){
-			int c=str.charAt(i);
-			if(c=='%'){
-				if(i+2<len){
-					int a=toHexNumber(str.charAt(i+1));
-					int b=toHexNumber(str.charAt(i+2));
-					if(a>=0 && b>=0){
-						mos.append((byte) (a*16+b));
-						i+=2;
+	private static String hostParse(String string) {
+		if(string.length()>0 && string.charAt(0)=='['){
+			if(string.charAt(string.length()-1)!=']'){
+				int[] ipv6=new int[8];
+				int piecePointer=0;
+				int index=1;
+				int compress=-1;
+				int ending=string.length()-1;
+				int c=(index>=ending) ? -1 : string.charAt(index);
+				if(c==':'){
+					if(index+1>=ending || string.charAt(index+1)!=':')
+						return null;
+					index+=2;
+					piecePointer++;
+					compress=piecePointer;
+				}
+				while(index<ending){
+					if(piecePointer>=8)return null;
+					c=string.charAt(index);
+					if(c>=0xD800 && c<=0xDBFF && index+1<ending &&
+							string.charAt(index+1)>=0xDC00 && string.charAt(index+1)<=0xDFFF){
+						// Get the Unicode code point for the surrogate pair
+						c=0x10000+(c-0xD800)*0x400+(string.charAt(index+1)-0xDC00);
+						index++;
+					} else if(c>=0xD800 && c<=0xDFFF)
+						// illegal surrogate
+						throw new IllegalArgumentException();
+					index++;
+					if(c==':'){
+						if(compress>=0)return null;
+						piecePointer++;
+						compress=piecePointer;
 						continue;
 					}
+					int value=0;
+					int length=0;
+					while(length<4){
+						if(c>='A' && c<='F'){
+							value=value*16+(c-'A')+10;
+							index++;
+							length++;
+							c=(index>=ending) ? -1 : string.charAt(index);
+						} else if(c>='a' && c<='f'){
+							value=value*16+(c-'a')+10;
+							index++;
+							length++;
+							c=(index>=ending) ? -1 : string.charAt(index);
+						} else if(c>='0' && c<='9'){
+							value=value*16+(c-'0');
+							index++;
+							length++;
+							c=(index>=ending) ? -1 : string.charAt(index);
+						} else {
+							break;
+						}
+					}
+					if(c=='.'){
+						if(length==0)return null;
+						index-=length;
+						break;
+					} else if(c==':'){
+						index++;
+						c=(index>=ending) ? -1 : string.charAt(index);
+						if(c<0)return null;
+					} else if(c>=0)
+						return null;
+					ipv6[piecePointer]=value;
+					piecePointer++;
 				}
-			}
-			mos.append((byte) (c&0xFF));
-		}
-		return TextEncoding.decodeString(mos.toInputStream(),
-				decoder, TextEncoding.ENCODING_ERROR_REPLACE);
-	}
-
-	public static String toQueryString(List<String[]> pairs,
-			String delimiter, String encoding) throws IOException{
-		if(encoding==null) {
-			encoding="utf-8";
-		}
-		ITextEncoder encoder=TextEncoding.getEncoder(encoding);
-		if(encoder==null)
-			throw new IllegalArgumentException();
-		StringBuilder builder=new StringBuilder();
-		boolean first=true;
-		MemoryOutputStream baos=new MemoryOutputStream();
-		for(String[] pair : pairs){
-			if(!first){
-				builder.append(delimiter==null ? "&" : delimiter);
-			}
-			first=false;
-			if(pair==null || pair.length<2)
-				throw new IllegalArgumentException();
-			baos.reset();
-			TextEncoding.encodeString(pair[0], baos, encoder, querySerializerError);
-			appendOutputBytes(builder,baos);
-			builder.append('=');
-			baos.reset();
-			TextEncoding.encodeString(pair[1], baos, encoder, querySerializerError);
-			appendOutputBytes(builder,baos);
-		}
-		return builder.toString();
-	}
-
-	public static List<String[]> parseQueryString(
-			String input, String delimiter, String encoding, boolean useCharset, boolean isindex){
-		if(input==null)
-			throw new IllegalArgumentException();
-		if(delimiter==null) {
-			delimiter="&";
-		}
-		if(encoding==null) {
-			encoding="utf-8";
-		}
-		for(int i=0;i<input.length();i++){
-			if(input.charAt(i)>0x7F)
-				throw new IllegalArgumentException();
-		}
-		String[] strings=StringUtility.splitAt(input,delimiter);
-		List<String[]> pairs=new ArrayList<String[]>();
-		for(String str : strings){
-			if(str.length()==0) {
-				continue;
-			}
-			int index=str.indexOf('=');
-			String name=str;
-			String value="";
-			if(index>=0){
-				name=str.substring(0,index);
-				value=str.substring(index+1);
-			}
-			name=name.replace('+',' ');
-			value=value.replace('+',' ');
-			if(useCharset && "_charset_".equals(name)){
-				String ch=TextEncoding.resolveEncoding(value);
-				if(ch!=null){
-					useCharset=false;
-					encoding=ch;
+				// IPv4
+				if(c>=0){
+					if(piecePointer>6)
+						return null;
+					int dotsSeen=0;
+					while(index<ending){
+						int value=0;
+						while(c>='0' && c<='9'){
+							value=value*10+(c-'0');
+							if(value>255)return null;
+							index++;
+							c=(index>=ending) ? -1 : string.charAt(index);
+						}
+						if(dotsSeen<3 && c!='.')
+							return null;
+						else if(dotsSeen==3 && c=='.')
+							return null;
+						ipv6[piecePointer]=ipv6[piecePointer]*256+value;
+						if(dotsSeen==0 || dotsSeen==2){
+							piecePointer++;
+						}
+						dotsSeen++;
+					}
 				}
+				if(compress>=0){
+					int swaps=piecePointer-compress;
+					piecePointer=7;
+					while(piecePointer!=0 && swaps!=0){
+						int ptr=compress-swaps+1;
+						int tmp=ipv6[piecePointer];
+						ipv6[piecePointer]=ipv6[ptr];
+						ipv6[ptr]=tmp;
+						piecePointer--;
+						swaps--;
+					}
+				} else if(compress<0 && piecePointer!=8)
+					return null;
 			}
-			String[] pair=new String[]{name,value};
-			pairs.add(pair);
 		}
 		try {
-			for(String[] pair : pairs){
-				pair[0]=percentDecode(pair[0],encoding);
-				pair[1]=percentDecode(pair[1],encoding);
-			}
+			//DebugUtility.log("was: %s",string);
+			string=percentDecode(string,"utf-8");
+			//DebugUtility.log("now: %s",string);
 		} catch (IOException e) {
-			throw new RuntimeException(e);
+			return null;
 		}
-		return pairs;
+		return string;
 	}
-
-	public static List<String> pathList(String s){
-		List<String> str=new ArrayList<String>();
-		if(s==null || s.length()==0)
-			return str;
-		if(s.charAt(0)!='/')
-			throw new IllegalArgumentException();
-		int i=1;
-		while(i<=s.length()){
-			int io=s.indexOf('/',i);
-			if(io>=0){
-				str.add(s.substring(i,io));
-				i=io+1;
-			} else {
-				str.add(s.substring(i));
-				break;
-			}
-		}
-		return str;
+	private static String hostSerialize(String string) {
+		if(string==null)return "";
+		return string;
+	}
+	private static boolean isHexDigit(int c) {
+		return (c>='A' && c<='Z') || (c>='a' && c<='z') || (c>='0' && c<='9');
+	}
+	private static boolean isUrlCodePoint(int c) {
+		if(c<=0x20)return false;
+		if(c<0x80)
+			return((c>='a' && c<='z') ||
+					(c>='A' && c<='Z') ||
+					(c>='0' && c<='9') ||
+					((c&0x7F)==c && "!$&'()*+,-./:;=?@_~".indexOf((char)c)>=0));
+		else if((c&0xFFFE)==0xFFFE)
+			return false;
+		else if((c>=0xa0 && c<=0xd7ff) ||
+				(c>=0xe000 && c<=0xfdcf) ||
+				(c>=0xfdf0 && c<=0xffef) ||
+				(c>=0x10000 && c<=0x10fffd))
+			return true;
+		return false;
 	}
 
 	public static URL parse(String s){
 		return parse(s,null,null, false);
 	}
+
 	public static URL parse(String s, URL baseurl){
 		return parse(s,baseurl,null, false);
 	}
+
 	public static URL parse(String s, URL baseurl, String encoding){
 		return parse(s, baseurl, encoding, false);
 	}
@@ -1044,127 +830,135 @@ public final class URL {
 		return url;
 	}
 
-	private static String hostSerialize(String string) {
-		if(string==null)return "";
-		return string;
-	}
-	private static String hostParse(String string) {
-		if(string.length()>0 && string.charAt(0)=='['){
-			if(string.charAt(string.length()-1)!=']'){
-				int[] ipv6=new int[8];
-				int piecePointer=0;
-				int index=1;
-				int compress=-1;
-				int ending=string.length()-1;
-				int c=(index>=ending) ? -1 : string.charAt(index);
-				if(c==':'){
-					if(index+1>=ending || string.charAt(index+1)!=':')
-						return null;
-					index+=2;
-					piecePointer++;
-					compress=piecePointer;
-				}
-				while(index<ending){
-					if(piecePointer>=8)return null;
-					c=string.charAt(index);
-					if(c>=0xD800 && c<=0xDBFF && index+1<ending &&
-							string.charAt(index+1)>=0xDC00 && string.charAt(index+1)<=0xDFFF){
-						// Get the Unicode code point for the surrogate pair
-						c=0x10000+(c-0xD800)*0x400+(string.charAt(index+1)-0xDC00);
-						index++;
-					} else if(c>=0xD800 && c<=0xDFFF)
-						// illegal surrogate
-						throw new IllegalArgumentException();
-					index++;
-					if(c==':'){
-						if(compress>=0)return null;
-						piecePointer++;
-						compress=piecePointer;
-						continue;
-					}
-					int value=0;
-					int length=0;
-					while(length<4){
-						if(c>='A' && c<='F'){
-							value=value*16+(c-'A')+10;
-							index++;
-							length++;
-							c=(index>=ending) ? -1 : string.charAt(index);
-						} else if(c>='a' && c<='f'){
-							value=value*16+(c-'a')+10;
-							index++;
-							length++;
-							c=(index>=ending) ? -1 : string.charAt(index);
-						} else if(c>='0' && c<='9'){
-							value=value*16+(c-'0');
-							index++;
-							length++;
-							c=(index>=ending) ? -1 : string.charAt(index);
-						} else {
-							break;
-						}
-					}
-					if(c=='.'){
-						if(length==0)return null;
-						index-=length;
-						break;
-					} else if(c==':'){
-						index++;
-						c=(index>=ending) ? -1 : string.charAt(index);
-						if(c<0)return null;
-					} else if(c>=0)
-						return null;
-					ipv6[piecePointer]=value;
-					piecePointer++;
-				}
-				// IPv4
-				if(c>=0){
-					if(piecePointer>6)
-						return null;
-					int dotsSeen=0;
-					while(index<ending){
-						int value=0;
-						while(c>='0' && c<='9'){
-							value=value*10+(c-'0');
-							if(value>255)return null;
-							index++;
-							c=(index>=ending) ? -1 : string.charAt(index);
-						}
-						if(dotsSeen<3 && c!='.')
-							return null;
-						else if(dotsSeen==3 && c=='.')
-							return null;
-						ipv6[piecePointer]=ipv6[piecePointer]*256+value;
-						if(dotsSeen==0 || dotsSeen==2){
-							piecePointer++;
-						}
-						dotsSeen++;
-					}
-				}
-				if(compress>=0){
-					int swaps=piecePointer-compress;
-					piecePointer=7;
-					while(piecePointer!=0 && swaps!=0){
-						int ptr=compress-swaps+1;
-						int tmp=ipv6[piecePointer];
-						ipv6[piecePointer]=ipv6[ptr];
-						ipv6[ptr]=tmp;
-						piecePointer--;
-						swaps--;
-					}
-				} else if(compress<0 && piecePointer!=8)
-					return null;
+	public static List<String[]> parseQueryString(
+			String input, String delimiter, String encoding, boolean useCharset, boolean isindex){
+		if(input==null)
+			throw new IllegalArgumentException();
+		if(delimiter==null) {
+			delimiter="&";
+		}
+		if(encoding==null) {
+			encoding="utf-8";
+		}
+		for(int i=0;i<input.length();i++){
+			if(input.charAt(i)>0x7F)
+				throw new IllegalArgumentException();
+		}
+		String[] strings=StringUtility.splitAt(input,delimiter);
+		List<String[]> pairs=new ArrayList<String[]>();
+		for(String str : strings){
+			if(str.length()==0) {
+				continue;
 			}
+			int index=str.indexOf('=');
+			String name=str;
+			String value="";
+			if(index>=0){
+				name=str.substring(0,index);
+				value=str.substring(index+1);
+			}
+			name=name.replace('+',' ');
+			value=value.replace('+',' ');
+			if(useCharset && "_charset_".equals(name)){
+				String ch=TextEncoding.resolveEncoding(value);
+				if(ch!=null){
+					useCharset=false;
+					encoding=ch;
+				}
+			}
+			String[] pair=new String[]{name,value};
+			pairs.add(pair);
 		}
 		try {
-			//DebugUtility.log("was: %s",string);
-			string=percentDecode(string,"utf-8");
-			//DebugUtility.log("now: %s",string);
+			for(String[] pair : pairs){
+				pair[0]=percentDecode(pair[0],encoding);
+				pair[1]=percentDecode(pair[1],encoding);
+			}
 		} catch (IOException e) {
-			return null;
+			throw new RuntimeException(e);
 		}
-		return string;
+		return pairs;
 	}
+
+	public static List<String> pathList(String s){
+		List<String> str=new ArrayList<String>();
+		if(s==null || s.length()==0)
+			return str;
+		if(s.charAt(0)!='/')
+			throw new IllegalArgumentException();
+		int i=1;
+		while(i<=s.length()){
+			int io=s.indexOf('/',i);
+			if(io>=0){
+				str.add(s.substring(i,io));
+				i=io+1;
+			} else {
+				str.add(s.substring(i));
+				break;
+			}
+		}
+		return str;
+	}
+
+	private static String percentDecode(String str, String encoding)
+			throws IOException{
+		int len=str.length();
+		boolean percent=false;
+		for(int i=0;i<len;i++){
+			char c=str.charAt(i);
+			if(c=='%') {
+				percent=true;
+			} else if(c>=0x80) // Non-ASCII characters not allowed
+				return null;
+		}
+		if(!percent)return str;
+		ITextDecoder decoder=TextEncoding.getDecoder(encoding);
+		ByteList mos=new ByteList();
+		for(int i=0;i<len;i++){
+			int c=str.charAt(i);
+			if(c=='%'){
+				if(i+2<len){
+					int a=toHexNumber(str.charAt(i+1));
+					int b=toHexNumber(str.charAt(i+2));
+					if(a>=0 && b>=0){
+						mos.append((byte) (a*16+b));
+						i+=2;
+						continue;
+					}
+				}
+			}
+			mos.append((byte) (c&0xFF));
+		}
+		return TextEncoding.decodeString(mos.toInputStream(),
+				decoder, TextEncoding.ENCODING_ERROR_REPLACE);
+	}
+
+	private static void percentEncode(IntList buffer, int b){
+		buffer.appendInt('%');
+		buffer.appendInt(hex.charAt((b>>4)&0x0F));
+		buffer.appendInt(hex.charAt((b)&0x0F));
+	}
+
+	private static void percentEncodeUtf8(IntList buffer, int cp){
+		if(cp<=0x7F){
+			buffer.appendInt('%');
+			buffer.appendInt(hex.charAt((cp>>4)&0x0F));
+			buffer.appendInt(hex.charAt((cp)&0x0F));
+		} else if(cp<=0x7FF){
+			percentEncode(buffer,(0xC0|((cp>>6)&0x1F)));
+			percentEncode(buffer,(0x80|(cp   &0x3F)));
+		} else if(cp<=0xFFFF){
+			percentEncode(buffer,(0xE0|((cp>>12)&0x0F)));
+			percentEncode(buffer,(0x80|((cp>>6 )&0x3F)));
+			percentEncode(buffer,(0x80|(cp      &0x3F)));
+		} else {
+			percentEncode(buffer,(0xF0|((cp>>18)&0x07)));
+			percentEncode(buffer,(0x80|((cp>>12)&0x3F)));
+			percentEncode(buffer,(0x80|((cp>>6 )&0x3F)));
+			percentEncode(buffer,(0x80|(cp      &0x3F)));
+		}
+	}
+
 	private static int toHexNumber(int c) {
 		if(c>='A' && c<='Z')
 			return 10+c-'A';
@@ -1175,25 +969,231 @@ public final class URL {
 		return -1;
 	}
 
-	private static boolean isHexDigit(int c) {
-		return (c>='A' && c<='Z') || (c>='a' && c<='z') || (c>='0' && c<='9');
+	public static String toQueryString(List<String[]> pairs,
+			String delimiter, String encoding) throws IOException{
+		if(encoding==null) {
+			encoding="utf-8";
+		}
+		ITextEncoder encoder=TextEncoding.getEncoder(encoding);
+		if(encoder==null)
+			throw new IllegalArgumentException();
+		StringBuilder builder=new StringBuilder();
+		boolean first=true;
+		MemoryOutputStream baos=new MemoryOutputStream();
+		for(String[] pair : pairs){
+			if(!first){
+				builder.append(delimiter==null ? "&" : delimiter);
+			}
+			first=false;
+			if(pair==null || pair.length<2)
+				throw new IllegalArgumentException();
+			baos.reset();
+			TextEncoding.encodeString(pair[0], baos, encoder, querySerializerError);
+			appendOutputBytes(builder,baos);
+			builder.append('=');
+			baos.reset();
+			TextEncoding.encodeString(pair[1], baos, encoder, querySerializerError);
+			appendOutputBytes(builder,baos);
+		}
+		return builder.toString();
 	}
 
-	private static boolean isUrlCodePoint(int c) {
-		if(c<=0x20)return false;
-		if(c<0x80)
-			return((c>='a' && c<='z') ||
-					(c>='A' && c<='Z') ||
-					(c>='0' && c<='9') ||
-					((c&0x7F)==c && "!$&'()*+,-./:;=?@_~".indexOf((char)c)>=0));
-		else if((c&0xFFFE)==0xFFFE)
-			return false;
-		else if((c>=0xa0 && c<=0xd7ff) ||
-				(c>=0xe000 && c<=0xfdcf) ||
-				(c>=0xfdf0 && c<=0xffef) ||
-				(c>=0x10000 && c<=0x10fffd))
+	private String scheme="";
+
+	private String schemeData="";
+
+	private String username="";
+
+	private String password=null;
+
+	private String host=null;
+
+	private String path="";
+
+	private String query=null;
+
+	private String fragment=null;
+
+	private String port="";
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
 			return true;
-		return false;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		URL other = (URL) obj;
+		if (fragment == null) {
+			if (other.fragment != null)
+				return false;
+		} else if (!fragment.equals(other.fragment))
+			return false;
+		if (host == null) {
+			if (other.host != null)
+				return false;
+		} else if (!host.equals(other.host))
+			return false;
+		if (password == null) {
+			if (other.password != null)
+				return false;
+		} else if (!password.equals(other.password))
+			return false;
+		if (path == null) {
+			if (other.path != null)
+				return false;
+		} else if (!path.equals(other.path))
+			return false;
+		if (port == null) {
+			if (other.port != null)
+				return false;
+		} else if (!port.equals(other.port))
+			return false;
+		if (query == null) {
+			if (other.query != null)
+				return false;
+		} else if (!query.equals(other.query))
+			return false;
+		if (scheme == null) {
+			if (other.scheme != null)
+				return false;
+		} else if (!scheme.equals(other.scheme))
+			return false;
+		if (schemeData == null) {
+			if (other.schemeData != null)
+				return false;
+		} else if (!schemeData.equals(other.schemeData))
+			return false;
+		if (username == null) {
+			if (other.username != null)
+				return false;
+		} else if (!username.equals(other.username))
+			return false;
+		return true;
+	}
+
+	public String getFragment(){
+		return fragment==null ? "" : fragment;
+	}
+
+	public String getHash(){
+		return (fragment==null || fragment.length()==0) ? "" : "#" + fragment;
+	}
+
+	public String getHost(){
+		if(port.length()==0)
+			return hostSerialize(host);
+		return hostSerialize(host) + ":" + port;
+	}
+	public String getHostname(){
+		return hostSerialize(host);
+	}
+
+	public String getPassword(){
+		return password==null ? "" : password;
+	}
+
+	public String getPath(){
+		return path;
+	}
+
+	public String getPathname(){
+		if(schemeData.length()>0)
+			return schemeData;
+		else
+			return path;
+	}
+
+	public String getPort(){
+		return port;
+	}
+	public String getProtocol(){
+		return scheme + ":";
+	}
+	public String getQueryString(){
+		return query==null ? "" : query;
+	}
+
+	public String getScheme(){
+		return scheme;
+	}
+
+	public String getSchemeData(){
+		return schemeData;
+	}
+	public String getSearch(){
+		return (query==null || query.length()==0) ? "" : "?" + query;
+	}
+	public String getUsername(){
+		return username==null ? "" : username;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((fragment == null) ? 0 : fragment.hashCode());
+		result = prime * result + ((host == null) ? 0 : host.hashCode());
+		result = prime * result
+				+ ((password == null) ? 0 : password.hashCode());
+		result = prime * result + ((path == null) ? 0 : path.hashCode());
+		result = prime * result + ((port == null) ? 0 : port.hashCode());
+		result = prime * result + ((query == null) ? 0 : query.hashCode());
+		result = prime * result + ((scheme == null) ? 0 : scheme.hashCode());
+		result = prime * result
+				+ ((schemeData == null) ? 0 : schemeData.hashCode());
+		result = prime * result
+				+ ((username == null) ? 0 : username.hashCode());
+		return result;
+	}
+
+	@Override
+	public String toString(){
+		StringBuilder builder=new StringBuilder();
+		builder.append(scheme);
+		builder.append(':');
+		if(scheme.equals("file") ||
+				scheme.equals("http") ||
+				scheme.equals("https") ||
+				scheme.equals("ftp") ||
+				scheme.equals("gopher") ||
+				scheme.equals("ws") ||
+				scheme.equals("wss")){
+			// NOTE: We check relative schemes here
+			// rather than have a relative flag,
+			// as specified in the URL Standard
+			// (since the protocol can't be changed
+			// as this class is immutable, we can
+			// do this variation).
+			builder.append("//");
+			if(username.length()!=0 || password!=null){
+				builder.append(username);
+				if(password!=null){
+					builder.append(':');
+					builder.append(password);
+				}
+				builder.append('@');
+			}
+			builder.append(hostSerialize(host));
+			if(port.length()>0){
+				builder.append(':');
+				builder.append(port);
+			}
+			builder.append(path);
+		} else {
+			builder.append(schemeData);
+		}
+		if(query!=null){
+			builder.append('?');
+			builder.append(query);
+		}
+		if(fragment!=null){
+			builder.append('#');
+			builder.append(fragment);
+		}
+		return builder.toString();
 	}
 
 }

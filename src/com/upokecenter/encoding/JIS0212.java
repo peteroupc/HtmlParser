@@ -26,7 +26,6 @@ THE SOFTWARE.
 // This file was generated using the index file in the WHATWG Encoding specification.
 package com.upokecenter.encoding;
 final class JIS0212 {
-	private JIS0212(){}
 	private static short[] table=new short[7103];
 	static {
 		System.arraycopy(method0(),0,table,0,4096);
@@ -61,13 +60,6 @@ final class JIS0212 {
 		39344,40215,6656,256,
 		40216,40869,6912,191
 	};
-
-	public static int indexToCodePoint(int index){
-		if(index<108 || index>7210)return -1;
-		int ret=table[index-108];
-		return (ret==0) ? -1 : (ret&0xFFFF);
-	}
-
 	public static int codePointToIndex(int codepoint){
 		if(codepoint<161 || codepoint>65374)return -1;
 		for(int i=0;i<indextable.length;i+=4){
@@ -81,6 +73,12 @@ final class JIS0212 {
 			}
 		}
 		return -1;
+	}
+
+	public static int indexToCodePoint(int index){
+		if(index<108 || index>7210)return -1;
+		int ret=table[index-108];
+		return (ret==0) ? -1 : (ret&0xFFFF);
 	}
 
 	private static short[] method0(){
@@ -344,6 +342,7 @@ final class JIS0212 {
 
 		};
 	}
+
 	private static short[] method1(){
 		return new short[]{
 				0x7603,0x7604,0x7607,0x7608,0x760A,0x760C,0x760F,0x7612,0x7613,0x7615,0x7616,0x7619,0x761B,0x761C,0x761D,0x761E,
@@ -536,4 +535,5 @@ final class JIS0212 {
 				(short)0x9F75,(short)0x9F7A,(short)0x9F7D,(short)0x9F8F,(short)0x9F90,(short)0x9F91,(short)0x9F92,(short)0x9F94,(short)0x9F96,(short)0x9F97,(short)0x9F9E,(short)0x9FA1,(short)0x9FA2,(short)0x9FA3,(short)0x9FA5
 		};
 	}
+	private JIS0212(){}
 }

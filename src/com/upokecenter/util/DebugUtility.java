@@ -14,12 +14,10 @@ import java.lang.reflect.Method;
  *
  */
 public final class DebugUtility {
-	private DebugUtility(){}
-
 	private static Method androidLog=null;
+
 	private static boolean checkedAndroidLog=false;
 	private static Object syncRoot=new Object();
-
 	private static Method getAndroidLog(){
 		synchronized(syncRoot){
 			if(!checkedAndroidLog){
@@ -31,6 +29,21 @@ public final class DebugUtility {
 				checkedAndroidLog=true;
 			}
 			return androidLog;
+		}
+	}
+
+	/**
+	 * Converts an object to a string,
+	 * and then writes that string as a line of output.
+	 * @param item the item to convert to a string.
+	 */
+	public static void log(Object item){
+		Method method=getAndroidLog();
+		String message=String.format("%s",item==null ? "null" : item.toString());
+		if(method==null){
+			System.out.println(message);
+		} else {
+			Reflection.invoke(null,method,null,"CWS",message);
 		}
 	}
 
@@ -50,18 +63,5 @@ public final class DebugUtility {
 			Reflection.invoke(null,method,null,"CWS",message);
 		}
 	}
-	/**
-	 * Converts an object to a string,
-	 * and then writes that string as a line of output.
-	 * @param item the item to convert to a string.
-	 */
-	public static void log(Object item){
-		Method method=getAndroidLog();
-		String message=String.format("%s",item==null ? "null" : item.toString());
-		if(method==null){
-			System.out.println(message);
-		} else {
-			Reflection.invoke(null,method,null,"CWS",message);
-		}
-	}
+	private DebugUtility(){}
 }

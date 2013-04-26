@@ -10,12 +10,12 @@ public interface IMarkableCharacterInput extends ICharacterInput {
 
 	public int getMarkPosition();
 
-	public void setMarkPosition(int pos) throws IOException;
-
-	public int setSoftMark();
+	public void moveBack(int count) throws IOException;
 
 	public int setHardMark();
 
-	public void moveBack(int count) throws IOException;
+	public void setMarkPosition(int pos) throws IOException;
+
+	public int setSoftMark();
 
 }

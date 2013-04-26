@@ -32,6 +32,22 @@ import java.io.OutputStream;
 final class XUserDefinedEncoding implements ITextEncoder, ITextDecoder {
 
 	@Override
+	public int decode(InputStream stream) throws IOException {
+		return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public int decode(InputStream stream, IEncodingError error) throws IOException {
+		if(stream==null)throw new IllegalArgumentException();
+		int c=stream.read();
+		if(c<0)return -1;
+		if(c<0x80)
+			return c;
+		else
+			return 0xF780+c-0x80;
+	}
+
+	@Override
 	public int decode(InputStream stream, int[] buffer, int offset, int length)
 			throws IOException {
 		return decode(stream, buffer, offset, length, TextEncoding.ENCODING_ERROR_THROW);
@@ -64,6 +80,12 @@ final class XUserDefinedEncoding implements ITextEncoder, ITextDecoder {
 	}
 
 	@Override
+	public void encode(OutputStream stream, int[] buffer, int offset, int length)
+			throws IOException {
+		encode(stream, buffer, offset, length, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
 	public void encode(OutputStream stream, int[] array, int offset, int length, IEncodingError error)
 			throws IOException {
 		if((stream)==null)throw new NullPointerException("stream");
@@ -85,28 +107,6 @@ final class XUserDefinedEncoding implements ITextEncoder, ITextDecoder {
 				error.emitEncoderError(stream, c);
 			}
 		}
-	}
-
-	@Override
-	public int decode(InputStream stream) throws IOException {
-		return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
-	}
-
-	@Override
-	public int decode(InputStream stream, IEncodingError error) throws IOException {
-		if(stream==null)throw new IllegalArgumentException();
-		int c=stream.read();
-		if(c<0)return -1;
-		if(c<0x80)
-			return c;
-		else
-			return 0xF780+c-0x80;
-	}
-
-	@Override
-	public void encode(OutputStream stream, int[] buffer, int offset, int length)
-			throws IOException {
-		encode(stream, buffer, offset, length, TextEncoding.ENCODING_ERROR_THROW);
 	}
 
 

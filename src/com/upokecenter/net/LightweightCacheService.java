@@ -37,56 +37,16 @@ import com.upokecenter.util.Reflection;
 
 public final class LightweightCacheService {
 
-	private boolean enableHttpCache(long sizeInBytes){
-		try {
-			return enableHttpCacheInternal(sizeInBytes);
-		} catch(IOException e){
-			return false;
-		}
-	}
-
-
-	private boolean enableHttpCacheInternal(long sizeInBytes) throws IOException{
-		File cacheDir=filePublicPath;
-		if(cacheDir==null)return false;
-		cacheDir=new File(filePublicPath,"httpcache");
-		cacheDir.mkdirs();
-		// HttpResponseCache added in ICS
-		Class<?> clazz=Reflection.getClassForName("android.net.http.HttpResponseCache");
-		if(clazz==null && ResponseCache.getDefault()==null){
-			ResponseCache legacyCache=(ResponseCache)DownloadHelper.getLegacyResponseCache(cacheDir);
-			ResponseCache.setDefault(legacyCache);
-			return (ResponseCache.getDefault()!=null);
-		}
-		Object o=null;
-		o=Reflection.invokeStaticByName(clazz,"install",null,cacheDir,sizeInBytes);
-		return (o!=null);
-	}
-
 	ScheduledExecutorService pool;
+
+
 	volatile long cacheSize=2L*1024L*1024L;
+
 	Object syncRoot=new Object();
 	Object syncRootFilesystem=new Object();
 	File filePublicPath;
 	File filePrivatePath;
 	Runnable runnable;
-
-	public void enableCache(){
-		pool.submit(new Runnable(){
-
-			@Override
-			public void run() {
-				long size=0;
-				synchronized(syncRoot){
-					size=cacheSize;
-				}
-				synchronized(syncRootFilesystem){
-					enableHttpCache(size);
-				}
-			}
-		});
-	}
-
 	public LightweightCacheService(File publicPath, File privatePath){
 		filePublicPath=publicPath;
 		filePrivatePath=privatePath;
@@ -115,9 +75,45 @@ public final class LightweightCacheService {
 		};
 		pool.scheduleAtFixedRate(runnable,5,120,TimeUnit.SECONDS);
 	}
-	public void shutdown(){
-		pool.shutdown();
-		runnable=null;
+	public void enableCache(){
+		pool.submit(new Runnable(){
+
+			@Override
+			public void run() {
+				long size=0;
+				synchronized(syncRoot){
+					size=cacheSize;
+				}
+				synchronized(syncRootFilesystem){
+					enableHttpCache(size);
+				}
+			}
+		});
+	}
+
+	private boolean enableHttpCache(long sizeInBytes){
+		try {
+			return enableHttpCacheInternal(sizeInBytes);
+		} catch(IOException e){
+			return false;
+		}
+	}
+
+	private boolean enableHttpCacheInternal(long sizeInBytes) throws IOException{
+		File cacheDir=filePublicPath;
+		if(cacheDir==null)return false;
+		cacheDir=new File(filePublicPath,"httpcache");
+		cacheDir.mkdirs();
+		// HttpResponseCache added in ICS
+		Class<?> clazz=Reflection.getClassForName("android.net.http.HttpResponseCache");
+		if(clazz==null && ResponseCache.getDefault()==null){
+			ResponseCache legacyCache=(ResponseCache)DownloadHelper.getLegacyResponseCache(cacheDir);
+			ResponseCache.setDefault(legacyCache);
+			return (ResponseCache.getDefault()!=null);
+		}
+		Object o=null;
+		o=Reflection.invokeStaticByName(clazz,"install",null,cacheDir,sizeInBytes);
+		return (o!=null);
 	}
 	public void setCacheSize(long size){
 		if(size<=0)
@@ -126,5 +122,9 @@ public final class LightweightCacheService {
 			cacheSize=Math.max(size,0);
 		}
 		pool.submit(runnable);
+	}
+	public void shutdown(){
+		pool.shutdown();
+		runnable=null;
 	}
 }

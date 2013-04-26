@@ -30,14 +30,6 @@ import com.upokecenter.util.URIUtility;
  *
  */
 final class ExclusiveCanonicalXML {
-	private ExclusiveCanonicalXML(){}
-	private static final class NamespaceAttrComparer implements Comparator<IAttr> {
-		@Override
-		public int compare(IAttr arg0, IAttr arg1) {
-			return StringUtility.codePointCompare(arg0.getName(),arg1.getName());
-		}
-	}
-
 	private static final class AttrComparer implements Comparator<IAttr> {
 		@Override
 		public int compare(IAttr arg0, IAttr arg1) {
@@ -56,6 +48,52 @@ final class ExclusiveCanonicalXML {
 			return cmp;
 		}
 	}
+	private static final class NamespaceAttr implements IAttr {
+		String prefix;
+		String localName;
+		String value;
+		String name;
+		public NamespaceAttr(String prefix, String value){
+			if(prefix.length()==0){
+				this.prefix="";
+				this.localName="xmlns";
+				this.value=value;
+				this.name="xmlns";
+			} else {
+				this.prefix="xmlns";
+				this.localName=prefix;
+				this.name="xmlns:"+value;
+				this.value=value;
+			}
+		}
+		@Override
+		public String getLocalName() {
+			return localName;
+		}
+		@Override
+		public String getName() {
+			return name;
+		}
+		@Override
+		public String getNamespaceURI() {
+			return "http://www.w3.org/2000/xmlns/";
+		}
+		@Override
+		public String getPrefix() {
+			return prefix;
+		}
+		@Override
+		public String getValue() {
+			return value;
+		}
+	}
+
+	private static final class NamespaceAttrComparer implements Comparator<IAttr> {
+		@Override
+		public int compare(IAttr arg0, IAttr arg1) {
+			return StringUtility.codePointCompare(arg0.getName(),arg1.getName());
+		}
+	}
 
 	private static final Comparator<IAttr> attrComparer=new AttrComparer();
 	private static final Comparator<IAttr> attrNamespaceComparer=new NamespaceAttrComparer();
@@ -66,21 +104,6 @@ final class ExclusiveCanonicalXML {
 			Map<String,String> prefixList
 			){
 		return canonicalize(node,includeRoot,prefixList,false);
-	}
-	private static void checkNamespacePrefix(String prefix, String nsvalue){
-		if(prefix.equals("xmlns"))
-			throw new IllegalArgumentException("'xmlns' namespace declared");
-		if(prefix.equals("xml") && !"http://www.w3.org/XML/1998/namespace".equals(nsvalue))
-			throw new IllegalArgumentException("'xml' bound to wrong namespace name");
-		if(!"xml".equals(prefix) && "http://www.w3.org/XML/1998/namespace".equals(nsvalue))
-			throw new IllegalArgumentException("'xml' bound to wrong namespace name");
-		if("http://www.w3.org/2000/xmlns/".equals(nsvalue))
-			throw new IllegalArgumentException("'prefix' bound to xmlns namespace name");
-		if(!StringUtility.isNullOrEmpty(nsvalue)){
-			if(!URIUtility.hasSchemeForURI(nsvalue))
-				throw new IllegalArgumentException(nsvalue+" is not a valid namespace URI.");
-		} else if(!"".equals(prefix))
-			throw new IllegalArgumentException("can't undeclare a prefix");
 	}
 	public static String canonicalize(
 			INode node,
@@ -120,126 +143,6 @@ final class ExclusiveCanonicalXML {
 		}
 		return builder.toString();
 	}
-
-	private static boolean isVisiblyUtilized(IElement element, String s){
-		String prefix=element.getPrefix();
-		if(prefix==null) {
-			prefix="";
-		}
-		if(s.equals(prefix))return true;
-		if(s.length()>0){
-			for(IAttr attr : element.getAttributes()){
-				prefix=attr.getPrefix();
-				if(prefix==null) {
-					continue;
-				}
-				if(s.equals(prefix))return true;
-			}
-		}
-		return false;
-	}
-
-	private static void renderAttribute(StringBuilder builder,
-			String prefix, String name, String value){
-		builder.append(' ');
-		if(!StringUtility.isNullOrEmpty(prefix)){
-			builder.append(prefix);
-			builder.append(":");
-		}
-		builder.append(name);
-		builder.append("=\"");
-		for(int i=0;i<value.length();i++){
-			char c=value.charAt(i);
-			if(c==0x0d) {
-				builder.append("&#xD;");
-			} else if(c==0x09) {
-				builder.append("&#x9;");
-			} else if(c==0x0a) {
-				builder.append("&#xA;");
-			} else if(c=='"') {
-				builder.append("&quot;");
-			} else if(c=='<') {
-				builder.append("&lt;");
-			} else if(c=='&') {
-				builder.append("&amp;");
-			} else {
-				builder.append(c);
-			}
-		}
-		builder.append('"');
-	}
-
-	private static void canonicalizeOutsideElement(
-			INode node, StringBuilder builder, boolean beforeDocument){
-		int nodeType=node.getNodeType();
-		if(nodeType==NodeType.COMMENT_NODE){
-			if(!beforeDocument) {
-				builder.append('\n');
-			}
-			builder.append("<!--");
-			builder.append(((IComment)node).getData());
-			builder.append("-->");
-			if(beforeDocument) {
-				builder.append('\n');
-			}
-		} else if(nodeType==NodeType.PROCESSING_INSTRUCTION_NODE){
-			if(!beforeDocument) {
-				builder.append('\n');
-			}
-			builder.append("<?");
-			builder.append(((IProcessingInstruction)node).getTarget());
-			String data=((IProcessingInstruction)node).getData();
-			if(data.length()>0){
-				builder.append(' ');
-				builder.append(data);
-			}
-			builder.append("?>");
-			if(beforeDocument) {
-				builder.append('\n');
-			}
-		}
-	}
-
-	private static final class NamespaceAttr implements IAttr {
-		String prefix;
-		String localName;
-		String value;
-		String name;
-		public NamespaceAttr(String prefix, String value){
-			if(prefix.length()==0){
-				this.prefix="";
-				this.localName="xmlns";
-				this.value=value;
-				this.name="xmlns";
-			} else {
-				this.prefix="xmlns";
-				this.localName=prefix;
-				this.name="xmlns:"+value;
-				this.value=value;
-			}
-		}
-		@Override
-		public String getPrefix() {
-			return prefix;
-		}
-		@Override
-		public String getLocalName() {
-			return localName;
-		}
-		@Override
-		public String getName() {
-			return name;
-		}
-		@Override
-		public String getNamespaceURI() {
-			return "http://www.w3.org/2000/xmlns/";
-		}
-		@Override
-		public String getValue() {
-			return value;
-		}
-	}
-
 	private static void canonicalize(
 			INode node,
 			StringBuilder builder,
@@ -399,5 +302,102 @@ final class ExclusiveCanonicalXML {
 			}
 		}
 	}
+
+	private static void canonicalizeOutsideElement(
+			INode node, StringBuilder builder, boolean beforeDocument){
+		int nodeType=node.getNodeType();
+		if(nodeType==NodeType.COMMENT_NODE){
+			if(!beforeDocument) {
+				builder.append('\n');
+			}
+			builder.append("<!--");
+			builder.append(((IComment)node).getData());
+			builder.append("-->");
+			if(beforeDocument) {
+				builder.append('\n');
+			}
+		} else if(nodeType==NodeType.PROCESSING_INSTRUCTION_NODE){
+			if(!beforeDocument) {
+				builder.append('\n');
+			}
+			builder.append("<?");
+			builder.append(((IProcessingInstruction)node).getTarget());
+			String data=((IProcessingInstruction)node).getData();
+			if(data.length()>0){
+				builder.append(' ');
+				builder.append(data);
+			}
+			builder.append("?>");
+			if(beforeDocument) {
+				builder.append('\n');
+			}
+		}
+	}
+
+	private static void checkNamespacePrefix(String prefix, String nsvalue){
+		if(prefix.equals("xmlns"))
+			throw new IllegalArgumentException("'xmlns' namespace declared");
+		if(prefix.equals("xml") && !"http://www.w3.org/XML/1998/namespace".equals(nsvalue))
+			throw new IllegalArgumentException("'xml' bound to wrong namespace name");
+		if(!"xml".equals(prefix) && "http://www.w3.org/XML/1998/namespace".equals(nsvalue))
+			throw new IllegalArgumentException("'xml' bound to wrong namespace name");
+		if("http://www.w3.org/2000/xmlns/".equals(nsvalue))
+			throw new IllegalArgumentException("'prefix' bound to xmlns namespace name");
+		if(!StringUtility.isNullOrEmpty(nsvalue)){
+			if(!URIUtility.hasSchemeForURI(nsvalue))
+				throw new IllegalArgumentException(nsvalue+" is not a valid namespace URI.");
+		} else if(!"".equals(prefix))
+			throw new IllegalArgumentException("can't undeclare a prefix");
+	}
+
+	private static boolean isVisiblyUtilized(IElement element, String s){
+		String prefix=element.getPrefix();
+		if(prefix==null) {
+			prefix="";
+		}
+		if(s.equals(prefix))return true;
+		if(s.length()>0){
+			for(IAttr attr : element.getAttributes()){
+				prefix=attr.getPrefix();
+				if(prefix==null) {
+					continue;
+				}
+				if(s.equals(prefix))return true;
+			}
+		}
+		return false;
+	}
+
+	private static void renderAttribute(StringBuilder builder,
+			String prefix, String name, String value){
+		builder.append(' ');
+		if(!StringUtility.isNullOrEmpty(prefix)){
+			builder.append(prefix);
+			builder.append(":");
+		}
+		builder.append(name);
+		builder.append("=\"");
+		for(int i=0;i<value.length();i++){
+			char c=value.charAt(i);
+			if(c==0x0d) {
+				builder.append("&#xD;");
+			} else if(c==0x09) {
+				builder.append("&#x9;");
+			} else if(c==0x0a) {
+				builder.append("&#xA;");
+			} else if(c=='"') {
+				builder.append("&quot;");
+			} else if(c=='<') {
+				builder.append("&lt;");
+			} else if(c=='&') {
+				builder.append("&amp;");
+			} else {
+				builder.append(c);
+			}
+		}
+		builder.append('"');
+	}
+
+	private ExclusiveCanonicalXML(){}
 
 }

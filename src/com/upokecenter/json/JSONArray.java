@@ -62,6 +62,15 @@ public class JSONArray {
 
 
 	/**
+	 * Construct a JSONArray from a Collection.
+	 * @param collection     A Collection.
+	 */
+	public JSONArray(/*covar*/Collection<?> collection) {
+		myArrayList = new ArrayList<Object>(collection);
+	}
+
+
+	/**
 	 * Construct a JSONArray from a JSONTokener.
 	 * @param x A JSONTokener
 	 * @exception ParseException A JSONArray must start with '['
@@ -97,6 +106,13 @@ public class JSONArray {
 	}
 
 
+	public JSONArray(List<String> collection) {
+		myArrayList = new ArrayList<Object>();
+		for(String str : collection){
+			myArrayList.add(str);
+		}
+	}
+
 	/**
 	 * Construct a JSONArray from a source string.
 	 * @param string     A string that begins with
@@ -108,21 +124,54 @@ public class JSONArray {
 		this(new JSONTokener(string));
 	}
 
-
-	/**
-	 * Construct a JSONArray from a Collection.
-	 * @param collection     A Collection.
-	 */
-	public JSONArray(/*covar*/Collection<?> collection) {
-		myArrayList = new ArrayList<Object>(collection);
+	public JSONArray add(int index, boolean value) {
+		add(index,Boolean.valueOf(value));
+		return this;
 	}
 
-	public JSONArray(List<String> collection) {
-		myArrayList = new ArrayList<Object>();
-		for(String str : collection){
-			myArrayList.add(str);
+
+	public JSONArray add(int index, double value) {
+		add(index,Double.valueOf(value));
+		return this;
+	}
+
+
+	public JSONArray add(int index, int value) {
+		add(index,Integer.valueOf(value));
+		return this;
+	}
+
+
+	public JSONArray add(int index, Object value) {
+		if (index < 0)
+			throw new NoSuchElementException("JSONArray[" + index +
+					"] not found.");
+		else if (value == null)
+			throw new NullPointerException();
+		else {
+			myArrayList.add(index, value);
 		}
+		return this;
 	}
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		JSONArray other = (JSONArray) obj;
+		if (myArrayList == null) {
+			if (other.myArrayList != null)
+				return false;
+		} else if (!myArrayList.equals(other.myArrayList))
+			return false;
+		return true;
+	}
+
 
 	/**
 	 * Get the object value associated with an index.
@@ -208,7 +257,6 @@ public class JSONArray {
 		return (int)getDouble(index);
 	}
 
-
 	/**
 	 * Get the JSONArray associated with an index.
 	 * @param index The index must be between 0 and length() - 1.
@@ -252,6 +300,16 @@ public class JSONArray {
 	}
 
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((myArrayList == null) ? 0 : myArrayList.hashCode());
+		return result;
+	}
+
+
 	/**
 	 * Determine if the value is null.
 	 * @param index The index must be between 0 and length() - 1.
@@ -292,6 +350,7 @@ public class JSONArray {
 		}
 		return sb.toString();
 	}
+
 
 	/**
 	 * Get the length of the JSONArray.
@@ -506,7 +565,6 @@ public class JSONArray {
 		return this;
 	}
 
-
 	/**
 	 * Append an int value.
 	 *
@@ -517,21 +575,6 @@ public class JSONArray {
 		put(Integer.valueOf(value));
 		return this;
 	}
-
-
-	/**
-	 * Append an object value.
-	 * @param value An object value.  The value should be a
-	 *  Boolean, Double, Integer, JSONArray, JSObject, or String, or the
-	 *  JSONObject.NULL object.
-	 * @return this.
-	 */
-	public JSONArray put(Object value) {
-		myArrayList.add(value);
-		return this;
-	}
-
-
 	/**
 	 * Put or replace a boolean value in the JSONArray.
 	 * @param index subscript The subscript. If the index is greater than the length of
@@ -545,8 +588,6 @@ public class JSONArray {
 		put(index, Boolean.valueOf(value));
 		return this;
 	}
-
-
 	/**
 	 * Put or replace a double value.
 	 * @param index subscript The subscript. If the index is greater than the length of
@@ -560,8 +601,6 @@ public class JSONArray {
 		put(index, Double.valueOf(value));
 		return this;
 	}
-
-
 	/**
 	 * Put or replace an int value.
 	 * @param index subscript The subscript. If the index is greater than the length of
@@ -575,7 +614,6 @@ public class JSONArray {
 		put(index, Integer.valueOf(value));
 		return this;
 	}
-
 
 	/**
 	 * Put or replace an object value in the JSONArray.
@@ -605,29 +643,30 @@ public class JSONArray {
 		return this;
 	}
 
-	public JSONArray add(int index, boolean value) {
-		add(index,Boolean.valueOf(value));
+
+	/**
+	 * Append an object value.
+	 * @param value An object value.  The value should be a
+	 *  Boolean, Double, Integer, JSONArray, JSObject, or String, or the
+	 *  JSONObject.NULL object.
+	 * @return this.
+	 */
+	public JSONArray put(Object value) {
+		myArrayList.add(value);
 		return this;
 	}
-	public JSONArray add(int index, double value) {
-		add(index,Double.valueOf(value));
-		return this;
+
+
+	/**
+	 * 
+	 * Removes the item at the specified index.
+	 * Added by Peter O. 2013-04-05
+	 * 
+	 */
+	public void removeAt(int index){
+		myArrayList.remove(index);
 	}
-	public JSONArray add(int index, int value) {
-		add(index,Integer.valueOf(value));
-		return this;
-	}
-	public JSONArray add(int index, Object value) {
-		if (index < 0)
-			throw new NoSuchElementException("JSONArray[" + index +
-					"] not found.");
-		else if (value == null)
-			throw new NullPointerException();
-		else {
-			myArrayList.add(index, value);
-		}
-		return this;
-	}
+
 
 	/**
 	 * Produce a JSONObject by combining a JSONArray of names with the values
@@ -646,7 +685,6 @@ public class JSONArray {
 		}
 		return jo;
 	}
-
 
 	/**
 	 * Make an JSON external form string of this JSONArray. For compactness, no
@@ -718,44 +756,6 @@ public class JSONArray {
 		}
 		sb.append(']');
 		return sb.toString();
-	}
-
-	/**
-	 * 
-	 * Removes the item at the specified index.
-	 * Added by Peter O. 2013-04-05
-	 * 
-	 */
-	public void removeAt(int index){
-		myArrayList.remove(index);
-	}
-
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result
-				+ ((myArrayList == null) ? 0 : myArrayList.hashCode());
-		return result;
-	}
-
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		JSONArray other = (JSONArray) obj;
-		if (myArrayList == null) {
-			if (other.myArrayList != null)
-				return false;
-		} else if (!myArrayList.equals(other.myArrayList))
-			return false;
-		return true;
 	}
 
 

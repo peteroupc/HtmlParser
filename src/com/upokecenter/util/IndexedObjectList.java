@@ -14,6 +14,21 @@ public final class IndexedObjectList<T> {
 	private final Object syncRoot=new Object();
 
 
+	// Remove the strong reference, but keep the weak
+	// reference; the index becomes no good when the
+	// object is garbage collected
+	public T receiveObject(int index){
+		if(index<0)return null;
+		T ret=null;
+		synchronized(syncRoot){
+			if(index>=strongrefs.size())return null;
+			ret=strongrefs.get(index);
+			if(ret==null)throw new IllegalStateException();
+			strongrefs.set(index,null);
+		}
+		return ret;
+	}
+
 	// Keep a strong reference and a weak reference
 	public int sendObject(T value){
 		if(value==null)return -1; // Special case for null
@@ -39,20 +54,5 @@ public final class IndexedObjectList<T> {
 			weakrefs.add(new WeakReference<T>(value));
 			return ret;
 		}
-	}
-
-	// Remove the strong reference, but keep the weak
-	// reference; the index becomes no good when the
-	// object is garbage collected
-	public T receiveObject(int index){
-		if(index<0)return null;
-		T ret=null;
-		synchronized(syncRoot){
-			if(index>=strongrefs.size())return null;
-			ret=strongrefs.get(index);
-			if(ret==null)throw new IllegalStateException();
-			strongrefs.set(index,null);
-		}
-		return ret;
 	}
 }

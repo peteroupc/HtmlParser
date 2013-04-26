@@ -38,18 +38,6 @@ import java.util.List;
 public interface IElement extends INode {
 
 	/**
-	 * Gets a serialized form of this HTML element.
-	 * 
-	 * @return a string consisting of the serialized
-	 * form of this element's children, in HTML.
-	 */
-	String getInnerHTML();
-
-	/**
-	 * Gets a list of all attributes declared on this element.
-	 */
-	List<IAttr> getAttributes();
-	/**
 	 * 
 	 * Gets an attribute declared on this element.
 	 * 
@@ -58,6 +46,7 @@ public interface IElement extends INode {
 	 * exist.
 	 */
 	String getAttribute(String name);
+
 	/**
 	 * 
 	 * Gets an attribute of this element, with the given namespace
@@ -69,6 +58,10 @@ public interface IElement extends INode {
 	 * exist.
 	 */
 	String getAttributeNS(String namespace, String name);
+	/**
+	 * Gets a list of all attributes declared on this element.
+	 */
+	List<IAttr> getAttributes();
 	/**
 	 * Gets all descendents, both direct and indirect, that have
 	 * the specified id, using case-sensitive matching.
@@ -92,6 +85,13 @@ public interface IElement extends INode {
 	 * doesn't exist.
 	 */
 	String getId();
+	/**
+	 * Gets a serialized form of this HTML element.
+	 * 
+	 * @return a string consisting of the serialized
+	 * form of this element's children, in HTML.
+	 */
+	String getInnerHTML();
 
 	/**
 	 * 
@@ -111,6 +111,7 @@ public interface IElement extends INode {
 	 * 
 	 */
 	String getNamespaceURI();
+	String getPrefix();
 	/**
 	 * 
 	 * Gets the name of the element as used on its HTML tags.
@@ -119,5 +120,4 @@ public interface IElement extends INode {
 	 * an uppercase version of the name will be returned.
 	 */
 	String getTagName();
-	String getPrefix();
 }

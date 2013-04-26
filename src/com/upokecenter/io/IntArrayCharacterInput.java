@@ -17,6 +17,14 @@ public final class IntArrayCharacterInput implements ICharacterInput {
 	}
 
 	@Override
+	public int read() throws IOException {
+		int[] arr=this.ilist;
+		if(pos<this.ilist.length)
+			return arr[pos++];
+		return -1;
+	}
+
+	@Override
 	public int read(int[] buf, int offset, int unitCount) throws IOException {
 		if(offset<0 || unitCount<0 || offset+unitCount>buf.length)
 			throw new IndexOutOfBoundsException();
@@ -32,14 +40,6 @@ public final class IntArrayCharacterInput implements ICharacterInput {
 			pos++;
 		}
 		return count==0 ? -1 : count;
-	}
-
-	@Override
-	public int read() throws IOException {
-		int[] arr=this.ilist;
-		if(pos<this.ilist.length)
-			return arr[pos++];
-		return -1;
 	}
 
 }

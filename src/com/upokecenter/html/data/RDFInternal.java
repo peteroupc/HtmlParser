@@ -10,38 +10,6 @@ import com.upokecenter.rdf.RDFTerm;
 import com.upokecenter.rdf.RDFTriple;
 
 final class RDFInternal {
-	private RDFInternal(){}
-
-
-	private static String suggestBlankNodeName(
-			String node, int[] nodeindex, Map<String,RDFTerm> bnodeLabels){
-		boolean validnode=(node.length()>0);
-		// Check if the blank node label is valid
-		// under N-Triples
-		for(int i=0;i<node.length();i++){
-			int c=node.charAt(i);
-			if(i==0 && !((c>='A' && c<='Z') || (c>='a' && c<='z'))){
-				validnode=false;
-				break;
-			}
-			if(i>=0 && !((c>='A' && c<='Z') || (c>='0' && c<='9') ||
-					(c>='a' && c<='z'))){
-				validnode=false;
-				break;
-			}
-		}
-		if(validnode)return node;
-		while(true){
-			// Generate a new blank node label,
-			// and ensure it's unique
-			node="b"+Integer.toString(nodeindex[0]);
-			if(!bnodeLabels.containsKey(node))
-				return node;
-			nodeindex[0]++;
-		}
-	}
-
-
 	/**
 	 *  Replaces certain blank nodes with blank nodes whose
 	 *  names meet the N-Triples requirements
@@ -102,4 +70,36 @@ final class RDFInternal {
 			triples.add(triple[1]);
 		}
 	}
+
+
+	private static String suggestBlankNodeName(
+			String node, int[] nodeindex, Map<String,RDFTerm> bnodeLabels){
+		boolean validnode=(node.length()>0);
+		// Check if the blank node label is valid
+		// under N-Triples
+		for(int i=0;i<node.length();i++){
+			int c=node.charAt(i);
+			if(i==0 && !((c>='A' && c<='Z') || (c>='a' && c<='z'))){
+				validnode=false;
+				break;
+			}
+			if(i>=0 && !((c>='A' && c<='Z') || (c>='0' && c<='9') ||
+					(c>='a' && c<='z'))){
+				validnode=false;
+				break;
+			}
+		}
+		if(validnode)return node;
+		while(true){
+			// Generate a new blank node label,
+			// and ensure it's unique
+			node="b"+Integer.toString(nodeindex[0]);
+			if(!bnodeLabels.containsKey(node))
+				return node;
+			nodeindex[0]++;
+		}
+	}
+
+
+	private RDFInternal(){}
 }

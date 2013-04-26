@@ -81,6 +81,11 @@ class Element extends Node implements IElement {
 	}
 
 
+	 void addAttribute(Attr value) {
+		attributes.add(value);
+	}
+
+
 	private void collectElements(INode c, String s, List<IElement> nodes){
 		if(c.getNodeType()==NodeType.ELEMENT_NODE){
 			Element e=(Element)c;
@@ -92,7 +97,6 @@ class Element extends Node implements IElement {
 			collectElements(node,s,nodes);
 		}
 	}
-
 
 	private void collectElementsHtml(INode c, String s,
 			String sLowercase, List<IElement> nodes){
@@ -130,11 +134,11 @@ class Element extends Node implements IElement {
 		}
 		return null;
 	}
-
 	@Override
 	public List<IAttr> getAttributes() {
 		return new ArrayList<IAttr>(attributes);
 	}
+
 	@Override
 	public IElement getElementById(String id) {
 		if(id==null)
@@ -177,6 +181,25 @@ class Element extends Node implements IElement {
 	}
 
 	@Override
+	public  String getInnerHTML() {
+		return getInnerHtmlInternal();
+	}
+
+	@Override public  String getLanguage(){
+		INode parent=getParentNode();
+		String a=getAttributeNS(HtmlParser.XML_NAMESPACE,"lang");
+		if(a==null) {
+			a=getAttribute("lang");
+		}
+		if(a!=null)return a;
+		if(parent==null){
+			parent=getOwnerDocument();
+			if(parent==null)return "";
+			return parent.getLanguage();
+		} else
+			return parent.getLanguage();
+	}
+	@Override
 	public String getLocalName() {
 		return name;
 	}
@@ -184,6 +207,15 @@ class Element extends Node implements IElement {
 	@Override
 	public String getNamespaceURI() {
 		return namespace;
+	}
+	@Override
+	public  String getNodeName(){
+		return getTagName();
+	}
+
+	@Override
+	public String getPrefix() {
+		return prefix;
 	}
 
 	@Override
@@ -197,6 +229,7 @@ class Element extends Node implements IElement {
 			return StringUtility.toUpperCaseAscii(tagName);
 		return tagName;
 	}
+
 	@Override
 	public  String getTextContent(){
 		StringBuilder builder=new StringBuilder();
@@ -208,9 +241,11 @@ class Element extends Node implements IElement {
 		return builder.toString();
 	}
 
+
 	 boolean isHtmlElement(String name){
 		return name.equals(this.name) && HtmlParser.HTML_NAMESPACE.equals(namespace);
 	}
+
 	 boolean isMathMLElement(String name){
 		return name.equals(this.name) && HtmlParser.MATHML_NAMESPACE.equals(namespace);
 	}
@@ -227,12 +262,6 @@ class Element extends Node implements IElement {
 			}
 		}
 	}
-
-	 void addAttribute(Attr value) {
-		attributes.add(value);
-	}
-
-
 	 void setAttribute(String string, String value) {
 		for(IAttr attr : getAttributes()){
 			if(attr.getName().equals(string)){
@@ -241,6 +270,7 @@ class Element extends Node implements IElement {
 		}
 		attributes.add(new Attr(string,value));
 	}
+
 
 	 void setLocalName(String name) {
 		this.name = name;
@@ -253,6 +283,7 @@ class Element extends Node implements IElement {
 	public void setPrefix(String prefix){
 		this.prefix=prefix;
 	}
+
 	@Override
 	 String toDebugString(){
 		StringBuilder builder=new StringBuilder();
@@ -301,37 +332,6 @@ class Element extends Node implements IElement {
 			}
 		}
 		return builder.toString();
-	}
-
-
-	@Override
-	public  String getNodeName(){
-		return getTagName();
-	}
-
-	@Override
-	public String getPrefix() {
-		return prefix;
-	}
-
-	@Override public  String getLanguage(){
-		INode parent=getParentNode();
-		String a=getAttributeNS(HtmlParser.XML_NAMESPACE,"lang");
-		if(a==null) {
-			a=getAttribute("lang");
-		}
-		if(a!=null)return a;
-		if(parent==null){
-			parent=getOwnerDocument();
-			if(parent==null)return "";
-			return parent.getLanguage();
-		} else
-			return parent.getLanguage();
-	}
-
-	@Override
-	public  String getInnerHTML() {
-		return getInnerHtmlInternal();
 	}
 
 }

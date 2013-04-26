@@ -69,11 +69,6 @@ public class JSONObject {
 			return this;
 		}
 
-		@Override public int hashCode(){
-			return 0;
-		}
-
-
 		/**
 		 * A Null object is equal to the null value and to itself.
 		 * @param object    An object to test for nullness.
@@ -83,6 +78,11 @@ public class JSONObject {
 		@Override
 		public boolean equals(Object object) {
 			return object == null || object == this;
+		}
+
+
+		@Override public int hashCode(){
+			return 0;
 		}
 
 
@@ -98,6 +98,60 @@ public class JSONObject {
 
 
 	/**
+	 * Produce a string in double quotes with backslash sequences in all the
+	 * right places. (Modified so that the slash character is not escaped.)
+	 * @param string A String
+	 * @return  A String correctly formatted for insertion in a JSON message.
+	 */
+	public static String quote(String string) {
+		if (string == null || string.length() == 0)
+			return "\"\"";
+
+		char         c;
+		int          i;
+		int          len = string.length();
+		StringBuilder sb = new StringBuilder(len + 4);
+		String       t;
+
+		sb.append('"');
+		for (i = 0; i < len; i += 1) {
+			c = string.charAt(i);
+			switch (c) {
+			case '\\':
+			case '"':// Peter O: '/' removed as needing escaping
+				sb.append('\\');
+				sb.append(c);
+				break;
+			case '\b':
+				sb.append("\\b");
+				break;
+			case '\t':
+				sb.append("\\t");
+				break;
+			case '\n':
+				sb.append("\\n");
+				break;
+			case '\f':
+				sb.append("\\f");
+				break;
+			case '\r':
+				sb.append("\\r");
+				break;
+			default:
+				if (c < ' ') {
+					t = "000" + Integer.toHexString(c);
+					sb.append("\\u" + t.substring(t.length() - 4));
+				} else {
+					sb.append(c);
+				}
+				break;
+			}
+		}
+		sb.append('"');
+		return sb.toString();
+	}
+
+	/**
 	 * The hash map where the JSONObject's properties are kept.
 	 */
 	private final HashMap<String, Object> myHashMap;
@@ -111,11 +165,69 @@ public class JSONObject {
 	public static final Object NULL = new Null();
 
 	/**
+	 * Produce a string from a number.
+	 * @param  n A Number
+	 * @return A String.
+	 * @exception ArithmeticException JSON can only serialize finite numbers.
+	 */
+	static public String numberToString(Object n) throws ArithmeticException {
+		if (
+				(n instanceof Float &&
+						(((Float)n).isInfinite() || ((Float)n).isNaN())) ||
+						(n instanceof Double &&
+								(((Double)n).isInfinite() || ((Double)n).isNaN())))
+			throw new ArithmeticException(
+					"JSON can only serialize finite numbers.");
+
+		// Shave off trailing zeros and decimal point, if possible.
+
+		String s = toLowerCaseAscii(n.toString());
+		if (s.indexOf('e') < 0 && s.indexOf('.') > 0) {
+			while (s.endsWith("0")) {
+				s = s.substring(0, s.length() - 1);
+			}
+			if (s.endsWith(".")) {
+				s = s.substring(0, s.length() - 1);
+			}
+		}
+		return s;
+	}
+
+
+	public static String toLowerCaseAscii(String s){
+		if(s==null)return null;
+		int len=s.length();
+		char c=0;
+		boolean hasUpperCase=false;
+		for(int i=0;i<len;i++){
+			c=s.charAt(i);
+			if(c>='A' && c<='Z'){
+				hasUpperCase=true;
+				break;
+			}
+		}
+		if(!hasUpperCase)
+			return s;
+		StringBuilder builder=new StringBuilder();
+		for(int i=0;i<len;i++){
+			c=s.charAt(i);
+			if(c>='A' && c<='Z'){
+				builder.append((char)(c+0x20));
+			} else {
+				builder.append(c);
+			}
+		}
+		return builder.toString();
+	}
+
+
+	/**
 	 * Construct an empty JSONObject.
 	 */
 	public JSONObject() {
 		myHashMap = new HashMap<String, Object>();
 	}
+
 
 	/**
 	 * Construct a JSONObject from a JSONTokener.
@@ -164,6 +276,16 @@ public class JSONObject {
 
 
 	/**
+	 * Construct a JSONObject from a Map.
+	 * @param map A map object that can be used to initialize the contents of
+	 *  the JSONObject.
+	 */
+	public JSONObject(Map<String, ?> map) {
+		myHashMap = new HashMap<String, Object>(map);
+	}
+
+
+	/**
 	 * Construct a JSONObject from a string.
 	 *
 	 * @param string    A string beginning
@@ -173,16 +295,6 @@ public class JSONObject {
 	 */
 	public JSONObject(String string) throws ParseException {
 		this(new JSONTokener(string));
-	}
-
-
-	/**
-	 * Construct a JSONObject from a Map.
-	 * @param map A map object that can be used to initialize the contents of
-	 *  the JSONObject.
-	 */
-	public JSONObject(Map<String, ?> map) {
-		myHashMap = new HashMap<String, Object>(map);
 	}
 
 
@@ -214,6 +326,24 @@ public class JSONObject {
 			put(key, a);
 		}
 		return this;
+	}
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		JSONObject other = (JSONObject) obj;
+		if (myHashMap == null) {
+			if (other.myHashMap != null)
+				return false;
+		} else if (!myHashMap.equals(other.myHashMap))
+			return false;
+		return true;
 	}
 
 
@@ -355,6 +485,16 @@ public class JSONObject {
 	}
 
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((myHashMap == null) ? 0 : myHashMap.hashCode());
+		return result;
+	}
+
+
 	/**
 	 * Determine if the value associated with the key is null or if there is
 	 *  no value.
@@ -377,35 +517,6 @@ public class JSONObject {
 	public Iterable<String> keys() {
 		return myHashMap.keySet();
 	}
-
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result
-				+ ((myHashMap == null) ? 0 : myHashMap.hashCode());
-		return result;
-	}
-
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		JSONObject other = (JSONObject) obj;
-		if (myHashMap == null) {
-			if (other.myHashMap != null)
-				return false;
-		} else if (!myHashMap.equals(other.myHashMap))
-			return false;
-		return true;
-	}
-
 
 	/**
 	 * Get the number of keys stored in the JSONObject.
@@ -431,62 +542,6 @@ public class JSONObject {
 		if (ja.length() == 0)
 			return null;
 		return ja;
-	}
-
-
-	/**
-	 * Produce a string from a number.
-	 * @param  n A Number
-	 * @return A String.
-	 * @exception ArithmeticException JSON can only serialize finite numbers.
-	 */
-	static public String numberToString(Object n) throws ArithmeticException {
-		if (
-				(n instanceof Float &&
-						(((Float)n).isInfinite() || ((Float)n).isNaN())) ||
-						(n instanceof Double &&
-								(((Double)n).isInfinite() || ((Double)n).isNaN())))
-			throw new ArithmeticException(
-					"JSON can only serialize finite numbers.");
-
-		// Shave off trailing zeros and decimal point, if possible.
-
-		String s = toLowerCaseAscii(n.toString());
-		if (s.indexOf('e') < 0 && s.indexOf('.') > 0) {
-			while (s.endsWith("0")) {
-				s = s.substring(0, s.length() - 1);
-			}
-			if (s.endsWith(".")) {
-				s = s.substring(0, s.length() - 1);
-			}
-		}
-		return s;
-	}
-
-	public static String toLowerCaseAscii(String s){
-		if(s==null)return null;
-		int len=s.length();
-		char c=0;
-		boolean hasUpperCase=false;
-		for(int i=0;i<len;i++){
-			c=s.charAt(i);
-			if(c>='A' && c<='Z'){
-				hasUpperCase=true;
-				break;
-			}
-		}
-		if(!hasUpperCase)
-			return s;
-		StringBuilder builder=new StringBuilder();
-		for(int i=0;i<len;i++){
-			c=s.charAt(i);
-			if(c>='A' && c<='Z'){
-				builder.append((char)(c+0x20));
-			} else {
-				builder.append(c);
-			}
-		}
-		return builder.toString();
 	}
 
 
@@ -751,61 +806,6 @@ public class JSONObject {
 			put(key, value);
 		}
 		return this;
-	}
-
-
-	/**
-	 * Produce a string in double quotes with backslash sequences in all the
-	 * right places. (Modified so that the slash character is not escaped.)
-	 * @param string A String
-	 * @return  A String correctly formatted for insertion in a JSON message.
-	 */
-	public static String quote(String string) {
-		if (string == null || string.length() == 0)
-			return "\"\"";
-
-		char         c;
-		int          i;
-		int          len = string.length();
-		StringBuilder sb = new StringBuilder(len + 4);
-		String       t;
-
-		sb.append('"');
-		for (i = 0; i < len; i += 1) {
-			c = string.charAt(i);
-			switch (c) {
-			case '\\':
-			case '"':// Peter O: '/' removed as needing escaping
-				sb.append('\\');
-				sb.append(c);
-				break;
-			case '\b':
-				sb.append("\\b");
-				break;
-			case '\t':
-				sb.append("\\t");
-				break;
-			case '\n':
-				sb.append("\\n");
-				break;
-			case '\f':
-				sb.append("\\f");
-				break;
-			case '\r':
-				sb.append("\\r");
-				break;
-			default:
-				if (c < ' ') {
-					t = "000" + Integer.toHexString(c);
-					sb.append("\\u" + t.substring(t.length() - 4));
-				} else {
-					sb.append(c);
-				}
-				break;
-			}
-		}
-		sb.append('"');
-		return sb.toString();
 	}
 
 	/**

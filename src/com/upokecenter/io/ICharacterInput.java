@@ -15,6 +15,16 @@ import java.io.IOException;
 public interface ICharacterInput {
 
 	/**
+	 * 
+	 * Reads the next Unicode character.
+	 * 
+	 * @return A Unicode code point or -1 if the end of
+	 * the input is reached
+	 * @throws IOException if an I/O error occurs.
+	 */
+	public int read() throws IOException;
+
+	/**
 	 * Reads multiple Unicode characters into a buffer.
 	 * 
 	 * @param buf
@@ -26,14 +36,4 @@ public interface ICharacterInput {
 	 */
 	public int read(int[] buf, int offset, int unitCount)
 			throws IOException;
-
-	/**
-	 * 
-	 * Reads the next Unicode character.
-	 * 
-	 * @return A Unicode code point or -1 if the end of
-	 * the input is reached
-	 * @throws IOException if an I/O error occurs.
-	 */
-	public int read() throws IOException;
 }

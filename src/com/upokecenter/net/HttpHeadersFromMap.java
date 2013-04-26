@@ -73,8 +73,13 @@ class HttpHeadersFromMap implements IHttpHeaders {
 	}
 
 	@Override
-	public String getRequestMethod() {
-		return requestMethod;
+	public String getHeaderField(int index) {
+		if(index==0)return list.get(0);
+		if(index<0)return null;
+		index=(index-1)*2+1+1;
+		if(index<0 || index>=list.size())
+			return null;
+		return list.get(index+1);
 	}
 
 	@Override
@@ -91,13 +96,8 @@ class HttpHeadersFromMap implements IHttpHeaders {
 		return last;
 	}
 	@Override
-	public String getHeaderField(int index) {
-		if(index==0)return list.get(0);
-		if(index<0)return null;
-		index=(index-1)*2+1+1;
-		if(index<0 || index>=list.size())
-			return null;
-		return list.get(index+1);
+	public long getHeaderFieldDate(String field, long defaultValue) {
+		return HeaderParser.parseHttpDate(getHeaderField(field),defaultValue);
 	}
 	@Override
 	public String getHeaderFieldKey(int index) {
@@ -108,19 +108,19 @@ class HttpHeadersFromMap implements IHttpHeaders {
 		return list.get(index);
 	}
 	@Override
+	public Map<String, List<String>> getHeaderFields() {
+		return Collections.unmodifiableMap(map);
+	}
+	@Override
+	public String getRequestMethod() {
+		return requestMethod;
+	}
+
+	@Override
 	public int getResponseCode() {
 		String status=getHeaderField(null);
 		if(status==null)return -1;
 		return HeaderParser.getResponseCode(status);
-	}
-	@Override
-	public long getHeaderFieldDate(String field, long defaultValue) {
-		return HeaderParser.parseHttpDate(getHeaderField(field),defaultValue);
-	}
-
-	@Override
-	public Map<String, List<String>> getHeaderFields() {
-		return Collections.unmodifiableMap(map);
 	}
 
 	@Override

@@ -47,67 +47,186 @@ import com.upokecenter.util.StringUtility;
 
 class CacheControl {
 
-	@Override
-	public String toString() {
-		return "CacheControl [cacheability=" + cacheability + ", noStore="
-				+ noStore + ", noTransform=" + noTransform
-				+ ", mustRevalidate=" + mustRevalidate + ", requestTime="
-				+ requestTime + ", responseTime=" + responseTime + ", maxAge="
-				+ maxAge + ", date=" + date + ", age=" + age + ", code=" + code
-				+ ", headerFields=" + headers + "]";
-	}
-	private int cacheability=0;
-	// Client must not store the response
-	// to disk and must remove it from memory
-	// as soon as it's finished with it
-	private boolean noStore=false;
-	// Client must not convert the response
-	// to a different format before caching it
-	private boolean noTransform=false;
-	// Client must re-check the server
-	// after the response becomes stale
-	private boolean mustRevalidate=false;
-	private long requestTime=0;
-	private long responseTime=0;
-	private long maxAge=0;
-	private long date=0;
-	private long age=0;
-	private int code=0;
-	private String uri="";
-	private String requestMethod="";
-	private List<String> headers;
+	private static class AgedHeaders implements IHttpHeaders {
 
-	public int getCacheability() {
-		return cacheability;
-	}
-	public boolean isNoStore() {
-		return noStore;
-	}
-	public boolean isNoTransform() {
-		return noTransform;
-	}
-	public boolean isMustRevalidate() {
-		return mustRevalidate;
-	}
+		CacheControl cc=null;
+		long age=0;
+		List<String> list=new ArrayList<String>();
 
-	private long getAge(){
-		long now=DateTimeUtility.getCurrentDate();
-		long age=Math.max(0,Math.max(now-date,this.age));
-		age+=(responseTime-requestTime);
-		age+=(now-responseTime);
-		age=(age>Integer.MAX_VALUE) ? Integer.MAX_VALUE : (int)age;
-		return age;
-	}
+		public AgedHeaders(CacheControl cc, long age, long length){
+			list.add(cc.headers.get(0));
+			for(int i=1;i<cc.headers.size();i+=2){
+				String key=cc.headers.get(i);
+				if(key!=null){
+					key=StringUtility.toLowerCaseAscii(key);
+					if("content-length".equals(key)||"age".equals(key)) {
+						continue;
+					}
+				}
+				list.add(cc.headers.get(i));
+				list.add(cc.headers.get(i+1));
+			}
+			this.age=age/1000; // convert age to seconds
+			list.add("age");
+			list.add(Long.toString(this.age));
+			list.add("content-length");
+			list.add(Long.toString(length));
+			//DebugUtility.log("aged=%s",list);
+			this.cc=cc;
+		}
 
-	public boolean isFresh() {
-		if(cacheability==0 || noStore)return false;
-		return (maxAge>getAge());
-	}
+		@Override
+		public String getHeaderField(int index) {
+			index=(index)*2+1+1;
+			if(index<0 || index>=list.size())
+				return null;
+			return list.get(index+1);
+		}
+		@Override
+		public String getHeaderField(String name) {
+			if(name==null)return list.get(0);
+			name=StringUtility.toLowerCaseAscii(name);
+			String last=null;
+			for(int i=1;i<list.size();i+=2){
+				String key=list.get(i);
+				if(name.equals(key)) {
+					last=list.get(i+1);
+				}
+			}
+			return last;
+		}
+		@Override
+		public long getHeaderFieldDate(String field, long defaultValue) {
+			return HeaderParser.parseHttpDate(getHeaderField(field),defaultValue);
+		}
+		@Override
+		public String getHeaderFieldKey(int index) {
+			index=(index)*2+1;
+			if(index<0 || index>=list.size())
+				return null;
+			return list.get(index);
+		}
+		@Override
+		public Map<String, List<String>> getHeaderFields() {
+			Map<String, List<String>> map=new HashMap<String, List<String>>();
+			map.put(null,Arrays.asList(new String[]{list.get(0)}));
+			for(int i=1;i<list.size();i+=2){
+				String key=list.get(i);
+				List<String> templist=map.get(key);
+				if(templist==null){
+					templist=new ArrayList<String>();
+					map.put(key,templist);
+				}
+				templist.add(list.get(i+1));
+			}
+			// Make lists unmodifiable
+			for(String key : new ArrayList<String>(map.keySet())){
+				map.put(key,Collections.unmodifiableList(map.get(key)));
+			}
+			return Collections.unmodifiableMap(map);
+		}
+		@Override
+		public String getRequestMethod() {
+			return cc.requestMethod;
+		}
+		@Override
+		public int getResponseCode() {
+			return cc.code;
+		}
 
-	private CacheControl(){
-		headers=new ArrayList<String>();
+		@Override
+		public String getUrl() {
+			return cc.uri;
+		}
 	}
-
+	private static class CacheControlSerializer {
+		public CacheControl readObjectFromStream(InputStream stream) throws IOException {
+			try {
+				JSONObject jsonobj=new JSONObject(StreamUtility.streamToString(stream));
+				CacheControl cc=new CacheControl();
+				cc.cacheability=jsonobj.getInt("cacheability");
+				cc.noStore=jsonobj.getBoolean("noStore");
+				cc.noTransform=jsonobj.getBoolean("noTransform");
+				cc.mustRevalidate=jsonobj.getBoolean("mustRevalidate");
+				cc.requestTime=Long.parseLong(jsonobj.getString("requestTime"));
+				cc.responseTime=Long.parseLong(jsonobj.getString("responseTime"));
+				cc.maxAge=Long.parseLong(jsonobj.getString("maxAge"));
+				cc.date=Long.parseLong(jsonobj.getString("date"));
+				cc.code=jsonobj.getInt("code");
+				cc.age=Long.parseLong(jsonobj.getString("age"));
+				cc.uri=jsonobj.getString("uri");
+				cc.requestMethod=jsonobj.getString("requestMethod");
+				if(cc.requestMethod!=null) {
+					cc.requestMethod=StringUtility.toLowerCaseAscii(cc.requestMethod);
+				}
+				cc.headers=new ArrayList<String>();
+				JSONArray jsonarr=jsonobj.getJSONArray("headers");
+				for(int i=0;i<jsonarr.length();i++){
+					String str=jsonarr.getString(i);
+					if(str!=null && (i%2)!=0){
+						str=StringUtility.toLowerCaseAscii(str);
+						if("age".equals(str) ||
+								"connection".equals(str) ||
+								"keep-alive".equals(str) ||
+								"proxy-authenticate".equals(str) ||
+								"proxy-authorization".equals(str) ||
+								"te".equals(str) ||
+								"trailers".equals(str) ||
+								"transfer-encoding".equals(str) ||
+								"upgrade".equals(str)){
+							// Skip "age" header field and
+							// hop-by-hop header fields
+							i++;
+							continue;
+						}
+					}
+					cc.headers.add(str);
+				}
+				return cc;
+			} catch(ClassCastException e){
+				e.printStackTrace();
+				return null;
+			} catch(NumberFormatException e){
+				e.printStackTrace();
+				return null;
+			} catch (ParseException e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+		public void writeObjectToStream(CacheControl o, OutputStream stream)
+				throws IOException {
+			JSONObject jsonobj=new JSONObject();
+			jsonobj.put("cacheability",o.cacheability);
+			jsonobj.put("noStore",o.noStore);
+			jsonobj.put("noTransform",o.noTransform);
+			jsonobj.put("mustRevalidate",o.mustRevalidate);
+			jsonobj.put("requestTime",Long.toString(o.requestTime));
+			jsonobj.put("responseTime",Long.toString(o.responseTime));
+			jsonobj.put("maxAge",Long.toString(o.maxAge));
+			jsonobj.put("date",Long.toString(o.date));
+			jsonobj.put("uri",o.uri);
+			jsonobj.put("requestMethod",o.requestMethod);
+			jsonobj.put("code",o.code);
+			jsonobj.put("age",Long.toString(o.age));
+			JSONArray jsonarr=new JSONArray();
+			for(String header : o.headers){
+				jsonarr.put(header);
+			}
+			jsonobj.put("headers",jsonarr);
+			StreamUtility.stringToStream(jsonobj.toString(),stream);
+		}
+	}
+	public static CacheControl fromFile(File f) throws IOException{
+		FileInputStream fs=new FileInputStream(f.toString());
+		try {
+			return new CacheControlSerializer().readObjectFromStream(fs);
+		} finally {
+			if(fs!=null) {
+				fs.close();
+			}
+		}
+	}
 	public static CacheControl getCacheControl(IHttpHeaders headers, long requestTime){
 		CacheControl cc=new CacheControl();
 		boolean proxyRevalidate=false;
@@ -274,18 +393,6 @@ class CacheControl {
 		//DebugUtility.log("final cc: %s",cc);
 		return cc;
 	}
-
-	public static CacheControl fromFile(File f) throws IOException{
-		FileInputStream fs=new FileInputStream(f.toString());
-		try {
-			return new CacheControlSerializer().readObjectFromStream(fs);
-		} finally {
-			if(fs!=null) {
-				fs.close();
-			}
-		}
-	}
-
 	public static void toFile(CacheControl o, File file) throws IOException{
 		OutputStream fs=new FileOutputStream(file);
 		try {
@@ -296,187 +403,80 @@ class CacheControl {
 			}
 		}
 	}
+	private int cacheability=0;
+	// Client must not store the response
+	// to disk and must remove it from memory
+	// as soon as it's finished with it
+	private boolean noStore=false;
+	// Client must not convert the response
+	// to a different format before caching it
+	private boolean noTransform=false;
+	// Client must re-check the server
+	// after the response becomes stale
+	private boolean mustRevalidate=false;
+	private long requestTime=0;
+	private long responseTime=0;
+	private long maxAge=0;
+	private long date=0;
+	private long age=0;
 
-	private static class CacheControlSerializer {
-		public CacheControl readObjectFromStream(InputStream stream) throws IOException {
-			try {
-				JSONObject jsonobj=new JSONObject(StreamUtility.streamToString(stream));
-				CacheControl cc=new CacheControl();
-				cc.cacheability=jsonobj.getInt("cacheability");
-				cc.noStore=jsonobj.getBoolean("noStore");
-				cc.noTransform=jsonobj.getBoolean("noTransform");
-				cc.mustRevalidate=jsonobj.getBoolean("mustRevalidate");
-				cc.requestTime=Long.parseLong(jsonobj.getString("requestTime"));
-				cc.responseTime=Long.parseLong(jsonobj.getString("responseTime"));
-				cc.maxAge=Long.parseLong(jsonobj.getString("maxAge"));
-				cc.date=Long.parseLong(jsonobj.getString("date"));
-				cc.code=jsonobj.getInt("code");
-				cc.age=Long.parseLong(jsonobj.getString("age"));
-				cc.uri=jsonobj.getString("uri");
-				cc.requestMethod=jsonobj.getString("requestMethod");
-				if(cc.requestMethod!=null) {
-					cc.requestMethod=StringUtility.toLowerCaseAscii(cc.requestMethod);
-				}
-				cc.headers=new ArrayList<String>();
-				JSONArray jsonarr=jsonobj.getJSONArray("headers");
-				for(int i=0;i<jsonarr.length();i++){
-					String str=jsonarr.getString(i);
-					if(str!=null && (i%2)!=0){
-						str=StringUtility.toLowerCaseAscii(str);
-						if("age".equals(str) ||
-								"connection".equals(str) ||
-								"keep-alive".equals(str) ||
-								"proxy-authenticate".equals(str) ||
-								"proxy-authorization".equals(str) ||
-								"te".equals(str) ||
-								"trailers".equals(str) ||
-								"transfer-encoding".equals(str) ||
-								"upgrade".equals(str)){
-							// Skip "age" header field and
-							// hop-by-hop header fields
-							i++;
-							continue;
-						}
-					}
-					cc.headers.add(str);
-				}
-				return cc;
-			} catch(ClassCastException e){
-				e.printStackTrace();
-				return null;
-			} catch(NumberFormatException e){
-				e.printStackTrace();
-				return null;
-			} catch (ParseException e) {
-				e.printStackTrace();
-				return null;
-			}
-		}
-		public void writeObjectToStream(CacheControl o, OutputStream stream)
-				throws IOException {
-			JSONObject jsonobj=new JSONObject();
-			jsonobj.put("cacheability",o.cacheability);
-			jsonobj.put("noStore",o.noStore);
-			jsonobj.put("noTransform",o.noTransform);
-			jsonobj.put("mustRevalidate",o.mustRevalidate);
-			jsonobj.put("requestTime",Long.toString(o.requestTime));
-			jsonobj.put("responseTime",Long.toString(o.responseTime));
-			jsonobj.put("maxAge",Long.toString(o.maxAge));
-			jsonobj.put("date",Long.toString(o.date));
-			jsonobj.put("uri",o.uri);
-			jsonobj.put("requestMethod",o.requestMethod);
-			jsonobj.put("code",o.code);
-			jsonobj.put("age",Long.toString(o.age));
-			JSONArray jsonarr=new JSONArray();
-			for(String header : o.headers){
-				jsonarr.put(header);
-			}
-			jsonobj.put("headers",jsonarr);
-			StreamUtility.stringToStream(jsonobj.toString(),stream);
-		}
+	private int code=0;
+	private String uri="";
+	private String requestMethod="";
+	private List<String> headers;
+
+	private CacheControl(){
+		headers=new ArrayList<String>();
+	}
+
+	private long getAge(){
+		long now=DateTimeUtility.getCurrentDate();
+		long age=Math.max(0,Math.max(now-date,this.age));
+		age+=(responseTime-requestTime);
+		age+=(now-responseTime);
+		age=(age>Integer.MAX_VALUE) ? Integer.MAX_VALUE : (int)age;
+		return age;
+	}
+
+	public int getCacheability() {
+		return cacheability;
 	}
 
 	public IHttpHeaders getHeaders(long length) {
 		return new AgedHeaders(this,getAge(),length);
 	}
 
-	private static class AgedHeaders implements IHttpHeaders {
-
-		CacheControl cc=null;
-		long age=0;
-		List<String> list=new ArrayList<String>();
-
-		public AgedHeaders(CacheControl cc, long age, long length){
-			list.add(cc.headers.get(0));
-			for(int i=1;i<cc.headers.size();i+=2){
-				String key=cc.headers.get(i);
-				if(key!=null){
-					key=StringUtility.toLowerCaseAscii(key);
-					if("content-length".equals(key)||"age".equals(key)) {
-						continue;
-					}
-				}
-				list.add(cc.headers.get(i));
-				list.add(cc.headers.get(i+1));
-			}
-			this.age=age/1000; // convert age to seconds
-			list.add("age");
-			list.add(Long.toString(this.age));
-			list.add("content-length");
-			list.add(Long.toString(length));
-			//DebugUtility.log("aged=%s",list);
-			this.cc=cc;
-		}
-
-		@Override
-		public String getRequestMethod() {
-			return cc.requestMethod;
-		}
-		@Override
-		public String getHeaderField(String name) {
-			if(name==null)return list.get(0);
-			name=StringUtility.toLowerCaseAscii(name);
-			String last=null;
-			for(int i=1;i<list.size();i+=2){
-				String key=list.get(i);
-				if(name.equals(key)) {
-					last=list.get(i+1);
-				}
-			}
-			return last;
-		}
-		@Override
-		public String getHeaderField(int index) {
-			index=(index)*2+1+1;
-			if(index<0 || index>=list.size())
-				return null;
-			return list.get(index+1);
-		}
-		@Override
-		public String getHeaderFieldKey(int index) {
-			index=(index)*2+1;
-			if(index<0 || index>=list.size())
-				return null;
-			return list.get(index);
-		}
-		@Override
-		public int getResponseCode() {
-			return cc.code;
-		}
-		@Override
-		public long getHeaderFieldDate(String field, long defaultValue) {
-			return HeaderParser.parseHttpDate(getHeaderField(field),defaultValue);
-		}
-		@Override
-		public Map<String, List<String>> getHeaderFields() {
-			Map<String, List<String>> map=new HashMap<String, List<String>>();
-			map.put(null,Arrays.asList(new String[]{list.get(0)}));
-			for(int i=1;i<list.size();i+=2){
-				String key=list.get(i);
-				List<String> templist=map.get(key);
-				if(templist==null){
-					templist=new ArrayList<String>();
-					map.put(key,templist);
-				}
-				templist.add(list.get(i+1));
-			}
-			// Make lists unmodifiable
-			for(String key : new ArrayList<String>(map.keySet())){
-				map.put(key,Collections.unmodifiableList(map.get(key)));
-			}
-			return Collections.unmodifiableMap(map);
-		}
-
-		@Override
-		public String getUrl() {
-			return cc.uri;
-		}
-	}
-
 	public String getRequestMethod() {
 		return requestMethod;
 	}
+
 	public String getUri() {
 		return uri;
+	}
+
+	public boolean isFresh() {
+		if(cacheability==0 || noStore)return false;
+		return (maxAge>getAge());
+	}
+
+	public boolean isMustRevalidate() {
+		return mustRevalidate;
+	}
+
+	public boolean isNoStore() {
+		return noStore;
+	}
+
+	public boolean isNoTransform() {
+		return noTransform;
+	}
+	@Override
+	public String toString() {
+		return "CacheControl [cacheability=" + cacheability + ", noStore="
+				+ noStore + ", noTransform=" + noTransform
+				+ ", mustRevalidate=" + mustRevalidate + ", requestTime="
+				+ requestTime + ", responseTime=" + responseTime + ", maxAge="
+				+ maxAge + ", date=" + date + ", age=" + age + ", code=" + code
+				+ ", headerFields=" + headers + "]";
 	}
 }

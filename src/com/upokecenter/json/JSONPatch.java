@@ -9,35 +9,6 @@ import java.util.NoSuchElementException;
 
 public class JSONPatch {
 
-	private static String getString(JSONObject o, String key){
-		try {
-			return o.getString(key);
-		} catch(NoSuchElementException e){
-			return null;
-		}
-	}
-
-	private static Object removeOperation(
-			Object o,
-			String opStr,
-			String path){
-		if(path==null)throw new IllegalArgumentException("patch "+opStr);
-		if(path.length()==0)
-			return o;
-		else {
-			JSONPointer pointer=JSONPointer.fromPointer(o, path);
-			if(!pointer.exists())
-				throw new NoSuchElementException("patch "+opStr+" "+path);
-			o=pointer.getValue();
-			if(pointer.getParent() instanceof JSONArray){
-				((JSONArray)pointer.getParent()).removeAt(pointer.getIndex());
-			} else if(pointer.getParent() instanceof JSONObject){
-				((JSONObject)pointer.getParent()).remove(pointer.getKey());
-			}
-			return o;
-		}
-	}
-
 	private static Object addOperation(
 			Object o,
 			String opStr,
@@ -63,33 +34,6 @@ public class JSONPatch {
 		return o;
 	}
 
-	private static Object replaceOperation(
-			Object o,
-			String opStr,
-			String path,
-			Object value
-			){
-		if(path==null)throw new IllegalArgumentException("patch "+opStr);
-		if(path.length()==0){
-			o=value;
-		} else {
-			JSONPointer pointer=JSONPointer.fromPointer(o, path);
-			if(!pointer.exists())
-				throw new NoSuchElementException("patch "+opStr+" "+path);
-			if(pointer.getParent() instanceof JSONArray){
-				int index=pointer.getIndex();
-				if(index<0)
-					throw new IllegalArgumentException("patch "+opStr+" path");
-				((JSONArray)pointer.getParent()).put(index,value);
-			} else if(pointer.getParent() instanceof JSONObject){
-				String key=pointer.getKey();
-				((JSONObject)pointer.getParent()).put(key,value);
-			} else
-				throw new IllegalArgumentException("patch "+opStr+" path");
-		}
-		return o;
-	}
-
 	private static Object cloneJsonObject(Object o){
 		try {
 			if(o instanceof JSONArray)
@@ -100,6 +44,14 @@ public class JSONPatch {
 			return o;
 		}
 		return o;
+	}
+
+	private static String getString(JSONObject o, String key){
+		try {
+			return o.getString(key);
+		} catch(NoSuchElementException e){
+			return null;
+		}
 	}
 
 	public static Object patch(Object o, JSONArray patch){
@@ -182,5 +134,53 @@ public class JSONPatch {
 			}
 		}
 		return (o==null) ? JSONObject.NULL : o;
+	}
+
+	private static Object removeOperation(
+			Object o,
+			String opStr,
+			String path){
+		if(path==null)throw new IllegalArgumentException("patch "+opStr);
+		if(path.length()==0)
+			return o;
+		else {
+			JSONPointer pointer=JSONPointer.fromPointer(o, path);
+			if(!pointer.exists())
+				throw new NoSuchElementException("patch "+opStr+" "+path);
+			o=pointer.getValue();
+			if(pointer.getParent() instanceof JSONArray){
+				((JSONArray)pointer.getParent()).removeAt(pointer.getIndex());
+			} else if(pointer.getParent() instanceof JSONObject){
+				((JSONObject)pointer.getParent()).remove(pointer.getKey());
+			}
+			return o;
+		}
+	}
+
+	private static Object replaceOperation(
+			Object o,
+			String opStr,
+			String path,
+			Object value
+			){
+		if(path==null)throw new IllegalArgumentException("patch "+opStr);
+		if(path.length()==0){
+			o=value;
+		} else {
+			JSONPointer pointer=JSONPointer.fromPointer(o, path);
+			if(!pointer.exists())
+				throw new NoSuchElementException("patch "+opStr+" "+path);
+			if(pointer.getParent() instanceof JSONArray){
+				int index=pointer.getIndex();
+				if(index<0)
+					throw new IllegalArgumentException("patch "+opStr+" path");
+				((JSONArray)pointer.getParent()).put(index,value);
+			} else if(pointer.getParent() instanceof JSONObject){
+				String key=pointer.getKey();
+				((JSONObject)pointer.getParent()).put(key,value);
+			} else
+				throw new IllegalArgumentException("patch "+opStr+" path");
+		}
+		return o;
 	}
 }

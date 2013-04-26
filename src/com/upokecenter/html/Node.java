@@ -39,6 +39,21 @@ class Node implements INode {
 	int nodeType;
 
 
+	private String baseURI=null;
+	public Node(int nodeType){
+		this.nodeType=nodeType;
+		childNodes=new ArrayList<Node>();
+	}
+
+
+	public void appendChild(Node node){
+		if(node==this)
+			throw new IllegalArgumentException();
+		node.parentNode=this;
+		node.ownerDocument=(this instanceof IDocument) ? (IDocument)this : ownerDocument;
+		childNodes.add(node);
+	}
+
 	private void fragmentSerializeInner(
 			INode current, StringBuilder builder){
 		if(current.getNodeType()==NodeType.ELEMENT_NODE){
@@ -178,29 +193,6 @@ class Node implements INode {
 			builder.append(">");			// NOTE: may be erroneous
 		}
 	}
-	protected  String getInnerHtmlInternal(){
-		StringBuilder builder=new StringBuilder();
-		for(INode child : getChildNodes()){
-			fragmentSerializeInner(child,builder);
-		}
-		return builder.toString();
-	}
-
-
-	public Node(int nodeType){
-		this.nodeType=nodeType;
-		childNodes=new ArrayList<Node>();
-	}
-
-	public void appendChild(Node node){
-		if(node==this)
-			throw new IllegalArgumentException();
-		node.parentNode=this;
-		node.ownerDocument=(this instanceof IDocument) ? (IDocument)this : ownerDocument;
-		childNodes.add(node);
-	}
-
-	private String baseURI=null;
 
 	@Override
 	public  String getBaseURI() {
@@ -220,16 +212,6 @@ class Node implements INode {
 		}
 	}
 
-	 void setBaseURI(String value){
-		INode parent=getParentNode();
-		if(parent==null){
-			baseURI=value;
-		} else {
-			String val=URL.parse(value,URL.parse(parent.getBaseURI())).toString();
-			baseURI=(val==null) ? parent.getBaseURI() : val.toString();
-		}
-	}
-
 	@Override
 	public List<INode> getChildNodes() {
 		return new ArrayList<INode>(childNodes);
@@ -237,6 +219,29 @@ class Node implements INode {
 
 	 List<Node> getChildNodesInternal(){
 		return childNodes;
+	}
+
+	protected  String getInnerHtmlInternal(){
+		StringBuilder builder=new StringBuilder();
+		for(INode child : getChildNodes()){
+			fragmentSerializeInner(child,builder);
+		}
+		return builder.toString();
+	}
+
+	@Override public  String getLanguage(){
+		INode parent=getParentNode();
+		if(parent==null){
+			parent=getOwnerDocument();
+			if(parent==null)return "";
+			return parent.getLanguage();
+		} else
+			return parent.getLanguage();
+	}
+
+	@Override
+	public  String getNodeName() {
+		return "";
 	}
 
 	@Override
@@ -248,7 +253,6 @@ class Node implements INode {
 	public  IDocument getOwnerDocument(){
 		return ownerDocument;
 	}
-
 	@Override
 	public INode getParentNode() {
 		return parentNode;
@@ -275,9 +279,20 @@ class Node implements INode {
 		}
 		throw new IllegalArgumentException();
 	}
+
 	public void removeChild(Node node){
 		node.parentNode=null;
 		childNodes.remove(node);
+	}
+
+	 void setBaseURI(String value){
+		INode parent=getParentNode();
+		if(parent==null){
+			baseURI=value;
+		} else {
+			String val=URL.parse(value,URL.parse(parent.getBaseURI())).toString();
+			baseURI=(val==null) ? parent.getBaseURI() : val.toString();
+		}
 	}
 
 	void setOwnerDocument(IDocument document){
@@ -288,25 +303,10 @@ class Node implements INode {
 		return null;
 	}
 
-	@Override
-	public  String getNodeName() {
-		return "";
-	}
 
 	@Override
 	public String toString() {
 		return getNodeName();
-	}
-
-
-	@Override public  String getLanguage(){
-		INode parent=getParentNode();
-		if(parent==null){
-			parent=getOwnerDocument();
-			if(parent==null)return "";
-			return parent.getLanguage();
-		} else
-			return parent.getLanguage();
 	}
 
 }

@@ -19,17 +19,15 @@ public final class IntList {
 		ptr=0;
 	}
 
-	public int get(int index){
-		return buffer[index];
-	}
-
-	/**
-	 * Sets the integer at a specified position to a new value.
-	 * @param index an index into the list.
-	 * @param value the integer's new value.
-	 */
-	public void set(int index, int value){
-		buffer[index]=value;
+	public void appendInt(int v){
+		if(ptr<buffer.length){
+			buffer[ptr++]=v;
+		} else {
+			int[] newbuffer=new int[buffer.length*2];
+			System.arraycopy(buffer,0,newbuffer,0,buffer.length);
+			buffer=newbuffer;
+			buffer[ptr++]=v;
+		}
 	}
 
 	public void appendInts(int[] array, int offset, int length){
@@ -46,16 +44,6 @@ public final class IntList {
 		ptr+=length;
 	}
 
-	public void appendInt(int v){
-		if(ptr<buffer.length){
-			buffer[ptr++]=v;
-		} else {
-			int[] newbuffer=new int[buffer.length*2];
-			System.arraycopy(buffer,0,newbuffer,0,buffer.length);
-			buffer=newbuffer;
-			buffer[ptr++]=v;
-		}
-	}
 	public void appendString(String str) {
 		for(int i=0;i<str.length();i++){
 			int c=str.charAt(i);
@@ -73,11 +61,23 @@ public final class IntList {
 			}
 		}
 	}
+
 	public int[] array(){
 		return buffer;
 	}
 	public void clearAll(){
 		ptr=0;
+	}
+	public int get(int index){
+		return buffer[index];
+	}
+	/**
+	 * Sets the integer at a specified position to a new value.
+	 * @param index an index into the list.
+	 * @param value the integer's new value.
+	 */
+	public void set(int index, int value){
+		buffer[index]=value;
 	}
 	public int size(){
 		return ptr;

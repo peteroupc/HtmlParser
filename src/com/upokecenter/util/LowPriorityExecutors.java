@@ -15,19 +15,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class LowPriorityExecutors {
 
-	public static ExecutorService newFixedThreadPool(int nThreads) {
-		return new ThreadPoolExecutor(nThreads, nThreads,
-				0L, TimeUnit.MILLISECONDS,
-				new LinkedBlockingQueue<Runnable>(),
-				new LowPriorityThreadFactory());
-	}
-
-	public static ScheduledExecutorService newScheduledThreadPool(int corePoolSize) {
-		return new ScheduledThreadPoolExecutor(corePoolSize,
-				new LowPriorityThreadFactory());
-	}
-
-
 	// Modified from DefaultThreadFactory in Executors.java,
 	// a public domain file
 	static class LowPriorityThreadFactory implements ThreadFactory {
@@ -58,5 +45,18 @@ public class LowPriorityExecutors {
 			}
 			return t;
 		}
+	}
+
+	public static ExecutorService newFixedThreadPool(int nThreads) {
+		return new ThreadPoolExecutor(nThreads, nThreads,
+				0L, TimeUnit.MILLISECONDS,
+				new LinkedBlockingQueue<Runnable>(),
+				new LowPriorityThreadFactory());
+	}
+
+
+	public static ScheduledExecutorService newScheduledThreadPool(int corePoolSize) {
+		return new ScheduledThreadPoolExecutor(corePoolSize,
+				new LowPriorityThreadFactory());
 	}
 }

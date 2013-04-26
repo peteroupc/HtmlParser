@@ -42,6 +42,10 @@ final class DocumentType extends Node implements IDocumentType {
 		return name;
 	}
 	@Override
+	public  String getNodeName(){
+		return getName();
+	}
+	@Override
 	public String getPublicId() {
 		return publicId;
 	}
@@ -49,14 +53,10 @@ final class DocumentType extends Node implements IDocumentType {
 	public String getSystemId() {
 		return systemId;
 	}
+
 	@Override
 	public  String getTextContent(){
 		return null;
-	}
-
-	@Override
-	public  String getNodeName(){
-		return getName();
 	}
 
 	@Override

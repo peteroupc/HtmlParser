@@ -8,109 +8,6 @@ import java.util.NoSuchElementException;
 
 public final class JSONPointer {
 
-	private static int readPositiveInteger(
-			String str, int index, int[] result){
-		boolean haveNumber=false;
-		boolean haveZeros=false;
-		int oldIndex=index;
-		result[0]=-1;
-		while(index<str.length()){ // skip zeros
-			int c=str.charAt(index++);
-			if(c!='0'){
-				index--;
-				break;
-			}
-			if(haveZeros){
-				index--;
-				return index;
-			}
-			haveNumber=true;
-			haveZeros=true;
-		}
-		long value=0;
-		while(index<str.length()){
-			int number=str.charAt(index++);
-			if(number>='0' && number<='9'){
-				value=(value*10)+(number-'0');
-				haveNumber=true;
-				if(haveZeros)
-					return oldIndex+1;
-			} else {
-				index--;
-				break;
-			}
-			if(value>Integer.MAX_VALUE)
-				return index-1;
-		}
-		if(!haveNumber)
-			return index;
-		result[0]=(int)value;
-		return index;
-	}
-
-	private final String ref;
-	private final Object jsonobj;
-
-	private JSONPointer(Object jsonobj, String ref){
-		assert ref!=null;
-		this.jsonobj=jsonobj;
-		this.ref=ref;
-	}
-
-	public String getKey(){
-		return ref;
-	}
-
-	public Object getParent(){
-		return jsonobj;
-	}
-
-	public boolean exists(){
-		if(jsonobj instanceof JSONArray){
-			if(ref.equals("-"))return false;
-			int value=Integer.parseInt(ref);
-			return (value>=0 && value<((JSONArray)jsonobj).length());
-		} else if(jsonobj instanceof JSONObject)
-			return ((JSONObject)jsonobj).has(ref);
-		else
-			return (ref.length()==0);
-	}
-
-	/**
-	 * 
-	 * Gets an index into the specified object, if the object
-	 * is an array and is not greater than the array's length.
-	 * 
-	 * @return The index contained in this instance, or -1 if
-	 * the object isn't a JSON array or is greater than the
-	 * array's length.
-	 */
-	public int getIndex(){
-		if(jsonobj instanceof JSONArray){
-			if(ref.equals("-"))return ((JSONArray)jsonobj).length();
-			int value=Integer.parseInt(ref);
-			if(value<0)return -1;
-			if(value>((JSONArray)jsonobj).length())return -1;
-			return value;
-		} else
-			return -1;
-	}
-
-	public Object getValue(){
-		if(ref.length()==0)
-			return jsonobj;
-		if(jsonobj instanceof JSONArray){
-			int index=getIndex();
-			if(index>=0 && index<((JSONArray)jsonobj).length())
-				return ((JSONArray)jsonobj).get(index);
-			else
-				return null;
-		} else if(jsonobj instanceof JSONObject)
-			return ((JSONObject)jsonobj).get(ref);
-		else
-			return (ref.length()==0) ? jsonobj : null;
-	}
-
 	public static JSONPointer fromPointer(Object obj, String pointer){
 		int index=0;
 		if(pointer==null)throw new NullPointerException("pointer");
@@ -234,5 +131,108 @@ public final class JSONPointer {
 		if(pointer==null)throw new NullPointerException("pointer");
 		if(pointer.length()==0)return obj;
 		return JSONPointer.fromPointer(obj,pointer).getValue();
+	}
+	private static int readPositiveInteger(
+			String str, int index, int[] result){
+		boolean haveNumber=false;
+		boolean haveZeros=false;
+		int oldIndex=index;
+		result[0]=-1;
+		while(index<str.length()){ // skip zeros
+			int c=str.charAt(index++);
+			if(c!='0'){
+				index--;
+				break;
+			}
+			if(haveZeros){
+				index--;
+				return index;
+			}
+			haveNumber=true;
+			haveZeros=true;
+		}
+		long value=0;
+		while(index<str.length()){
+			int number=str.charAt(index++);
+			if(number>='0' && number<='9'){
+				value=(value*10)+(number-'0');
+				haveNumber=true;
+				if(haveZeros)
+					return oldIndex+1;
+			} else {
+				index--;
+				break;
+			}
+			if(value>Integer.MAX_VALUE)
+				return index-1;
+		}
+		if(!haveNumber)
+			return index;
+		result[0]=(int)value;
+		return index;
+	}
+
+	private final String ref;
+
+	private final Object jsonobj;
+
+	private JSONPointer(Object jsonobj, String ref){
+		assert ref!=null;
+		this.jsonobj=jsonobj;
+		this.ref=ref;
+	}
+
+	public boolean exists(){
+		if(jsonobj instanceof JSONArray){
+			if(ref.equals("-"))return false;
+			int value=Integer.parseInt(ref);
+			return (value>=0 && value<((JSONArray)jsonobj).length());
+		} else if(jsonobj instanceof JSONObject)
+			return ((JSONObject)jsonobj).has(ref);
+		else
+			return (ref.length()==0);
+	}
+
+	/**
+	 * 
+	 * Gets an index into the specified object, if the object
+	 * is an array and is not greater than the array's length.
+	 * 
+	 * @return The index contained in this instance, or -1 if
+	 * the object isn't a JSON array or is greater than the
+	 * array's length.
+	 */
+	public int getIndex(){
+		if(jsonobj instanceof JSONArray){
+			if(ref.equals("-"))return ((JSONArray)jsonobj).length();
+			int value=Integer.parseInt(ref);
+			if(value<0)return -1;
+			if(value>((JSONArray)jsonobj).length())return -1;
+			return value;
+		} else
+			return -1;
+	}
+
+	public String getKey(){
+		return ref;
+	}
+
+	public Object getParent(){
+		return jsonobj;
+	}
+
+	public Object getValue(){
+		if(ref.length()==0)
+			return jsonobj;
+		if(jsonobj instanceof JSONArray){
+			int index=getIndex();
+			if(index>=0 && index<((JSONArray)jsonobj).length())
+				return ((JSONArray)jsonobj).get(index);
+			else
+				return null;
+		} else if(jsonobj instanceof JSONObject)
+			return ((JSONObject)jsonobj).get(ref);
+		else
+			return (ref.length()==0) ? jsonobj : null;
 	}
 }

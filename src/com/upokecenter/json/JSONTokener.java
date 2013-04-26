@@ -17,6 +17,22 @@ import java.text.ParseException;
  */
 public class JSONTokener {
 
+	/**
+	 * Get the hex value of a character (base16).
+	 * @param c A character between '0' and '9' or between 'A' and 'F' or
+	 * between 'a' and 'f'.
+	 * @return  An int between 0 and 15, or -1 if c was not a hex digit.
+	 */
+	public static int dehexchar(char c) {
+		if (c >= '0' && c <= '9')
+			return c - '0';
+		if (c >= 'A' && c <= 'F')
+			return c + 10 - 'A';
+		if (c >= 'a' && c <= 'f')
+			return c + 10 - 'a';
+		return -1;
+	}
+
 	private static String trimSpaces(String s){
 		if(s==null || s.length()==0)return s;
 		int index=0;
@@ -40,6 +56,33 @@ public class JSONTokener {
 		return "";
 	}
 
+
+	/**
+	 * Convert <code>%</code><i>hh</i> sequences to single characters, and convert plus to space.
+	 * @param s A string that may contain <code>+</code>&nbsp;<small>(plus)</small> and <code>%</code><i>hh</i> sequences.
+	 * @return The unescaped string.
+	 */
+	public static String unescape(String s) {
+		int len = s.length();
+		StringBuilder b = new StringBuilder();
+		for (int i = 0; i < len; ++i) {
+			char c = s.charAt(i);
+			if (c == '+') {
+				c = ' ';
+			} else if (c == '%' && i + 2 < len) {
+				int d = dehexchar(s.charAt(i + 1));
+				int e = dehexchar(s.charAt(i + 2));
+				if (d >= 0 && e >= 0) {
+					c = (char)(d * 16 + e);
+					i += 2;
+				}
+			}
+			b.append(c);
+		}
+		return b.toString();
+	}
+
+
 	/**
 	 * The index of the next character.
 	 */
@@ -50,6 +93,7 @@ public class JSONTokener {
 	 * The source string being tokenized.
 	 */
 	private String mySource;
+
 
 
 	/**
@@ -72,24 +116,6 @@ public class JSONTokener {
 		if (myIndex > 0) {
 			myIndex -= 1;
 		}
-	}
-
-
-
-	/**
-	 * Get the hex value of a character (base16).
-	 * @param c A character between '0' and '9' or between 'A' and 'F' or
-	 * between 'a' and 'f'.
-	 * @return  An int between 0 and 15, or -1 if c was not a hex digit.
-	 */
-	public static int dehexchar(char c) {
-		if (c >= '0' && c <= '9')
-			return c - '0';
-		if (c >= 'A' && c <= 'F')
-			return c + 10 - 'A';
-		if (c >= 'a' && c <= 'f')
-			return c + 10 - 'a';
-		return -1;
 	}
 
 
@@ -343,6 +369,21 @@ public class JSONTokener {
 
 
 	/**
+	 * Skip characters until past the requested string.
+	 * If it is not found, we are left at the end of the source.
+	 * @param to A string to skip past.
+	 */
+	public void skipPast(String to) {
+		myIndex = mySource.indexOf(to, myIndex);
+		if (myIndex < 0) {
+			myIndex = mySource.length();
+		} else {
+			myIndex += to.length();
+		}
+	}
+
+
+	/**
 	 * Skip characters until the next character is the requested character.
 	 * If the requested character is not found, no characters are skipped.
 	 * @param to A character to skip to.
@@ -361,21 +402,6 @@ public class JSONTokener {
 		} while (c != to);
 		back();
 		return c;
-	}
-
-
-	/**
-	 * Skip characters until past the requested string.
-	 * If it is not found, we are left at the end of the source.
-	 * @param to A string to skip past.
-	 */
-	public void skipPast(String to) {
-		myIndex = mySource.indexOf(to, myIndex);
-		if (myIndex < 0) {
-			myIndex = mySource.length();
-		} else {
-			myIndex += to.length();
-		}
 	}
 
 
@@ -400,7 +426,6 @@ public class JSONTokener {
 		return " at character " + myIndex + " of " + mySource;
 	}
 
-
 	/**
 	 * Unescape the source text. Convert <code>%</code><i>hh</i> sequences to single characters,
 	 * and convert plus to space. There are Web transport systems that insist on
@@ -408,30 +433,5 @@ public class JSONTokener {
 	 */
 	 void unescape() {
 		mySource = unescape(mySource);
-	}
-
-	/**
-	 * Convert <code>%</code><i>hh</i> sequences to single characters, and convert plus to space.
-	 * @param s A string that may contain <code>+</code>&nbsp;<small>(plus)</small> and <code>%</code><i>hh</i> sequences.
-	 * @return The unescaped string.
-	 */
-	public static String unescape(String s) {
-		int len = s.length();
-		StringBuilder b = new StringBuilder();
-		for (int i = 0; i < len; ++i) {
-			char c = s.charAt(i);
-			if (c == '+') {
-				c = ' ';
-			} else if (c == '%' && i + 2 < len) {
-				int d = dehexchar(s.charAt(i + 1));
-				int e = dehexchar(s.charAt(i + 2));
-				if (d >= 0 && e >= 0) {
-					c = (char)(d * 16 + e);
-					i += 2;
-				}
-			}
-			b.append(c);
-		}
-		return b.toString();
 	}
 }

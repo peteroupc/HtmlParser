@@ -23,34 +23,6 @@ public final class ActionList<T> {
 		postponeCall=new ArrayList<T[]>();
 	}
 
-	public boolean unbindAction(int actionID){
-		//DebugUtility.log("Unbinding action %d",actionID);
-		IBoundAction<T> action=null;
-		if(actionID<0)return false;
-		synchronized(syncRoot){
-			if(actionID>=actions.size())
-				return false;
-			action=actions.get(actionID);
-			if(action==null)
-				return false;
-			boundObjects.set(actionID,null);
-		}
-		return true;
-	}
-
-	public boolean removeAction(int actionID){
-		//DebugUtility.log("Removing action %d",actionID);
-		if(actionID<0)return false;
-		synchronized(syncRoot){
-			if(actionID>=actions.size())
-				return false;
-			actions.set(actionID,null);
-			boundObjects.set(actionID,null);
-			postponeCall.set(actionID,null);
-		}
-		return true;
-	}
-
 	public boolean rebindAction(int actionID, Object boundObject){
 		//DebugUtility.log("Rebinding action %d",actionID);
 		IBoundAction<T> action=null;
@@ -73,6 +45,39 @@ public final class ActionList<T> {
 		if(postponed!=null){
 			//DebugUtility.log("Calling postponed action %d",actionID);
 			action.action(boundObject,postponed);
+		}
+		return true;
+	}
+
+	public int registerAction(Object boundObject, IBoundAction<T> action){
+		synchronized(syncRoot){
+			for(int i=0;i<actions.size();i++){
+				if(actions.get(i)==null){
+					//DebugUtility.log("Adding action %d",i);
+					actions.set(i,action);
+					boundObjects.set(i,boundObject);
+					postponeCall.set(i,null);
+					return i;
+				}
+			}
+			int ret=actions.size();
+			//DebugUtility.log("Adding action %d",ret);
+			actions.add(action);
+			boundObjects.add(boundObject);
+			postponeCall.add(null);
+			return ret;
+		}
+	}
+
+	public boolean removeAction(int actionID){
+		//DebugUtility.log("Removing action %d",actionID);
+		if(actionID<0)return false;
+		synchronized(syncRoot){
+			if(actionID>=actions.size())
+				return false;
+			actions.set(actionID,null);
+			boundObjects.set(actionID,null);
+			postponeCall.set(actionID,null);
 		}
 		return true;
 	}
@@ -101,23 +106,18 @@ public final class ActionList<T> {
 		return true;
 	}
 
-	public int registerAction(Object boundObject, IBoundAction<T> action){
+	public boolean unbindAction(int actionID){
+		//DebugUtility.log("Unbinding action %d",actionID);
+		IBoundAction<T> action=null;
+		if(actionID<0)return false;
 		synchronized(syncRoot){
-			for(int i=0;i<actions.size();i++){
-				if(actions.get(i)==null){
-					//DebugUtility.log("Adding action %d",i);
-					actions.set(i,action);
-					boundObjects.set(i,boundObject);
-					postponeCall.set(i,null);
-					return i;
-				}
-			}
-			int ret=actions.size();
-			//DebugUtility.log("Adding action %d",ret);
-			actions.add(action);
-			boundObjects.add(boundObject);
-			postponeCall.add(null);
-			return ret;
+			if(actionID>=actions.size())
+				return false;
+			action=actions.get(actionID);
+			if(action==null)
+				return false;
+			boundObjects.set(actionID,null);
 		}
+		return true;
 	}
 }

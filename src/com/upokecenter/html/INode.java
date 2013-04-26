@@ -52,6 +52,15 @@ public interface INode {
 	 */
 	List<INode> getChildNodes();
 	/**
+	 * Gets the language of this node.  Not defined in the DOM specification.
+	 */
+	String getLanguage();
+	/**
+	 * Gets the name of this node.  For HTML elements, this will
+	 * be the same as the tag name.
+	 */
+	String getNodeName();
+	/**
 	 * 
 	 * Returns the type of node represented by this object.
 	 * 
@@ -80,13 +89,4 @@ public interface INode {
 	 * nodes; or the text of Comment nodes; or null otherwise.
 	 */
 	String getTextContent();
-	/**
-	 * Gets the name of this node.  For HTML elements, this will
-	 * be the same as the tag name.
-	 */
-	String getNodeName();
-	/**
-	 * Gets the language of this node.  Not defined in the DOM specification.
-	 */
-	String getLanguage();
 }

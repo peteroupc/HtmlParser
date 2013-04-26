@@ -38,12 +38,6 @@ import java.util.List;
  */
 public interface IDocument extends INode {
 	/**
-	 * Gets the document's address
-	 * 
-	 * @return An absolute URL.
-	 */
-	String getURL();
-	/**
 	 * 
 	 * Gets the character encoding used in this document.
 	 * 
@@ -74,4 +68,10 @@ public interface IDocument extends INode {
 	 * 
 	 */
 	List<IElement> getElementsByTagName(String string);
+	/**
+	 * Gets the document's address
+	 * 
+	 * @return An absolute URL.
+	 */
+	String getURL();
 }

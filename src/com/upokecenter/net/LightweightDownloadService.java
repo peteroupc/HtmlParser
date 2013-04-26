@@ -45,27 +45,6 @@ public final class LightweightDownloadService {
 		service.setCacheSize(cacheSize);
 	}
 
-	public void setResultPoster(IAction<Runnable> action){
-		synchronized(syncRoot){
-			postResult=action;
-		}
-	}
-
-	public void shutdown(){
-		service.shutdown();
-		pool.shutdown();
-	}
-
-	public void sendRequest(final String url, final IResponseListener<Object> cbobj,
-			final IOnFinishedListener<Object> finobj) {
-		pool.submit(new Runnable(){
-			@Override
-			public void run() {
-				handleDownload(url,cbobj,finobj);
-			}
-		});
-	}
-
 	private void handleDownload(final String url, final IResponseListener<Object> cbobj,
 			final IOnFinishedListener<Object> finobj) {
 		service.enableCache();
@@ -104,6 +83,27 @@ public final class LightweightDownloadService {
 			}
 			e.printStackTrace();
 		}
+	}
+
+	public void sendRequest(final String url, final IResponseListener<Object> cbobj,
+			final IOnFinishedListener<Object> finobj) {
+		pool.submit(new Runnable(){
+			@Override
+			public void run() {
+				handleDownload(url,cbobj,finobj);
+			}
+		});
+	}
+
+	public void setResultPoster(IAction<Runnable> action){
+		synchronized(syncRoot){
+			postResult=action;
+		}
+	}
+
+	public void shutdown(){
+		service.shutdown();
+		pool.shutdown();
 	}
 
 }

@@ -9,12 +9,6 @@ package com.upokecenter.html;
 public interface IAttr {
 
 	/**
-	 * Gets the attribute name's prefix (the part before the colon,
-	 * if it's bound to a namespace).
-	 */
-	public String getPrefix();
-
-	/**
 	 * Gets the attribute name's local name (the part after the colon,
 	 * if it's bound to a namespace).
 	 */
@@ -29,6 +23,12 @@ public interface IAttr {
 	 * Gets the attribute's namespace URI, if it's bound to a namespace.
 	 */
 	public String getNamespaceURI();
+
+	/**
+	 * Gets the attribute name's prefix (the part before the colon,
+	 * if it's bound to a namespace).
+	 */
+	public String getPrefix();
 
 	/**
 	 * Gets the attribute's value.

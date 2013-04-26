@@ -36,6 +36,21 @@ public final class StackableCharacterInput implements IMarkableCharacterInput {
 		}
 
 		@Override
+		public int read() throws IOException {
+			if(charInput!=null){
+				int c=charInput.read();
+				if(c>=0)return c;
+				charInput=null;
+			}
+			if(buffer!=null){
+				if(pos<buffer.length)
+					return buffer[pos++];
+				buffer=null;
+			}
+			return -1;
+		}
+
+		@Override
 		public int read(int[] buf, int offset, int unitCount)
 				throws IOException {
 			if((buf)==null)throw new NullPointerException("buf");
@@ -68,21 +83,6 @@ public final class StackableCharacterInput implements IMarkableCharacterInput {
 			return (count==0) ? -1 : count;
 		}
 
-		@Override
-		public int read() throws IOException {
-			if(charInput!=null){
-				int c=charInput.read();
-				if(c>=0)return c;
-				charInput=null;
-			}
-			if(buffer!=null){
-				if(pos<buffer.length)
-					return buffer[pos++];
-				buffer=null;
-			}
-			return -1;
-		}
-
 	}
 
 	int pos=0;
@@ -100,6 +100,16 @@ public final class StackableCharacterInput implements IMarkableCharacterInput {
 		return pos;
 	}
 
+	@Override
+	public void moveBack(int count) throws IOException {
+		if((count)<0)throw new IndexOutOfBoundsException("count not greater or equal to 0 ("+Integer.toString(count)+")");
+		if(haveMark && pos>=count){
+			pos-=count;
+			return;
+		}
+		throw new IOException();
+	}
+
 	public void pushInput(ICharacterInput input){
 		if((input)==null)throw new NullPointerException("input");
 		// Move unread characters in buffer, since this new
@@ -109,79 +119,38 @@ public final class StackableCharacterInput implements IMarkableCharacterInput {
 	}
 
 	@Override
-	public void setMarkPosition(int pos) throws IOException{
-		if(!haveMark || pos<0 || pos>endpos)
-			throw new IOException();
-		this.pos=pos;
-	}
-
-	@Override
-	public int setSoftMark(){
-		if(!haveMark){
-			setHardMark();
-		}
-		return getMarkPosition();
-	}
-
-	@Override
-	public int setHardMark(){
-		if(buffer==null){
-			buffer=new int[16];
-			pos=0;
-			endpos=0;
-			haveMark=true;
-		} else if(haveMark){
-			// Already have a mark; shift buffer to the new mark
-			if(pos>0 && pos<endpos){
-				System.arraycopy(buffer,pos,buffer,0,endpos-pos);
+	public int read() throws IOException{
+		if(haveMark){
+			// Read from buffer
+			if(pos<endpos)
+				return buffer[pos++];
+			//DebugUtility.log(this);
+			// End pos is smaller than buffer size, fill
+			// entire buffer if possible
+			if(endpos<buffer.length){
+				int count=readInternal(buffer,endpos,buffer.length-endpos);
+				if(count>0) {
+					endpos+=count;
+				}
 			}
-			endpos-=pos;
-			pos=0;
-		} else {
-			pos=0;
-			endpos=0;
-			haveMark=true;
-		}
-		return 0;
-	}
-
-	private int readInternal(int[] buf, int offset, int unitCount) throws IOException {
-		if(this.stack.size()==0)return -1;
-		assert ((buf)!=null) : "buf";
-		assert ((offset)>=0) : ("offset not greater or equal to 0 ("+Integer.toString(offset)+")");
-		assert ((unitCount)>=0) : ("unitCount not greater or equal to 0 ("+Integer.toString(unitCount)+")");
-		assert ((offset+unitCount)<=buf.length) : ("offset+unitCount not less or equal to "+Integer.toString(buf.length)+" ("+Integer.toString(offset+unitCount)+")");
-		if(unitCount==0)return 0;
-		int count=0;
-		while(this.stack.size()>0 && unitCount>0){
-			int index=this.stack.size()-1;
-			int c=this.stack.get(index).read(buf,offset,unitCount);
-			if(c<=0){
-				this.stack.remove(index);
-				continue;
+			// Try reading from buffer again
+			if(pos<endpos)
+				return buffer[pos++];
+			//DebugUtility.log(this);
+			// No room, read next character and put it in buffer
+			int c=readInternal();
+			if(c<0)return c;
+			if(pos>=buffer.length){
+				int[] newBuffer=new int[buffer.length*2];
+				System.arraycopy(buffer,0,newBuffer,0,buffer.length);
+				buffer=newBuffer;
 			}
-			count+=c;
-			unitCount-=c;
-			if(unitCount==0){
-				break;
-			}
-			this.stack.remove(index);
-		}
-		return count;
-	}
-
-	private int readInternal() throws IOException {
-		if(this.stack.size()==0)return -1;
-		while(this.stack.size()>0){
-			int index=this.stack.size()-1;
-			int c=this.stack.get(index).read();
-			if(c==-1){
-				this.stack.remove(index);
-				continue;
-			}
+			//DebugUtility.log(this);
+			buffer[pos++]=(byte)c;
+			endpos++;
 			return c;
-		}
-		return -1;
+		} else
+			return readInternal();
 	}
 
 	@Override
@@ -240,49 +209,80 @@ public final class StackableCharacterInput implements IMarkableCharacterInput {
 			return readInternal(buf, offset, unitCount);
 	}
 
-	@Override
-	public int read() throws IOException{
-		if(haveMark){
-			// Read from buffer
-			if(pos<endpos)
-				return buffer[pos++];
-			//DebugUtility.log(this);
-			// End pos is smaller than buffer size, fill
-			// entire buffer if possible
-			if(endpos<buffer.length){
-				int count=readInternal(buffer,endpos,buffer.length-endpos);
-				if(count>0) {
-					endpos+=count;
-				}
+	private int readInternal() throws IOException {
+		if(this.stack.size()==0)return -1;
+		while(this.stack.size()>0){
+			int index=this.stack.size()-1;
+			int c=this.stack.get(index).read();
+			if(c==-1){
+				this.stack.remove(index);
+				continue;
 			}
-			// Try reading from buffer again
-			if(pos<endpos)
-				return buffer[pos++];
-			//DebugUtility.log(this);
-			// No room, read next character and put it in buffer
-			int c=readInternal();
-			if(c<0)return c;
-			if(pos>=buffer.length){
-				int[] newBuffer=new int[buffer.length*2];
-				System.arraycopy(buffer,0,newBuffer,0,buffer.length);
-				buffer=newBuffer;
-			}
-			//DebugUtility.log(this);
-			buffer[pos++]=(byte)c;
-			endpos++;
 			return c;
-		} else
-			return readInternal();
+		}
+		return -1;
+	}
+
+	private int readInternal(int[] buf, int offset, int unitCount) throws IOException {
+		if(this.stack.size()==0)return -1;
+		assert ((buf)!=null) : "buf";
+		assert ((offset)>=0) : ("offset not greater or equal to 0 ("+Integer.toString(offset)+")");
+		assert ((unitCount)>=0) : ("unitCount not greater or equal to 0 ("+Integer.toString(unitCount)+")");
+		assert ((offset+unitCount)<=buf.length) : ("offset+unitCount not less or equal to "+Integer.toString(buf.length)+" ("+Integer.toString(offset+unitCount)+")");
+		if(unitCount==0)return 0;
+		int count=0;
+		while(this.stack.size()>0 && unitCount>0){
+			int index=this.stack.size()-1;
+			int c=this.stack.get(index).read(buf,offset,unitCount);
+			if(c<=0){
+				this.stack.remove(index);
+				continue;
+			}
+			count+=c;
+			unitCount-=c;
+			if(unitCount==0){
+				break;
+			}
+			this.stack.remove(index);
+		}
+		return count;
 	}
 
 	@Override
-	public void moveBack(int count) throws IOException {
-		if((count)<0)throw new IndexOutOfBoundsException("count not greater or equal to 0 ("+Integer.toString(count)+")");
-		if(haveMark && pos>=count){
-			pos-=count;
-			return;
+	public int setHardMark(){
+		if(buffer==null){
+			buffer=new int[16];
+			pos=0;
+			endpos=0;
+			haveMark=true;
+		} else if(haveMark){
+			// Already have a mark; shift buffer to the new mark
+			if(pos>0 && pos<endpos){
+				System.arraycopy(buffer,pos,buffer,0,endpos-pos);
+			}
+			endpos-=pos;
+			pos=0;
+		} else {
+			pos=0;
+			endpos=0;
+			haveMark=true;
 		}
-		throw new IOException();
+		return 0;
+	}
+
+	@Override
+	public void setMarkPosition(int pos) throws IOException{
+		if(!haveMark || pos<0 || pos>endpos)
+			throw new IOException();
+		this.pos=pos;
+	}
+
+	@Override
+	public int setSoftMark(){
+		if(!haveMark){
+			setHardMark();
+		}
+		return getMarkPosition();
 	}
 
 }

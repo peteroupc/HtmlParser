@@ -31,11 +31,14 @@ import java.io.OutputStream;
 
 final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 
+	int lead=0;
+
+	boolean jis0212=false;
+	int state=0;
 	@Override
 	public int decode(InputStream stream) throws IOException {
 		return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
 	}
-
 	@Override
 	public int decode(InputStream stream, IEncodingError error) throws IOException {
 		int[] value=new int[1];
@@ -43,9 +46,6 @@ final class Iso2022JPEncoding implements ITextEncoder, ITextDecoder {
 		if(c<=0)return -1;
 		return value[0];
 	}
-	int lead=0;
-	boolean jis0212=false;
-	int state=0;
 	@Override
 	public int decode(InputStream stream, int[] buffer, int offset, int length)
 			throws IOException {

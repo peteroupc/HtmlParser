@@ -41,21 +41,21 @@ class Comment extends Node implements IComment {
 	}
 
 	@Override
+	public  String getNodeName(){
+		return "#comment";
+	}
+
+	@Override
 	public  String getTextContent(){
 		return null;
 	}
 
+
 	 void setData(String data){
 		this.data=data;
 	}
-
-
 	 @Override  String toDebugString(){
 		return "<!-- "+getData().toString().replace("\n","~~~~")+" -->\n";
-	}
-	@Override
-	public  String getNodeName(){
-		return "#comment";
 	}
 
 }

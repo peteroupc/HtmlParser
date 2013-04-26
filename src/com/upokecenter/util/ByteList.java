@@ -15,14 +15,6 @@ public final class ByteList {
 		ptr=0;
 	}
 
-	public int get(int index){
-		return buffer[index];
-	}
-
-	public void set(int index, byte value){
-		buffer[index]=value;
-	}
-
 	public void append(byte v){
 		if(ptr<buffer.length){
 			buffer[ptr++]=v;
@@ -37,20 +29,28 @@ public final class ByteList {
 	public byte[] array(){
 		return buffer;
 	}
+
 	public void clear(){
 		ptr=0;
 	}
+
+	public int get(int index){
+		return buffer[index];
+	}
+	public void set(int index, byte value){
+		buffer[index]=value;
+	}
 	public int size(){
 		return ptr;
-	}
-
-	public InputStream toInputStream(){
-		return new ByteArrayInputStream(buffer,0,ptr);
 	}
 
 	public byte[] toByteArray(){
 		byte[] ret=new byte[ptr];
 		System.arraycopy(buffer,0,ret,0,ptr);
 		return ret;
+	}
+
+	public InputStream toInputStream(){
+		return new ByteArrayInputStream(buffer,0,ptr);
 	}
 }

@@ -132,6 +132,12 @@ public final class HtmlDocument {
 	}
 
 	public static IDocument parseStream(
+			InputStream stream, String address)
+					throws IOException {
+		return parseStream(stream,address,"text/html");
+	}
+
+	public static IDocument parseStream(
 			InputStream stream, String address, String contentType)
 					throws IOException {
 		return parseStream(stream,address,contentType,null);
@@ -178,12 +184,6 @@ public final class HtmlDocument {
 			throw new IllegalArgumentException("content type not supported: "+mediatype);
 	}
 
-	public static IDocument parseStream(
-			InputStream stream, String address)
-					throws IOException {
-		return parseStream(stream,address,"text/html");
-	}
-
 	/**
 	 * 
 	 * Parses an HTML document from a URL.
@@ -199,8 +199,6 @@ public final class HtmlDocument {
 		return DownloadHelper.downloadUrl(url,
 				new ParseURLListener(), false);
 	}
-	private HtmlDocument(){}
-
 	public static String resolveURL(INode node, String url, String base){
 		String encoding=((node instanceof IDocument) ?
 				((IDocument)node).getCharacterSet() : node.getOwnerDocument().getCharacterSet());
@@ -216,4 +214,6 @@ public final class HtmlDocument {
 			return base;
 		return resolved.toString();
 	}
+
+	private HtmlDocument(){}
 }

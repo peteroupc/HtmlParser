@@ -22,11 +22,211 @@ import com.upokecenter.util.URL;
 
 class XhtmlParser {
 
-	private final String address;
-	private XMLReader reader;
-	private final InputSource isource;
+	 static class ProcessingInstruction extends Node
+	implements IProcessingInstruction {
+
+		public String target,data;
+
+		public ProcessingInstruction() {
+			super(NodeType.PROCESSING_INSTRUCTION_NODE);
+		}
+
+		@Override
+		public String getData() {
+			return data;
+		}
+
+		@Override
+		public String getTarget() {
+			return target;
+		}
+
+	}
+	 static class XhtmlContentHandler extends DefaultHandler2
+	{
+		private final List<Element> elements;
+		private final List<Element> xmlBaseElements;
+		private Document document;
+		 String baseurl;
+		 String encoding;
+		boolean useEntities=false;
+		public XhtmlContentHandler(XhtmlParser parser){
+			elements=new ArrayList<Element>();
+			xmlBaseElements=new ArrayList<Element>();
+		}
+		@Override
+		public  void characters(char[] arg0, int arg1, int arg2)
+				throws SAXException {
+			getTextNodeToInsert(getCurrentNode()).text.appendString(new String(arg0,arg1,arg2));
+		}
 
 
+
+		@Override
+		public  void comment(char[] arg0, int arg1, int arg2)
+				throws SAXException {
+			Comment cmt=new Comment();
+			cmt.setData(new String(arg0,arg1,arg2));
+			getCurrentNode().appendChild(cmt);
+		}
+
+		@Override
+		public  void endDocument() throws SAXException {
+			stopParsing();
+		}
+
+		@Override
+		public  void endElement(String arg0, String arg1, String arg2)
+				throws SAXException {
+			elements.remove(elements.size()-1);
+		}
+
+		private Node getCurrentNode(){
+			if(elements.size()==0)return document;
+			return elements.get(elements.size()-1);
+		}
+
+
+		 Document getDocument(){
+			return this.document;
+		}
+
+		private String getPrefix(String qname){
+			String prefix="";
+			if(qname!=null){
+				int prefixIndex=qname.indexOf(':');
+				if(prefixIndex>=0){
+					prefix=qname.substring(0,prefixIndex);
+				}
+			}
+			return prefix;
+		}
+
+		private Text getTextNodeToInsert(Node node){
+			List<Node> childNodes=node.getChildNodesInternal();
+			Node lastChild=(childNodes.size()==0) ? null : childNodes.get(childNodes.size()-1);
+			if(lastChild==null || lastChild.getNodeType()!=NodeType.TEXT_NODE){
+				Text textNode=new Text();
+				node.appendChild(textNode);
+				return textNode;
+			} else
+				return ((Text)lastChild);
+		}
+		@Override
+		public  void ignorableWhitespace(char[] arg0, int arg1, int arg2)
+				throws SAXException {
+			getTextNodeToInsert(getCurrentNode()).text.appendString(new String(arg0,arg1,arg2));
+		}
+
+		@Override
+		public  void processingInstruction(String arg0, String arg1)
+				throws SAXException {
+			ProcessingInstruction pi=new ProcessingInstruction();
+			pi.target=arg0;
+			pi.data=arg1;
+			getCurrentNode().appendChild(pi);
+		}
+
+		@Override
+		public InputSource resolveEntity(String name, String publicId, String baseURI, String systemId)
+				throws SAXException, IOException {
+			// Always load a blank external entity
+			return new InputSource(new ByteArrayInputStream(new byte[]{}));
+		}
+
+		 void setDocument(Document doc){
+			this.document=doc;
+		}
+
+		@Override
+		public  void skippedEntity(String arg0) throws SAXException {
+			DebugUtility.log(arg0);
+			if(useEntities){
+				int entity=HtmlEntities.getHtmlEntity(arg0);
+				if(entity<0){
+					int[] twoChars=HtmlEntities.getTwoCharacterEntity(entity);
+					getTextNodeToInsert(getCurrentNode()).text.appendInts(twoChars, 0,2);
+				} else if(entity<0x110000){
+					getTextNodeToInsert(getCurrentNode()).text.appendInt(entity);
+				}
+			}
+			throw new SAXException("Unrecognized entity: "+arg0);
+		}
+
+		@Override
+		public  void startDTD(String name, String pubid, String sysid){
+			DocumentType doctype=new DocumentType();
+			doctype.name=name;
+			doctype.publicId=pubid;
+			doctype.systemId=sysid;
+			document.appendChild(doctype);
+			if("-//W3C//DTD XHTML 1.0 Transitional//EN".equals(pubid) ||
+					"-//W3C//DTD XHTML 1.1//EN".equals(pubid) ||
+					"-//W3C//DTD XHTML 1.0 Strict//EN".equals(pubid) ||
+					"-//W3C//DTD XHTML 1.0 Frameset//EN".equals(pubid) ||
+					"-//W3C//DTD XHTML Basic 1.0//EN".equals(pubid) ||
+					"-//W3C//DTD XHTML 1.1 plus MathML 2.0//EN".equals(pubid) ||
+					"-//W3C//DTD XHTML 1.1 plus MathML 2.0 plus SVG 1.1//EN".equals(pubid) ||
+					"-//W3C//DTD MathML 2.0//EN".equals(pubid) ||
+					"-//WAPFORUM//DTD XHTML Mobile 1.0//EN".equals(pubid)){
+				useEntities=true;
+			}
+		}
+
+		@Override
+		public  void startElement(String uri, String localName, String arg2,
+				Attributes arg3) throws SAXException {
+			String prefix=getPrefix(arg2);
+			Element element=new Element();
+			element.setLocalName(localName);
+			if(prefix.length()>0){
+				element.setPrefix(prefix);
+			}
+			if(uri!=null && uri.length()>0){
+				element.setNamespace(uri);
+			}
+			getCurrentNode().appendChild(element);
+			for(int i=0;i<arg3.getLength();i++){
+				String namespace=arg3.getURI(i);
+				Attr attr=new Attr();
+				attr.setName(arg3.getQName(i)); // Sets prefix and local name
+				attr.setNamespace(namespace);
+				attr.setValue(arg3.getValue(i));
+				element.addAttribute(attr);
+				if("xml:base".equals(arg3.getQName(i))){
+					xmlBaseElements.add(element);
+				}
+			}
+			if("http://www.w3.org/1999/xhtml".equals(uri) &&
+					"base".equals(localName)){
+				String href=element.getAttributeNS("", "href");
+				if(href!=null) {
+					baseurl=href;
+				}
+			}
+			elements.add(element);
+		}
+
+		private void stopParsing() {
+			document.encoding=encoding;
+			String docbase=document.getBaseURI();
+			if(docbase==null || docbase.length()==0){
+				docbase=baseurl;
+			} else {
+				if(baseurl!=null && baseurl.length()>0){
+					document.setBaseURI(HtmlDocument.resolveURL(
+							document,baseurl,document.getBaseURI()));
+				}
+			}
+			for(Element baseElement : xmlBaseElements){
+				String xmlbase=baseElement.getAttribute("xml:base");
+				if(!StringUtility.isNullOrEmpty(xmlbase)) {
+					baseElement.setBaseURI(xmlbase);
+				}
+			}
+			elements.clear();
+		}
+	}
 	private static String sniffEncoding(InputStream s) throws IOException{
 		byte[] data=new byte[4];
 		int count=0;
@@ -144,225 +344,25 @@ class XhtmlParser {
 	}
 
 
-
-	 static class ProcessingInstruction extends Node
-	implements IProcessingInstruction {
-
-		public String target,data;
-
-		public ProcessingInstruction() {
-			super(NodeType.PROCESSING_INSTRUCTION_NODE);
-		}
-
-		@Override
-		public String getTarget() {
-			return target;
-		}
-
-		@Override
-		public String getData() {
-			return data;
-		}
-
-	}
-
-
-	 static class XhtmlContentHandler extends DefaultHandler2
-	{
-		private final List<Element> elements;
-		private final List<Element> xmlBaseElements;
-		private Document document;
-		 String baseurl;
-		 String encoding;
-		boolean useEntities=false;
-		private Node getCurrentNode(){
-			if(elements.size()==0)return document;
-			return elements.get(elements.size()-1);
-		}
-		@Override
-		public InputSource resolveEntity(String name, String publicId, String baseURI, String systemId)
-				throws SAXException, IOException {
-			// Always load a blank external entity
-			return new InputSource(new ByteArrayInputStream(new byte[]{}));
-		}
+	private final String address;
 
 
 
-		private void stopParsing() {
-			document.encoding=encoding;
-			String docbase=document.getBaseURI();
-			if(docbase==null || docbase.length()==0){
-				docbase=baseurl;
-			} else {
-				if(baseurl!=null && baseurl.length()>0){
-					document.setBaseURI(HtmlDocument.resolveURL(
-							document,baseurl,document.getBaseURI()));
-				}
-			}
-			for(Element baseElement : xmlBaseElements){
-				String xmlbase=baseElement.getAttribute("xml:base");
-				if(!StringUtility.isNullOrEmpty(xmlbase)) {
-					baseElement.setBaseURI(xmlbase);
-				}
-			}
-			elements.clear();
-		}
-
-		 void setDocument(Document doc){
-			this.document=doc;
-		}
-
-		 Document getDocument(){
-			return this.document;
-		}
-
-		private Text getTextNodeToInsert(Node node){
-			List<Node> childNodes=node.getChildNodesInternal();
-			Node lastChild=(childNodes.size()==0) ? null : childNodes.get(childNodes.size()-1);
-			if(lastChild==null || lastChild.getNodeType()!=NodeType.TEXT_NODE){
-				Text textNode=new Text();
-				node.appendChild(textNode);
-				return textNode;
-			} else
-				return ((Text)lastChild);
-		}
+	private XMLReader reader;
 
 
-		public XhtmlContentHandler(XhtmlParser parser){
-			elements=new ArrayList<Element>();
-			xmlBaseElements=new ArrayList<Element>();
-		}
+	private final InputSource isource;
 
-		@Override
-		public  void characters(char[] arg0, int arg1, int arg2)
-				throws SAXException {
-			getTextNodeToInsert(getCurrentNode()).text.appendString(new String(arg0,arg1,arg2));
-		}
+	private final XhtmlContentHandler handler;
+	private final String encoding;
 
-		@Override
-		public  void ignorableWhitespace(char[] arg0, int arg1, int arg2)
-				throws SAXException {
-			getTextNodeToInsert(getCurrentNode()).text.appendString(new String(arg0,arg1,arg2));
-		}
-		@Override
-		public  void endDocument() throws SAXException {
-			stopParsing();
-		}
-
-		@Override
-		public  void endElement(String arg0, String arg1, String arg2)
-				throws SAXException {
-			elements.remove(elements.size()-1);
-		}
-
-		@Override
-		public  void processingInstruction(String arg0, String arg1)
-				throws SAXException {
-			ProcessingInstruction pi=new ProcessingInstruction();
-			pi.target=arg0;
-			pi.data=arg1;
-			getCurrentNode().appendChild(pi);
-		}
-
-		@Override
-		public  void startDTD(String name, String pubid, String sysid){
-			DocumentType doctype=new DocumentType();
-			doctype.name=name;
-			doctype.publicId=pubid;
-			doctype.systemId=sysid;
-			document.appendChild(doctype);
-			if("-//W3C//DTD XHTML 1.0 Transitional//EN".equals(pubid) ||
-					"-//W3C//DTD XHTML 1.1//EN".equals(pubid) ||
-					"-//W3C//DTD XHTML 1.0 Strict//EN".equals(pubid) ||
-					"-//W3C//DTD XHTML 1.0 Frameset//EN".equals(pubid) ||
-					"-//W3C//DTD XHTML Basic 1.0//EN".equals(pubid) ||
-					"-//W3C//DTD XHTML 1.1 plus MathML 2.0//EN".equals(pubid) ||
-					"-//W3C//DTD XHTML 1.1 plus MathML 2.0 plus SVG 1.1//EN".equals(pubid) ||
-					"-//W3C//DTD MathML 2.0//EN".equals(pubid) ||
-					"-//WAPFORUM//DTD XHTML Mobile 1.0//EN".equals(pubid)){
-				useEntities=true;
-			}
-		}
-
-		@Override
-		public  void skippedEntity(String arg0) throws SAXException {
-			DebugUtility.log(arg0);
-			if(useEntities){
-				int entity=HtmlEntities.getHtmlEntity(arg0);
-				if(entity<0){
-					int[] twoChars=HtmlEntities.getTwoCharacterEntity(entity);
-					getTextNodeToInsert(getCurrentNode()).text.appendInts(twoChars, 0,2);
-				} else if(entity<0x110000){
-					getTextNodeToInsert(getCurrentNode()).text.appendInt(entity);
-				}
-			}
-			throw new SAXException("Unrecognized entity: "+arg0);
-		}
-
-		private String getPrefix(String qname){
-			String prefix="";
-			if(qname!=null){
-				int prefixIndex=qname.indexOf(':');
-				if(prefixIndex>=0){
-					prefix=qname.substring(0,prefixIndex);
-				}
-			}
-			return prefix;
-		}
-
-		@Override
-		public  void startElement(String uri, String localName, String arg2,
-				Attributes arg3) throws SAXException {
-			String prefix=getPrefix(arg2);
-			Element element=new Element();
-			element.setLocalName(localName);
-			if(prefix.length()>0){
-				element.setPrefix(prefix);
-			}
-			if(uri!=null && uri.length()>0){
-				element.setNamespace(uri);
-			}
-			getCurrentNode().appendChild(element);
-			for(int i=0;i<arg3.getLength();i++){
-				String namespace=arg3.getURI(i);
-				Attr attr=new Attr();
-				attr.setName(arg3.getQName(i)); // Sets prefix and local name
-				attr.setNamespace(namespace);
-				attr.setValue(arg3.getValue(i));
-				element.addAttribute(attr);
-				if("xml:base".equals(arg3.getQName(i))){
-					xmlBaseElements.add(element);
-				}
-			}
-			if("http://www.w3.org/1999/xhtml".equals(uri) &&
-					"base".equals(localName)){
-				String href=element.getAttributeNS("", "href");
-				if(href!=null) {
-					baseurl=href;
-				}
-			}
-			elements.add(element);
-		}
-
-		@Override
-		public  void comment(char[] arg0, int arg1, int arg2)
-				throws SAXException {
-			Comment cmt=new Comment();
-			cmt.setData(new String(arg0,arg1,arg2));
-			getCurrentNode().appendChild(cmt);
-		}
-	}
-
+	private final String[] contentLang;
 	public XhtmlParser(InputStream s, String string) throws IOException {
 		this(s,string,null,null);
 	}
 	public XhtmlParser(InputStream s, String string, String charset) throws IOException {
 		this(s,string,charset,null);
 	}
-
-	private final XhtmlContentHandler handler;
-	private final String encoding;
-	private final String[] contentLang;
 
 
 	public XhtmlParser(InputStream source, String address, String charset, String lang)

@@ -26,7 +26,6 @@ THE SOFTWARE.
 // This file was generated using the index file in the WHATWG Encoding specification.
 package com.upokecenter.encoding;
 final class GBK {
-	private GBK(){}
 	private static short[] table=new short[23845];
 	static {
 		System.arraycopy(method0(),0,table,0,4096);
@@ -132,13 +131,6 @@ final class GBK {
 		11905,64041,23552,256,
 		11978,19886,23808,37
 	};
-
-	public static int indexToCodePoint(int index){
-		if(index<0 || index>23844)return -1;
-		int ret=table[index];
-		return (ret==0) ? -1 : (ret&0xFFFF);
-	}
-
 	public static int codePointToIndex(int codepoint){
 		if(codepoint<164 || codepoint>65509)return -1;
 		for(int i=0;i<indextable.length;i+=4){
@@ -152,6 +144,12 @@ final class GBK {
 			}
 		}
 		return -1;
+	}
+
+	public static int indexToCodePoint(int index){
+		if(index<0 || index>23844)return -1;
+		int ret=table[index];
+		return (ret==0) ? -1 : (ret&0xFFFF);
 	}
 
 	private static short[] method0(){
@@ -415,6 +413,7 @@ final class GBK {
 
 		};
 	}
+
 	private static short[] method1(){
 		return new short[]{
 				0x67C5,0x67C6,0x67C7,0x67C8,0x67C9,0x67CA,0x67CB,0x67CC,0x67CD,0x67CE,0x67D5,0x67D6,0x67D7,0x67DB,0x67DF,0x67E1,
@@ -1674,4 +1673,5 @@ final class GBK {
 				0x4D16,0x4D17,0x4D18,0x4D19,0x4DAE
 		};
 	}
+	private GBK(){}
 }

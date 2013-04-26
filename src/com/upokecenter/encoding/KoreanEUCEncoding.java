@@ -31,6 +31,8 @@ import java.io.OutputStream;
 final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 
 
+	int lead=0;
+
 	@Override
 	public int decode(InputStream stream) throws IOException {
 		return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
@@ -43,8 +45,6 @@ final class KoreanEUCEncoding implements ITextEncoder, ITextDecoder {
 		if(c<=0)return -1;
 		return value[0];
 	}
-
-	int lead=0;
 
 	@Override
 	public int decode(InputStream stream, int[] buffer, int offset, int length)

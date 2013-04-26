@@ -14,23 +14,6 @@ import java.io.OutputStream;
 import java.io.Reader;
 
 public final class StreamUtility {
-	private StreamUtility(){}
-
-	public static void skipToEnd(InputStream stream){
-		if(stream==null)return;
-		while(true){
-			byte[] x=new byte[1024];
-			try {
-				int c=stream.read(x,0,x.length);
-				if(c<0) {
-					break;
-				}
-			} catch(IOException e){
-				break; // maybe this stream is already closed
-			}
-		}
-	}
-
 	public static void copyStream(InputStream stream, OutputStream output)
 			throws IOException {
 		byte[] buffer=new byte[8192];
@@ -43,6 +26,27 @@ public final class StreamUtility {
 		}
 	}
 
+	public static String fileToString(File file)
+			throws IOException {
+		FileReader reader = new FileReader(file.toString());
+		try {
+			StringBuilder builder=new StringBuilder();
+			char[] buffer = new char[4096];
+			while(true){
+				int count=reader.read(buffer);
+				if(count<0) {
+					break;
+				}
+				builder.append(buffer,0,count);
+			}
+			return builder.toString();
+		} finally {
+			if(reader!=null) {
+				reader.close();
+			}
+		}
+	}
+
 	public static void inputStreamToFile(InputStream stream, File file)
 			throws IOException {
 		FileOutputStream output=null;
@@ -52,6 +56,21 @@ public final class StreamUtility {
 		} finally {
 			if(output!=null) {
 				output.close();
+			}
+		}
+	}
+
+	public static void skipToEnd(InputStream stream){
+		if(stream==null)return;
+		while(true){
+			byte[] x=new byte[1024];
+			try {
+				int c=stream.read(x,0,x.length);
+				if(c<0) {
+					break;
+				}
+			} catch(IOException e){
+				break; // maybe this stream is already closed
 			}
 		}
 	}
@@ -76,6 +95,30 @@ public final class StreamUtility {
 		return builder.toString();
 	}
 
+
+	/**
+	 * 
+	 * Writes a string in UTF-8 to the specified file.
+	 * If the file exists, it will be overwritten
+	 * 
+	 * @param s a string to write. Illegal code unit
+	 * sequences are replaced with
+	 * with U+FFFD REPLACEMENT CHARACTER when writing to the stream.
+	 * @param file a filename
+	 * @throws IOException if the file can't be created
+	 * or another I/O error occurs.
+	 */
+	public static void stringToFile(String s, File file) throws IOException{
+		OutputStream os=null;
+		try {
+			os=new FileOutputStream(file);
+			stringToStream(s,os);
+		} finally {
+			if(os!=null) {
+				os.close();
+			}
+		}
+	}
 
 	/**
 	 * 
@@ -121,49 +164,6 @@ public final class StreamUtility {
 		}
 	}
 
-	/**
-	 * 
-	 * Writes a string in UTF-8 to the specified file.
-	 * If the file exists, it will be overwritten
-	 * 
-	 * @param s a string to write. Illegal code unit
-	 * sequences are replaced with
-	 * with U+FFFD REPLACEMENT CHARACTER when writing to the stream.
-	 * @param file a filename
-	 * @throws IOException if the file can't be created
-	 * or another I/O error occurs.
-	 */
-	public static void stringToFile(String s, File file) throws IOException{
-		OutputStream os=null;
-		try {
-			os=new FileOutputStream(file);
-			stringToStream(s,os);
-		} finally {
-			if(os!=null) {
-				os.close();
-			}
-		}
-	}
-
-	public static String fileToString(File file)
-			throws IOException {
-		FileReader reader = new FileReader(file.toString());
-		try {
-			StringBuilder builder=new StringBuilder();
-			char[] buffer = new char[4096];
-			while(true){
-				int count=reader.read(buffer);
-				if(count<0) {
-					break;
-				}
-				builder.append(buffer,0,count);
-			}
-			return builder.toString();
-		} finally {
-			if(reader!=null) {
-				reader.close();
-			}
-		}
-	}
+	private StreamUtility(){}
 
 }

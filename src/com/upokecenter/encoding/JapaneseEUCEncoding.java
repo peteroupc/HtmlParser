@@ -36,6 +36,19 @@ final class JapaneseEUCEncoding implements ITextEncoder, ITextDecoder {
 	int eucjp2=0;
 
 	@Override
+	public int decode(InputStream stream) throws IOException {
+		return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
+	}
+
+	@Override
+	public int decode(InputStream stream, IEncodingError error) throws IOException {
+		int[] value=new int[1];
+		int c=decode(stream,value,0,1, error);
+		if(c<=0)return -1;
+		return value[0];
+	}
+
+	@Override
 	public int decode(InputStream stream, int[] buffer, int offset, int length)
 			throws IOException {
 		return decode(stream, buffer, offset, length, TextEncoding.ENCODING_ERROR_THROW);
@@ -176,18 +189,5 @@ final class JapaneseEUCEncoding implements ITextEncoder, ITextDecoder {
 				stream.write(index%94+0xa1);
 			}
 		}
-	}
-
-	@Override
-	public int decode(InputStream stream) throws IOException {
-		return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
-	}
-
-	@Override
-	public int decode(InputStream stream, IEncodingError error) throws IOException {
-		int[] value=new int[1];
-		int c=decode(stream,value,0,1, error);
-		if(c<=0)return -1;
-		return value[0];
 	}
 }

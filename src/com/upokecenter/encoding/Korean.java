@@ -26,7 +26,6 @@ THE SOFTWARE.
 // This file was generated using the index file in the WHATWG Encoding specification.
 package com.upokecenter.encoding;
 final class Korean {
-	private Korean(){}
 	private static short[] table=new short[17630];
 	static {
 		System.arraycopy(method0(),0,table,0,4096);
@@ -106,13 +105,6 @@ final class Korean {
 		19979,64010,17152,256,
 		20024,64011,17408,222
 	};
-
-	public static int indexToCodePoint(int index){
-		if(index<0 || index>17629)return -1;
-		int ret=table[index];
-		return (ret==0) ? -1 : (ret&0xFFFF);
-	}
-
 	public static int codePointToIndex(int codepoint){
 		if(codepoint<161 || codepoint>65510)return -1;
 		for(int i=0;i<indextable.length;i+=4){
@@ -126,6 +118,12 @@ final class Korean {
 			}
 		}
 		return -1;
+	}
+
+	public static int indexToCodePoint(int index){
+		if(index<0 || index>17629)return -1;
+		int ret=table[index];
+		return (ret==0) ? -1 : (ret&0xFFFF);
 	}
 
 	private static short[] method0(){
@@ -389,6 +387,7 @@ final class Korean {
 
 		};
 	}
+
 	private static short[] method1(){
 		return new short[]{
 				(short)0xC042,(short)0xC043,(short)0xC044,(short)0xC045,(short)0xC046,(short)0xC047,(short)0xC048,(short)0xC049,(short)0xC04A,(short)0xC04B,(short)0xC04C,(short)0xC04D,(short)0xC04E,(short)0xC04F,(short)0xC050,(short)0xC052,
@@ -1254,4 +1253,5 @@ final class Korean {
 				0x5E0C,0x6199,0x6198,0x6231,0x665E,0x66E6,0x7199,0x71B9,0x71BA,0x72A7,0x79A7,0x7A00,0x7FB2,(short)0x8A70
 		};
 	}
+	private Korean(){}
 }
