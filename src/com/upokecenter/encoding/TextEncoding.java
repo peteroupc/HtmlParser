@@ -89,7 +89,7 @@ public final class TextEncoding {
 	 * 
 	 */
 	public static final IEncodingError ENCODING_ERROR_REPLACE = new EncodingErrorReplace();
-	private static Map<String,String> encodingMap=new HashMap<String,String>();;
+	private static Map<String,String> encodingMap=new HashMap<String,String>();
 
 	private static Map<String,ITextEncoder> indexEncodingMap=new HashMap<String,ITextEncoder>();
 	static {

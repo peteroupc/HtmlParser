@@ -181,7 +181,7 @@ class Element extends Node implements IElement {
 	}
 
 	@Override
-	public  String getInnerHTML() {
+	public String getInnerHTML() {
 		return getInnerHtmlInternal();
 	}
 

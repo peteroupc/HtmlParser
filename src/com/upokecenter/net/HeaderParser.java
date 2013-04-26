@@ -45,7 +45,7 @@ import com.upokecenter.util.URIUtility;
  */
 public final class HeaderParser {
 
-	private enum QuotedStringRule {
+	 enum QuotedStringRule {
 		Http,
 		Rfc5322,
 		Smtp // RFC5321
@@ -80,7 +80,7 @@ public final class HeaderParser {
 	 * 
 	 * @param date the number of milliseconds since midnight,
 	 * January 1, 1970 GMT.
-	 * @return a string formatted under the rules of HTTP/1.1. 
+	 * @return a string formatted under the rules of HTTP/1.1.
 	 */
 	public static String formatHttpDate(long date){
 		int[] components=DateTimeUtility.getGmtDateComponents(date);
@@ -177,7 +177,7 @@ public final class HeaderParser {
 	public static byte[] getDataURLBytes(String dataURL){
 		int[] components=URIUtility.splitIRI(dataURL);
 		// check if the scheme is "data"
-		if(components==null || components[0]<0 || 
+		if(components==null || components[0]<0 ||
 				!StringUtility.equalsIgnoreCaseAscii(
 						"data",
 						dataURL.substring(components[0],components[1])))
@@ -206,7 +206,7 @@ public final class HeaderParser {
 			for(int j=index;j<len;j++){
 				int c=dataPath.charAt(j);
 				// matches productions "unreserved" and
-				// "reserved" of RFC2396, including 
+				// "reserved" of RFC2396, including
 				// '?' (even though it delimits
 				// a query string, which is allowed in all
 				// URIs as of RFC3986)
@@ -270,7 +270,7 @@ public final class HeaderParser {
 	public static String getDataURLContentType(String dataURL){
 		int[] components=URIUtility.splitIRI(dataURL);
 		// check if the scheme is "data"
-		if(components==null || components[0]<0 || 
+		if(components==null || components[0]<0 ||
 				!StringUtility.equalsIgnoreCaseAscii(
 						"data",
 						dataURL.substring(components[0],components[1])))
@@ -292,9 +292,8 @@ public final class HeaderParser {
 			int endOffset, int c, int delim){
 		if(c>='0' && c<='9' && index+2<endOffset &&
 				(s.charAt(index+1)>='0' && s.charAt(index+1)<='9') &&
-				s.charAt(index+2)==delim){
+				s.charAt(index+2)==delim)
 			return 3;
-		}
 		else if(c=='2' && index+3<endOffset &&
 				(s.charAt(index+1)=='5') &&
 				(s.charAt(index+2)>='0' && s.charAt(index+2)<='5') &&
@@ -496,7 +495,7 @@ public final class HeaderParser {
 
 
 	private static String getMimeParameterRaw(
-			String data, int index, int endIndex, 
+			String data, int index, int endIndex,
 			String parameter, boolean httpRules){
 		if(data==null || parameter==null)
 			return null;
@@ -536,7 +535,7 @@ public final class HeaderParser {
 			index++;
 			if(index>=endIndex)
 				return "";
-			builder.delete(0,builder.length());
+			builder.setLength(0);
 			// try getting the value quoted
 			int qs=skipQuotedString(
 					data,index,endIndex,isToken ? builder : null,
@@ -547,7 +546,7 @@ public final class HeaderParser {
 				index=qs;
 				continue;
 			}
-			builder.delete(0,builder.length());
+			builder.setLength(0);
 			// try getting the value unquoted
 			// Note we don't use getAtom
 			qs=skipMimeToken(data,index,endIndex,isToken ? builder : null);
@@ -980,9 +979,8 @@ public final class HeaderParser {
 			int endOffset, int c, int delim){
 		if(c>='0' && c<='9' && index+2<endOffset &&
 				(s.charAt(index+1)>='0' && s.charAt(index+1)<='9') &&
-				s.charAt(index+2)==delim){
+				s.charAt(index+2)==delim)
 			return (c-'0')*10+(s.charAt(index+1)-'0');
-		}
 		else if(c=='2' && index+3<endOffset &&
 				(s.charAt(index+1)=='5') &&
 				(s.charAt(index+2)>='0' && s.charAt(index+2)<='5') &&
@@ -1167,7 +1165,7 @@ public final class HeaderParser {
 					expectHex=true;
 					expectColon=false;
 					//		DebugUtility.log("colon %d [%d %d] %s",
-						//		phase1+(phased ? 1 : 0)+phase2,phase1,phase2,s.substring(index));
+					//		phase1+(phased ? 1 : 0)+phase2,phase1,phase2,s.substring(index));
 					continue;
 				} else if((c>='0' && c<='9') && !expectColon &&
 						(phased || (phase1+(phased ? 2 : 0)+phase2)==6)){
@@ -1395,9 +1393,9 @@ public final class HeaderParser {
 
 	/* addr-spec (RFC5322 sec 3.41) */
 	 static int skipAddrSpec(
-			String s, 
-			int index, 
-			int endIndex, 
+			String s,
+			int index,
+			int endIndex,
 			StringBuilder builderLocal,
 			StringBuilder builderDomain
 			){
@@ -1408,8 +1406,12 @@ public final class HeaderParser {
 		if(i2==index)return startIndex;
 		index=i2;
 		if(index>=endIndex || s.charAt(index)!='@'){
-			if(builderLocal!=null)builderLocal.setLength(bLength);
-			if(builderDomain!=null)builderDomain.setLength(domLength);
+			if(builderLocal!=null) {
+				builderLocal.setLength(bLength);
+			}
+			if(builderDomain!=null) {
+				builderDomain.setLength(domLength);
+			}
 			return startIndex;
 		}
 		index++;
@@ -1418,13 +1420,17 @@ public final class HeaderParser {
 		// production "dtext" (except obs-dtext) under RFC5322
 		i2=skipDomain(s,index,endIndex,builderDomain);
 		if(i2==index){
-			if(builderLocal!=null)builderLocal.setLength(bLength);
-			if(builderDomain!=null)builderDomain.setLength(domLength);
+			if(builderLocal!=null) {
+				builderLocal.setLength(bLength);
+			}
+			if(builderDomain!=null) {
+				builderDomain.setLength(domLength);
+			}
 			return startIndex;
 		}
 		return i2;
 	}
-	
+
 	/* atom (RFC5322 sec. 3.2.3) */
 	 static int skipAtom(String s, int index,
 			int endIndex, StringBuilder builder){
@@ -1474,7 +1480,7 @@ public final class HeaderParser {
 		}
 		return retIndex;
 	}
-	
+
 	 static int skipCFWS(String s, int index, int endIndex, StringBuilder builder){
 		int ret=skipCFWS(s,index,endIndex);
 		if(builder!=null && ret!=index){
@@ -1483,8 +1489,8 @@ public final class HeaderParser {
 		return ret;
 	}
 
-	
-	
+
+
 	/* comment (RFC5322 sec. 3.2.1) */
 	 static int skipComment(String s, int index, int endIndex){
 		int startIndex=index;
@@ -1566,14 +1572,14 @@ public final class HeaderParser {
 				} else {
 					// invalid media type
 					if(builder!=null) {
-						builder.delete(oldpos,builder.length());
+						builder.setLength(oldpos);
 					}
 					return startIndex;
 				}
 			} else {
 				// invalid media type
 				if(builder!=null) {
-					builder.delete(oldpos,builder.length());
+					builder.setLength(oldpos);
 				}
 				return startIndex;
 			}
@@ -1584,7 +1590,7 @@ public final class HeaderParser {
 				return skipDataUrlParameters(str,index,endIndex,builder,true);
 			else {
 				if(builder!=null) {
-					builder.delete(oldpos,builder.length());
+					builder.setLength(oldpos);
 				}
 				return startIndex;
 			}
@@ -1596,7 +1602,7 @@ public final class HeaderParser {
 		if(str==null)return index;
 		return skipDataUrlContentType(str,index,str.length(),builder);
 	}
-	
+
 	private static int skipDataUrlParameters(
 			String str, int index, int endIndex, StringBuilder builder, boolean plain){
 		assert str!=null;
@@ -1682,7 +1688,7 @@ public final class HeaderParser {
 		}
 		return retval;
 	}
-	
+
 	private static int skipDigits(String v, int index){
 		char c=0;
 		int length=v.length();
@@ -1693,7 +1699,7 @@ public final class HeaderParser {
 		}
 		return index;
 	}
-	
+
 	 static int skipDirective(String str, int io){
 		int length=str.length();
 		char c=0;
@@ -1747,16 +1753,19 @@ public final class HeaderParser {
 		int startIndex=index;
 		int bLength=(builder==null) ? 0 : builder.length();
 		index=skipCFWS(s,index,endIndex,null);
-		if(index>=endIndex || s.charAt(index)!='['){
+		if(index>=endIndex || s.charAt(index)!='[')
 			return startIndex;
+		if(builder!=null) {
+			builder.append('[');
 		}
-		if(builder!=null)builder.append('[');
 		index++;
 		while(index<endIndex){
 			index=skipFws(s,index,endIndex);
 			char c=s.charAt(index);
 			if(c==']'){
-				if(builder!=null)builder.append(']');
+				if(builder!=null) {
+					builder.append(']');
+				}
 				return skipCFWS(s,index,endIndex,null);
 			}
 			// dtext
@@ -1776,7 +1785,7 @@ public final class HeaderParser {
 						if(builder!=null) {
 							builder.setLength(bLength);
 						}
-						return startIndex;  
+						return startIndex;
 					}
 					if(builder!=null) {
 						c=s.charAt(i2-1); // get quoted character
@@ -1796,7 +1805,7 @@ public final class HeaderParser {
 						builder.append(c);
 					}
 					index++;
-					continue;        
+					continue;
 				}
 			}
 			// not a valid domain-literal
@@ -1808,7 +1817,7 @@ public final class HeaderParser {
 		}
 		return startIndex;
 	}
-	
+
 
 	static int skipDomainSMTP(String s, int index, int endIndex, StringBuilder builder){
 		int startIndex=index;
@@ -1817,11 +1826,12 @@ public final class HeaderParser {
 		StringBuilder tmpbuilder=(builder==null) ? null : new StringBuilder();
 		while(true){
 			index=i2;
-			if(index>=endIndex || s.charAt(index)!='.'){
+			if(index>=endIndex || s.charAt(index)!='.')
 				return index;
-			}
 			int i3=index+1;
-			if(tmpbuilder!=null)tmpbuilder.setLength(0);
+			if(tmpbuilder!=null) {
+				tmpbuilder.setLength(0);
+			}
 			i2=skipSubdomain(s,i3,endIndex,tmpbuilder,false);
 			if(i2==i3)return index;
 			if(builder!=null){
@@ -1848,18 +1858,24 @@ public final class HeaderParser {
 			if(c=='.'){
 				// in case of "x..y"
 				if(haveDot){
-					if(builder!=null)builder.delete(builder.length()-1,builder.length());
+					if(builder!=null) {
+						builder.setLength(builder.length()-1);
+					}
 					return index-1; // index of previous dot
 				}
 				// in case of ".y"
 				if(!haveAtom)return startIndex;
-				if(builder!=null)builder.append(c);
+				if(builder!=null) {
+					builder.append(c);
+				}
 				haveDot=true;
 				index++;
 				continue;
 			}
 			if(isAtext(c)){
-				if(builder!=null)builder.append(c);
+				if(builder!=null) {
+					builder.append(c);
+				}
 				index++;
 				haveAtom=true;
 				haveDot=false;
@@ -1867,14 +1883,18 @@ public final class HeaderParser {
 				if(!haveAtom)return startIndex;
 				if(haveDot){
 					// move index to the dot
-					if(builder!=null)builder.delete(builder.length()-1,builder.length());
+					if(builder!=null) {
+						builder.setLength(builder.length()-1);
+					}
 					return index-1;
 				}
 				return (withCFWS) ? skipCFWS(s,index,endIndex,null) : index;
 			}
 		}
 		if(haveDot && haveAtom){
-			if(builder!=null)builder.delete(builder.length()-1,builder.length());
+			if(builder!=null) {
+				builder.setLength(builder.length()-1);
+			}
 			index--;
 		}
 		return (haveAtom) ? index : startIndex;
@@ -1992,7 +2012,7 @@ public final class HeaderParser {
 			return Math.max(i2,skipObsFws(s,startIndex,endIndex));
 	}
 
-	
+
 	/* Folding white space (RFC5322 sec. 3.2.2) */
 	 static int skipFws(String s, int index, int endIndex, StringBuilder builder){
 		int ret=skipFws(s,index,endIndex);
@@ -2000,8 +2020,9 @@ public final class HeaderParser {
 			while(index<ret){
 				// get the whitespace other than CR and LF
 				char c=s.charAt(index);
-				if(c!='\r' && c!='\n')
+				if(c!='\r' && c!='\n') {
 					builder.append(c);
+				}
 				index++;
 			}
 		}
@@ -2060,17 +2081,14 @@ public final class HeaderParser {
 		int bLength=(builder==null) ? 0 : builder.length();
 		StringBuilder tmpbuilder=(builder==null) ? null : new StringBuilder();
 		i2=skipLocalPartSMTP(s,index,endIndex,tmpbuilder);
-		if(i2==index){
+		if(i2==index)
 			return startIndex;
-		}
-		if(i2-index>64){
+		if(i2-index>64)
 			// local part too long
 			return startIndex;
-		}
-		if(i2>=endIndex || s.charAt(i2)!='@'){
+		if(i2>=endIndex || s.charAt(i2)!='@')
 			// local part not followed by '@'
 			return startIndex;
-		}
 		i2++;
 		index=i2;
 		if(builder!=null){
@@ -2081,26 +2099,34 @@ public final class HeaderParser {
 		if(i2!=index){
 			if(i2-index>255){
 				// domain too long
-				if(builder!=null)builder.setLength(bLength);
+				if(builder!=null) {
+					builder.setLength(bLength);
+				}
 				return startIndex;
 			}
 			return i2;
 		}
 		int afterAt=i2;
 		if(i2>=endIndex || s.charAt(i2)!='['){
-			if(builder!=null)builder.setLength(bLength);
+			if(builder!=null) {
+				builder.setLength(bLength);
+			}
 			return startIndex;
 		}
 		i2++;
 		index=i2;
 		i2=parseIPLiteralSMTP(s,index,endIndex);
 		if(i2<0){
-			if(builder!=null)builder.setLength(bLength);
+			if(builder!=null) {
+				builder.setLength(bLength);
+			}
 			return startIndex;
 		}
 		if(i2-afterAt>255){
 			// domain too long
-			if(builder!=null)builder.setLength(bLength);
+			if(builder!=null) {
+				builder.setLength(bLength);
+			}
 			return startIndex;
 		}
 		if(builder!=null){
@@ -2167,11 +2193,12 @@ public final class HeaderParser {
 		StringBuilder tmpbuilder=(builder==null) ? null : new StringBuilder();
 		while(true){
 			index=i2;
-			if(index>=endIndex || s.charAt(index)!='.'){
+			if(index>=endIndex || s.charAt(index)!='.')
 				return index;
-			}
 			int i3=index+1;
-			if(tmpbuilder!=null)tmpbuilder.setLength(0);
+			if(tmpbuilder!=null) {
+				tmpbuilder.setLength(0);
+			}
 			i2=skipAtom(s,i3,endIndex,tmpbuilder);
 			if(i2==i3)return index;
 			if(builder!=null){
@@ -2200,11 +2227,12 @@ public final class HeaderParser {
 		StringBuilder tmpbuilder=(builder==null) ? null : new StringBuilder();
 		while(true){
 			index=i2;
-			if(index>=endIndex || s.charAt(index)!='.'){
+			if(index>=endIndex || s.charAt(index)!='.')
 				return index;
-			}
 			int i3=index+1;
-			if(tmpbuilder!=null)tmpbuilder.setLength(0);
+			if(tmpbuilder!=null) {
+				tmpbuilder.setLength(0);
+			}
 			i2=skipWord(s,i3,endIndex,tmpbuilder);
 			if(i2==i3)return index;
 			if(builder!=null){
@@ -2225,7 +2253,7 @@ public final class HeaderParser {
 		}
 		return index;
 	}
-	
+
 	private static void appendDotAtomOrStringSMTP(String s, StringBuilder b){
 		if(b==null)return;
 		int i2=skipDotAtom(s,0,s.length(),null);
@@ -2274,10 +2302,9 @@ public final class HeaderParser {
 				return index+1;
 			i2=skipQuotedPairSMTP(s,index,endIndex);
 			if(index!=i2)return i2;
-			return i2;			
-		} else {
-			throw new IllegalArgumentException(rule==null ? "" : rule.toString());
-		}
+			return i2;
+		} else
+			throw new IllegalArgumentException(rule.toString());
 	}
 
 	/* quoted-pair (RFC5322 sec. 3.2.1) */
@@ -2314,34 +2341,39 @@ public final class HeaderParser {
 			int endIndex,
 			StringBuilder builder, // receives the unescaped version of the string
 			QuotedStringRule rule // rule to follow for quoted string
-	){
+			){
 		int startIndex=index;
 		int bLength=(builder==null) ? 0 : builder.length();
-		index=(rule!=QuotedStringRule.Rfc5322) ? index : skipCFWS(s,index,endIndex,builder);
+		index=(rule!=QuotedStringRule.Rfc5322) ? index : skipCFWS(s,index,endIndex,null);
 		if(!(index<endIndex && s.charAt(index)=='"')){
-			if(builder!=null)builder.delete(bLength,builder.length());
+			if(builder!=null) {
+				builder.setLength(bLength);
+			}
 			return startIndex; // not a valid quoted-string
 		}
 		index++;
 		while(index<endIndex){
 			int i2=index;
-			if(rule==QuotedStringRule.Http)
+			if(rule==QuotedStringRule.Http) {
 				i2=skipLws(s,index,endIndex,builder);
-			else if(rule==QuotedStringRule.Rfc5322)
+			} else if(rule==QuotedStringRule.Rfc5322) {
 				i2=skipFws(s,index,endIndex,builder);
+			}
 			index=i2;
 			char c=s.charAt(index);
 			if(c=='"'){ // end of quoted-string
 				index++;
 				if(rule==QuotedStringRule.Rfc5322)
 					return skipCFWS(s,index,endIndex,null);
-				else 
+				else
 					return index;
 			}
 			int oldIndex=index;
 			index=skipQtextOrQuotedPair(s,index,endIndex,rule);
 			if(index==oldIndex){
-				if(builder!=null)builder.delete(bLength,builder.length());
+				if(builder!=null) {
+					builder.delete(bLength,builder.length());
+				}
 				return startIndex;
 			}
 			if(builder!=null){
@@ -2350,12 +2382,14 @@ public final class HeaderParser {
 				builder.append(s.charAt(index-1));
 			}
 		}
-		if(builder!=null)builder.delete(bLength,builder.length());
+		if(builder!=null) {
+			builder.delete(bLength,builder.length());
+		}
 		return startIndex; // not a valid quoted-string
 	}
 	private static int skipSubdomain(
 			String s, int index, int endIndex, StringBuilder builder,
-			boolean canBeginWithHyphen){		
+			boolean canBeginWithHyphen){
 		if(index>=endIndex)return index;
 		boolean hyphen=false;
 		boolean haveString=false;
@@ -2364,12 +2398,16 @@ public final class HeaderParser {
 			if(c=='-'){
 				hyphen=true;
 				if(!haveString && !canBeginWithHyphen)return index;
-				if(builder!=null)builder.append(c);
+				if(builder!=null) {
+					builder.append(c);
+				}
 				index++;
 				haveString=true;
 			} else if((c>='A' && c<='Z') || (c>='a' && c<='z') || (c>='0' && c<='9')){
 				hyphen=false;
-				if(builder!=null)builder.append(c);
+				if(builder!=null) {
+					builder.append(c);
+				}
 				index++;
 				haveString=true;
 			} else {
@@ -2377,7 +2415,9 @@ public final class HeaderParser {
 			}
 		}
 		if(hyphen){
-			if(builder!=null)builder.setLength(builder.length()-1);
+			if(builder!=null) {
+				builder.setLength(builder.length()-1);
+			}
 			index--;
 		}
 		return index;

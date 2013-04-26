@@ -253,7 +253,9 @@ final class CharsetSniffer {
 			if(position>=length){
 				// end of stream reached, so clear
 				// the attribute name to indicate failure
-				if(attrName!=null)attrName.setLength(0);
+				if(attrName!=null) {
+					attrName.setLength(0);
+				}
 				return position;
 			}
 			b=(data[position]&0xFF);
@@ -288,8 +290,11 @@ final class CharsetSniffer {
 			if(position>=length){
 				// end of stream reached, so clear
 				// the attribute name to indicate failure
-				if(attrName!=null)attrName.setLength(0);				
-			}				
+				if(attrName!=null) {
+					attrName.setLength(0);
+				}
+				return position;
+			}
 			if((data[position]&0xFF)!=0x3D)
 				return position;
 			position++;
@@ -305,8 +310,11 @@ final class CharsetSniffer {
 		if(position>=length){
 			// end of stream reached, so clear
 			// the attribute name to indicate failure
-			if(attrName!=null)attrName.setLength(0);				
-		}				
+			if(attrName!=null) {
+				attrName.setLength(0);
+			}
+			return position;
+		}
 		b=(data[position]&0xFF);
 		if(b==0x22 || b==0x27){ // have quoted string
 			position++;
@@ -314,8 +322,12 @@ final class CharsetSniffer {
 				if(position>=length){
 					// end of stream reached, so clear
 					// the attribute name and value to indicate failure
-					if(attrName!=null)attrName.setLength(0);
-					if(attrValue!=null)attrValue.setLength(0);
+					if(attrName!=null) {
+						attrName.setLength(0);
+					}
+					if(attrValue!=null) {
+						attrValue.setLength(0);
+					}
 					return position;
 				}
 				int b2=(data[position]&0xFF);
@@ -349,8 +361,12 @@ final class CharsetSniffer {
 			if(position>=length){
 				// end of stream reached, so clear
 				// the attribute name and value to indicate failure
-				if(attrName!=null)attrName.setLength(0);
-				if(attrValue!=null)attrValue.setLength(0);
+				if(attrName!=null) {
+					attrName.setLength(0);
+				}
+				if(attrValue!=null) {
+					attrValue.setLength(0);
+				}
 				return position;
 			}
 			b=(data[position]&0xFF);
