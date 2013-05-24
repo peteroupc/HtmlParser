@@ -388,10 +388,6 @@ public final class HeaderParser {
 	 * value if the media type is ill-formed; rather, this function
 	 * is useful more to check if a media type is well-formed.
 	 * <br><br>
-	 * This function should not be used to extract the media
-	 * type from a data URL string; use skipDataUrlContentType
-	 * instead on those strings.
-	 *
 	 * @param str a string containing a MIME media type.
 	 * @param index the index into the string where the
 	 * media type begins. Specify 0 for the beginning of the
@@ -904,7 +900,7 @@ public final class HeaderParser {
 	 * 4.1.2).  Note that only ASCII characters are allowed
 	 * in a mailbox string under that specification.
 	 * Length restrictions on "local parts" and "domains"
-	 * under section 4.5.3 arechecked.
+	 * under section 4.5.3 are checked.
 	 * 
 	 * @param s a string to check
 	 * @return true if the string is a well-formed

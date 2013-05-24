@@ -1,9 +1,15 @@
 /*
-Written in 2013 by Peter Occil.  Released to the public domain.
-Public domain dedication: http://creativecommons.org/publicdomain/zero/1.0/
+Written in 2013 by Peter Occil.  
+Any copyright is dedicated to the Public Domain.
+http://creativecommons.org/publicdomain/zero/1.0/
+
+If you like this, you should donate to Peter O.
+at: http://upokecenter.com/d/
  */
 package com.upokecenter.json;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 public final class JSONPointer {
@@ -234,5 +240,130 @@ public final class JSONPointer {
 			return ((JSONObject)jsonobj).get(ref);
 		else
 			return (ref.length()==0) ? jsonobj : null;
+	}
+	
+
+	/**
+	 * Gets all children of the specified JSON object
+	 * that contain the specified key.   The method will
+	 * not remove matching keys. As an example, consider
+	 * this object:
+	 * <pre>
+	 * [{"key":"value1","foo":"foovalue"},
+	 *  {"key":"value2","bar":"barvalue"},
+	 *  {"baz":"bazvalue"}]
+	 * </pre>
+	 * If getPointersToKey is called on this object
+	 * with a keyToFind called "key", we get the following
+	 * Map as the return value:
+	 * <pre>
+	 * {
+	 * "/0" => "value1", // "/0" points to {"foo":"foovalue"}
+	 * "/1" => "value2" // "/1" points to {"bar":"barvalue"}
+	 * }
+	 * </pre>
+	 * and the JSON object will change to the following:
+	 * <pre>
+	 * [{"foo":"foovalue"},
+	 *  {"bar":"barvalue"},
+	 *  {"baz","bazvalue"}]
+	 * </pre>
+	 * 
+	 * @param root object to search
+	 * @param keyToFind the key to search for.
+	 * @return a map:<ul>
+	 *  <li>The keys in the map are JSON Pointers to the objects
+	 *  within <i>root</i>
+	 *  that contained a key named <i>keyToFind</i>.
+	 *  To get the actual JSON object, call JSONPointer.getObject,
+	 *  passing <i>root</i> and the pointer as arguments.</li>
+	 *  <li>The values in the map are the values of each of
+	 *  those keys named <i>keyToFind</i>.</li>
+	 *  </ul>
+	 *  The JSON Pointers are relative to the root
+	 * object.
+	 */
+	public static Map<String,Object> getPointersWithKeyAndRemove(Object root, String keyToFind){
+		Map<String,Object> list=new HashMap<String,Object>();
+		getPointersWithKey(root,keyToFind,"",list,true);
+		return list;
+	}
+
+	/**
+	 * Gets all children of the specified JSON object
+	 * that contain the specified key.   The method will
+	 * remove matching keys. As an example, consider
+	 * this object:
+	 * <pre>
+	 * [{"key":"value1","foo":"foovalue"},
+	 *  {"key":"value2","bar":"barvalue"},
+	 *  {"baz":"bazvalue"}]
+	 * </pre>
+	 * If getPointersToKey is called on this object
+	 * with a keyToFind called "key", we get the following
+	 * Map as the return value:
+	 * <pre>
+	 * {
+	 * "/0" => "value1", // "/0" points to {"key":"value1","foo":"foovalue"}
+	 * "/1" => "value2" // "/1" points to {"key":"value2","bar":"barvalue"}
+	 * }
+	 * </pre>
+	 * and the JSON object will remain unchanged.
+	 * 
+	 * 
+	 * @param root object to search
+	 * @param keyToFind the key to search for.
+	 * @return a map:<ul>
+	 *  <li>The keys in the map are JSON Pointers to the objects
+	 *  within <i>root</i>
+	 *  that contained a key named <i>keyToFind</i>.
+	 *  To get the actual JSON object, call JSONPointer.getObject,
+	 *  passing <i>root</i> and the pointer as arguments.</li>
+	 *  <li>The values in the map are the values of each of
+	 *  those keys named <i>keyToFind</i>.</li>
+	 *  </ul>
+	 *  The JSON Pointers are relative to the root
+	 * object.
+	 */
+	public static Map<String,Object> getPointersWithKey(Object root, String keyToFind){
+		Map<String,Object> list=new HashMap<String,Object>();
+		getPointersWithKey(root,keyToFind,"",list,false);
+		return list;
+	}
+
+	private static void getPointersWithKey(
+			Object root,
+			String keyToFind,
+			String currentPointer,
+			Map<String,Object> pointerList,
+			boolean remove){
+		if(root instanceof JSONObject){
+			JSONObject rootObj=((JSONObject)root);
+			if(rootObj.has(keyToFind)){
+				// Key found in this object,
+				// add this object's JSON pointer
+				Object pointerKey=rootObj.get(keyToFind);
+				pointerList.put(currentPointer,pointerKey);
+				// and remove the key from the object
+				// if necessary
+				if(remove)
+					rootObj.remove(keyToFind);
+			}
+			// Search the key's values
+			for(String key : rootObj.keys()){
+				String ptrkey=key;
+				ptrkey=ptrkey.replace((CharSequence)"~","~0");
+				ptrkey=ptrkey.replace((CharSequence)"/","~1");
+				getPointersWithKey(rootObj.get(key),keyToFind,
+						currentPointer+"/"+ptrkey,pointerList,remove);
+			}
+		}
+		else if(root instanceof JSONArray){
+			for(int i=0;i<((JSONArray)root).length();i++){
+				String ptrkey=Integer.toString(i);
+				getPointersWithKey(((JSONArray)root).get(i),keyToFind,
+						currentPointer+"/"+ptrkey,pointerList,remove);
+			}
+		}
 	}
 }

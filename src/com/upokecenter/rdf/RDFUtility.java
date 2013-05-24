@@ -9,9 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.upokecenter.json.JSONArray;
-import com.upokecenter.json.JSONObject;
-
 public final class RDFUtility {
 	public static boolean areIsomorphic(Set<RDFTriple> graph1, Set<RDFTriple> graph2){
 		if(graph1==null)return graph2==null;
@@ -78,9 +75,10 @@ public final class RDFUtility {
 	 * @param triples
 	 * 
 	 */
-	public static JSONObject RDFtoJSON(Set<RDFTriple> triples){
+  /*
+	public static com.upokecenter.json.JSONObject RDFtoJSON(Set<RDFTriple> triples){
 		Map<RDFTerm,List<RDFTriple>> subjects=new HashMap<RDFTerm,List<RDFTriple>>();
-		JSONObject rootJson=new JSONObject();
+		com.upokecenter.json.JSONObject rootJson=new com.upokecenter.json.JSONObject();
 		for(RDFTriple triple : triples){
 			List<RDFTriple> subjectList=subjects.get(triple.getSubject());
 			if(subjectList==null){
@@ -90,7 +88,7 @@ public final class RDFUtility {
 			subjectList.add(triple);
 		}
 		for(RDFTerm subject : subjects.keySet()){
-			JSONObject subjectJson=new JSONObject();
+			com.upokecenter.json.JSONObject subjectJson=new com.upokecenter.json.JSONObject();
 			Map<RDFTerm,List<RDFTerm>> predicates=new HashMap<RDFTerm,List<RDFTerm>>();
 			for(RDFTriple triple : triples){
 				List<RDFTerm> subjectList=predicates.get(triple.getPredicate());
@@ -101,9 +99,9 @@ public final class RDFUtility {
 				subjectList.add(triple.getObject());
 			}
 			for(RDFTerm predicate : predicates.keySet()){
-				JSONArray valueArray=new JSONArray();
+				com.upokecenter.json.JSONArray valueArray=new com.upokecenter.json.JSONArray();
 				for(RDFTerm obj : predicates.get(predicate)){
-					JSONObject valueJson=new JSONObject();
+					com.upokecenter.json.JSONObject valueJson=new com.upokecenter.json.JSONObject();
 					if(obj.getKind()==RDFTerm.IRI){
 						valueJson.put("type","uri");
 						valueJson.put("value",obj.getValue());
@@ -130,6 +128,6 @@ public final class RDFUtility {
 		}
 		return rootJson;
 	}
-
+   */
 	private RDFUtility(){}
 }

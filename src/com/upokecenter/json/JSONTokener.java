@@ -1,7 +1,9 @@
-// Modified by Peter O. to use generics; also
-// moved from org.json.  Still in the public domain.
-// Modified by Peter O. to use int and -1 as the terminating
-// value rather than char and 0.
+// Modified by Peter O. to use generics and 
+// to use int and -1 as the terminating
+// value rather than char and 0, among
+// other things; also moved from org.json.  
+// Still in the public domain;
+// public domain dedication: http://creativecommons.org/publicdomain/zero/1.0/
 package com.upokecenter.json;
 
 import java.text.ParseException;
@@ -15,7 +17,7 @@ import java.text.ParseException;
  * @author JSON.org
  * @version 0.1
  */
-public class JSONTokener {
+class JSONTokener {
 
 	/**
 	 * Get the hex value of a character (base16).
@@ -95,15 +97,17 @@ public class JSONTokener {
 	private String mySource;
 
 
+	private int options;
 
 	/**
 	 * Construct a JSONTokener from a string.
 	 *
 	 * @param s     A source string.
 	 */
-	public JSONTokener(String s) {
+	public JSONTokener(String s, int options) {
 		myIndex = 0;
 		mySource = s;
+		this.options=options;
 	}
 
 
@@ -172,26 +176,56 @@ public class JSONTokener {
 			throw syntaxError("Substring bounds error");
 		myIndex += n;
 		return mySource.substring(i, j);
+	}	
+
+	public int getOptions(){
+		return options;
 	}
 
-
 	/**
-	 * Get the next char in the string, skipping whitespace
-	 * and comments (slashslash and slashstar).
-	 * @throws ParseException
-	 * @return  A character, or 0 if there are no more characters.
+	 * Get the next comment or comments in the string, if any.
+	 * (Added by Peter O., 5/6/2013)
 	 */
-	public int nextClean() throws java.text.ParseException {
+	public String nextComment() throws java.text.ParseException {
+		StringBuilder builder=new StringBuilder();
 		while (true) {
 			int c = next();
-			if (c == '/') {
+			if(c=='#' && (options & JSONObject.OPTION_SHELL_COMMENTS)!=0){
+				// Shell-style single-line comment
+				boolean haveChar=false;
+				while(true) {
+					c = next();
+					if(c != '\n' && c != '\r' && c != -1){
+						if(haveChar || c>' '){
+							if(!haveChar && builder.length()>0)
+								builder.append(' '); // append space if comment is continuing
+							builder.append((char)c);
+							haveChar=true;
+						}
+					} else
+						break; // end of line
+				}
+			}
+			else if (c == '/') {
 				switch (next()) {
-				case '/':
-					do {
+				case '/':{ // single-line comment
+					boolean haveChar=false;
+					while(true) {
 						c = next();
-					} while (c != '\n' && c != '\r' && c != -1);
+						if(c != '\n' && c != '\r' && c != -1){
+							if(haveChar || c>' '){
+								if(!haveChar && builder.length()>0)
+									builder.append(' '); // append space if comment is continuing
+								builder.append((char)c);
+								haveChar=true;
+							}
+						} else
+							break; // end of line
+					}
 					break;
-				case '*':
+				}
+				case '*':{ // multi-line comment
+					boolean haveChar=false;
 					while (true) {
 						c = next();
 						if (c == -1)
@@ -202,13 +236,40 @@ public class JSONTokener {
 							}
 							back();
 						}
+						if(haveChar || c>' '){
+							if(!haveChar && builder.length()>0)
+								builder.append(' '); // append space if comment is continuing
+							builder.append((char)c);
+							haveChar=true;
+						}
 					}
 					break;
+				}
 				default:
 					back();
-					return '/';
+					return builder.toString();
 				}
-			} else if (c == -1 || c > ' ')
+			} else if (c == -1){
+				return builder.toString(); // reached end of string
+			} else if(c>' '){
+				// reached an ordinary character
+				back();
+				return builder.toString();
+			}
+		}
+	}
+
+	/**
+	 * Get the next char in the string, skipping whitespace
+	 * and comments (slashslash and slashstar).
+	 * @throws ParseException
+	 * @return  A character, or 0 if there are no more characters.
+	 */
+	public int nextClean() throws java.text.ParseException {
+		nextComment();
+		while (true) {
+			int c = next();
+			if (c == -1 || c > ' ')
 				return c;
 		}
 	}

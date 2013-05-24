@@ -1,9 +1,13 @@
-// Modified by Peter O. to use generics; also
-// moved from org.json.  Still in the public domain.
+// Modified by Peter O. to use generics, among
+// other things; also moved from org.json.  
+// Still in the public domain;
+// public domain dedication: http://creativecommons.org/publicdomain/zero/1.0/
 package com.upokecenter.json;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -47,7 +51,7 @@ public class JSONObject {
 
 	/**
 	 * JSONObject.NULL is equivalent to the value that JavaScript calls null,
-	 * whilst Java's null is equivalent to the value that JavaScript calls
+	 * whereas Java's null is equivalent to the value that JavaScript calls
 	 * undefined.
 	 */
 	private static final class Null {
@@ -229,6 +233,16 @@ public class JSONObject {
 	}
 
 
+	private void addCommentIfAny(JSONTokener x) throws ParseException{
+		if((x.getOptions()&OPTION_ADD_COMMENTS)!=0){
+			// Parse and add the comment if any
+			String comment=x.nextComment();
+			if(comment.length()>0){
+				myHashMap.put("@comment", comment);
+			}
+		}		
+	}
+
 	/**
 	 * Construct a JSONObject from a JSONTokener.
 	 * @param x A JSONTokener object containing the source string.
@@ -245,23 +259,33 @@ public class JSONObject {
 		if (x.nextClean() != '{')
 			throw x.syntaxError("A JSONObject must begin with '{'");
 		while (true) {
+			addCommentIfAny(x);
 			c = x.nextClean();
 			switch (c) {
-			case (char)0:
+			case -1:
 				throw x.syntaxError("A JSONObject must end with '}'");
 			case '}':
 				return;
 			default:
 				x.back();
+				addCommentIfAny(x);
 				key = x.nextValue().toString();
+				if((x.getOptions() & OPTION_NO_DUPLICATES)!=0 &&
+						myHashMap.containsKey(key)){
+					throw x.syntaxError("Key already exists: "+key);
+				}
 				break;
 			}
+			addCommentIfAny(x);
 			if (x.nextClean() != ':')
 				throw x.syntaxError("Expected a ':' after a key");
 			// NOTE: Will overwrite existing value. --Peter O.
+			addCommentIfAny(x);
 			myHashMap.put(key, x.nextValue());
+			addCommentIfAny(x);
 			switch (x.nextClean()) {
 			case ',':
+				addCommentIfAny(x);
 				if (x.nextClean() == '}')
 					return;
 				x.back();
@@ -286,6 +310,37 @@ public class JSONObject {
 
 
 	/**
+	 * No duplicates are allowed in the JSON string.
+	 */
+	public static final int OPTION_NO_DUPLICATES = 1;
+	/**
+	 * Will parse Shell-style comments (beginning with "#").
+	 */
+	public static final int OPTION_SHELL_COMMENTS = 2;
+	/**
+	 * Will add a "@comment" property to all objects with
+	 * comments associated with them. Only applies to JSON
+	 * objects, not JSON arrays.
+	 */
+	public static final int OPTION_ADD_COMMENTS = 4;
+
+
+	/**
+	 * Construct a JSONObject from a string.
+	 *
+	 * @param string    A string beginning
+	 *  with <code>{</code>&nbsp;<small>(left brace)</small> and ending
+	 *  with <code>}</code>&nbsp;<small>(right brace)</small>.
+	 * @param option Options for parsing the string. Currently
+	 * OPTION_NO_DUPLICATES, OPTION_SHELL_COMMENTS, and/or
+	 * OPTION_ADD_COMMENTS.
+	 *  @exception ParseException The string must be properly formatted.
+	 */
+	public JSONObject(String string, int options) throws ParseException {
+		this(new JSONTokener(string,options));
+	}
+
+	/**
 	 * Construct a JSONObject from a string.
 	 *
 	 * @param string    A string beginning
@@ -294,9 +349,8 @@ public class JSONObject {
 	 *  @exception ParseException The string must be properly formatted.
 	 */
 	public JSONObject(String string) throws ParseException {
-		this(new JSONTokener(string));
+		this(string,0);
 	}
-
 
 	/**
 	 * Accumulate values under a key. It is similar to the put method except
@@ -935,5 +989,28 @@ public class JSONObject {
 		}
 		sb.append('}');
 		return sb.toString();
+	}
+
+	public static void main(String[] args) throws ParseException{
+		String json="["+
+			      "{ # foo\n\"foo-key\":\"foo-value\"},\n"+
+			      "{ /* This is a\n # multiline comment.*/\n\"bar-key\":\"bar-value\"}]";
+		System.out.println(json);
+	    JSONArray obj=new JSONArray(json,
+	            JSONObject.OPTION_SHELL_COMMENTS | // Support SHELL-style comments
+	            JSONObject.OPTION_ADD_COMMENTS // Incorporate comments in the JSON object
+	    );
+	    System.out.println(obj); // Output the JSON object
+		// Objects with comments associated with them will
+		// now contain a "@comment" key; get the JSON Pointers
+		// (RFC6901) to these objects and remove the "@comment" keys.
+		Map<String,Object> pointers=JSONPointer.getPointersWithKeyAndRemove(obj,"@comment");
+		// For each JSON Pointer, get its corresponding object.
+		// They will always be JSONObjects.
+		for(String pointer : pointers.keySet()){
+			JSONObject subobj=(JSONObject)JSONPointer.getObject(obj,pointer);
+			System.out.println(subobj); // Output the object
+			System.out.println(pointers.get(pointer)); // Output the key's value
+		}
 	}
 }
