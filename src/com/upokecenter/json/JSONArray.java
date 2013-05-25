@@ -95,8 +95,14 @@ public class JSONArray {
 			}
 			switch (x.nextClean()) {
 			case ',':
-				if (x.nextClean() == ']')
-					return;
+				if (x.nextClean() == ']'){
+          if((x.getOptions() & JSONObject.OPTION_TRAILING_COMMAS)==0){
+					 // 2013-05-24 -- Peter O. Disallow trailing comma.
+           throw x.syntaxError("Trailing comma");
+          } else {
+            return;
+          }
+        }
 				x.back();
 				break;
 			case ']':

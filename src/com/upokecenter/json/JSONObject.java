@@ -5,9 +5,7 @@
 package com.upokecenter.json;
 
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -286,8 +284,14 @@ public class JSONObject {
 			switch (x.nextClean()) {
 			case ',':
 				addCommentIfAny(x);
-				if (x.nextClean() == '}')
-					return;
+				if (x.nextClean() == '}'){
+          if((x.getOptions() & OPTION_TRAILING_COMMAS)==0){
+					// 2013-05-24 -- Peter O. Disallow trailing comma.
+          throw x.syntaxError("Trailing comma");
+          } else {
+            return;
+          }
+        }
 				x.back();
 				break;
 			case '}':
@@ -309,6 +313,10 @@ public class JSONObject {
 	}
 
 
+  /**
+  * Trailing commas are allowed in the JSON string.
+  */
+  public static final int OPTION_TRAILING_COMMAS = 8;
 	/**
 	 * No duplicates are allowed in the JSON string.
 	 */
