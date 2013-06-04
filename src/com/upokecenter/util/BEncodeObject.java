@@ -580,7 +580,7 @@ public final class BEncodeObject {
 				map.get(key).write(stream);
 			}
 			stream.write((byte)'e');
-		} else if(obj instanceof List<?>){
+		} else if(obj instanceof List/*<BEncodeObject><?>*/){
 			stream.write((byte)'l');
 			List<BEncodeObject> list=(List<BEncodeObject>)obj;
 			for(BEncodeObject value : list){

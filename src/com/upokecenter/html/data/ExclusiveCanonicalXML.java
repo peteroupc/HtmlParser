@@ -27,8 +27,8 @@ import com.upokecenter.util.URIUtility;
  * http://www.w3.org/TR/xml-exc-c14n/
  * 
  * @author Peter
- *
  */
+ 
 final class ExclusiveCanonicalXML {
 	private static final class AttrComparer implements Comparator<IAttr> {
 		@Override

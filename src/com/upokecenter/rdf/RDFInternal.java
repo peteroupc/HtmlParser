@@ -1,3 +1,11 @@
+/*
+Written in 2013 by Peter Occil.  
+Any copyright is dedicated to the Public Domain.
+http://creativecommons.org/publicdomain/zero/1.0/
+
+If you like this, you should donate to Peter O.
+at: http://upokecenter.com/d/
+*/
 package com.upokecenter.rdf;
 
 import java.util.ArrayList;
@@ -7,7 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 final class RDFInternal {
-	/**
+	/*
 	 *  Replaces certain blank nodes with blank nodes whose
 	 *  names meet the N-Triples requirements
 	 * @param triples A set of RDF triples
@@ -97,7 +105,5 @@ final class RDFInternal {
 			nodeindex[0]++;
 		}
 	}
-
-
 	private RDFInternal(){}
 }

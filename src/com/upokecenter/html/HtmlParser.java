@@ -1,4 +1,8 @@
 /*
+If you like this, you should donate to Peter O.
+at: http://upokecenter.com/d/
+
+
 
 Licensed under the Expat License.
 
@@ -21,8 +25,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-
- */
+*/
 
 package com.upokecenter.html;
 
@@ -846,10 +849,7 @@ final class HtmlParser {
 					SVG_NAMESPACE.equals(getCurrentNode().getNamespaceURI())){
 				popCurrentNode();
 			} else {
-				// NOTE: The HTML spec here is unfortunately too strict
-				// in that it doesn't allow an ASCII case-insensitive
-				// comparison (for example, with SVG foreignObject)
-				if(!getCurrentNode().getLocalName().equals(name)) {
+				if(!StringUtility.toLowerCaseAscii(getCurrentNode().getLocalName()).equals(name)) {
 					error=true;
 				}
 				int originalSize=openElements.size();
@@ -1384,7 +1384,6 @@ final class HtmlParser {
 						"bgsound".equals(name)||
 						"basefont".equals(name)||
 						"link".equals(name)||
-						"menuitem".equals(name)||
 						"noframes".equals(name)||
 						"script".equals(name)||
 						"style".equals(name)||
@@ -1611,6 +1610,7 @@ final class HtmlParser {
 					}
 				} else if("param".equals(name)||
 						"source".equals(name)||
+						"menuitem".equals(name)||
 						"track".equals(name)
 						){
 					addHtmlElementNoPush(tag);

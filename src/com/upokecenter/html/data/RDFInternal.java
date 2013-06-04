@@ -18,7 +18,6 @@ final class RDFInternal {
 	 * already allocated.  This method will modify this
 	 * object as needed to allocate new blank nodes.
 	 */
-	//
 	 static void replaceBlankNodes(Set<RDFTriple> triples,
 			Map<String,RDFTerm> bnodeLabels){
 		if(bnodeLabels.size()==0)

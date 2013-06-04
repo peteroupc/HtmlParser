@@ -5,7 +5,7 @@ http://creativecommons.org/publicdomain/zero/1.0/
 
 If you like this, you should donate to Peter O.
 at: http://upokecenter.com/d/
- */
+*/
 package com.upokecenter.util;
 
 import java.util.concurrent.ExecutorService;

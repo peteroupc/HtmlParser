@@ -1,3 +1,11 @@
+/*
+Written in 2013 by Peter Occil.  
+Any copyright is dedicated to the Public Domain.
+http://creativecommons.org/publicdomain/zero/1.0/
+
+If you like this, you should donate to Peter O.
+at: http://upokecenter.com/d/
+*/
 package com.upokecenter.rdf;
 
 import java.io.IOException;
@@ -13,20 +21,6 @@ import com.upokecenter.io.StackableCharacterInput;
 import com.upokecenter.io.StringCharacterInput;
 import com.upokecenter.io.Utf8CharacterInput;
 import com.upokecenter.util.URIUtility;
-//Written by Peter Occil, 2013. In the public domain.
-//Public domain dedication: http://creativecommons.org/publicdomain/zero/1.0/
-
-/**
- * 
- * A parser for Turtle, a syntax for writing
- * Resource Description Framework (RDF) graphs
- * in text.
- * 
- * For more information, visit http://www.w3.org/TR/turtle/
- * 
- * @author Peter
- *
- */
 public class TurtleParser implements IRDFParser {
 
 	private static class TurtleObject {
@@ -67,9 +61,6 @@ public class TurtleParser implements IRDFParser {
 	private static class TurtleProperty {
 		public RDFTerm pred;
 		public TurtleObject obj;
-	}
-	private static boolean isAsciiChar(int c, String asciiChars){
-		return (c>=0 && c<=0x7F && asciiChars.indexOf((char)c)>=0);
 	}
 	private final Map<String,RDFTerm> bnodeLabels;
 	private final Map<String,String> namespaces;

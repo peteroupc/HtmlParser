@@ -1,4 +1,8 @@
 /*
+If you like this, you should donate to Peter O.
+at: http://upokecenter.com/d/
+
+
 
 Licensed under the Expat License.
 
@@ -21,8 +25,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-
- */
+*/
 package com.upokecenter.net;
 
 import java.io.IOException;
@@ -55,7 +58,7 @@ public final class HeaderParser {
 	private static void appendParameterValue(String str, StringBuilder builder){
 		// if string is a valid MIME token, the return value
 		// will be the end of the string
-		if(skipMimeToken(str,0,str.length(),null)==str.length()){
+		if(skipMimeToken(str,0,str.length(),null,false)==str.length()){
 			// append the string as is
 			builder.append(str);
 			return;
@@ -518,7 +521,7 @@ public final class HeaderParser {
 				index=skipCFWS(data,index,endIndex,null);
 			}
 			StringBuilder builder=new StringBuilder();
-			int afteratt=skipMimeToken(data,index,endIndex,builder);
+			int afteratt=skipMimeTypeSubtype(data,index,endIndex,builder);
 			if(afteratt==index) // ill-formed attribute
 				return null;
 			String attribute=builder.toString();
@@ -545,7 +548,7 @@ public final class HeaderParser {
 			builder.setLength(0);
 			// try getting the value unquoted
 			// Note we don't use getAtom
-			qs=skipMimeToken(data,index,endIndex,isToken ? builder : null);
+			qs=skipMimeToken(data,index,endIndex,isToken ? builder : null,httpRules);
 			if(qs!=index){
 				if(isToken)
 					return builder.toString();
@@ -865,7 +868,7 @@ public final class HeaderParser {
 			} else {
 				index=skipCFWS(data,index,endIndex,null);
 			}
-			int afteratt=skipMimeToken(data,index,endIndex,null);
+			int afteratt=skipMimeTypeSubtype(data,index,endIndex,null);
 			if(afteratt==index) // ill-formed attribute
 				return false;
 			index=afteratt;
@@ -884,7 +887,7 @@ public final class HeaderParser {
 				continue;
 			}
 			// try getting the value unquoted
-			qs=skipMimeToken(data,index,endIndex,null);
+			qs=skipMimeToken(data,index,endIndex,null,httpRules);
 			if(qs!=index){
 				index=qs;
 				continue;
@@ -2132,13 +2135,17 @@ public final class HeaderParser {
 		}
 		return i2;
 	}
-	 static int skipMimeToken(String str, int index, int endIndex, StringBuilder builder){
+	 static int skipMimeToken(String str, int index, int endIndex, 
+     StringBuilder builder, boolean httpRules){
 		int i=index;
 		while(i<endIndex){
 			char c=str.charAt(i);
 			if(c<=0x20 || c>=0x7F || ((c&0x7F)==c && "()<>@,;:\\\"/[]?=".indexOf(c)>=0)) {
 				break;
 			}
+      if(httpRules && (c=='{' || c=='}')){
+        break;
+      }
 			if(builder!=null) {
 				builder.append(c);
 			}
