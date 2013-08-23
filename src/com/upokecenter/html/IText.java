@@ -37,11 +37,11 @@ package com.upokecenter.html;
  *
  */
 public interface IText extends INode {
-	/**
-	 * 
-	 * Gets this node's text.
-	 * 
-	 * 
-	 */
-	public String getData();
+  /**
+   * 
+   * Gets this node's text.
+   * 
+   * 
+   */
+  public String getData();
 }

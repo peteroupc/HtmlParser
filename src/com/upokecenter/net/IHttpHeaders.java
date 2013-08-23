@@ -33,12 +33,12 @@ import java.util.List;
 import java.util.Map;
 
 public interface IHttpHeaders {
-	public String getHeaderField(int name);
-	public String getHeaderField(String name);
-	public long getHeaderFieldDate(String field, long defaultValue);
-	public String getHeaderFieldKey(int name);
-	public Map<String,List<String>> getHeaderFields();
-	public String getRequestMethod();
-	public int getResponseCode();
-	public String getUrl();
+  public String getHeaderField(int name);
+  public String getHeaderField(String name);
+  public long getHeaderFieldDate(String field, long defaultValue);
+  public String getHeaderFieldKey(int name);
+  public Map<String,List<String>> getHeaderFields();
+  public String getRequestMethod();
+  public int getResponseCode();
+  public String getUrl();
 }

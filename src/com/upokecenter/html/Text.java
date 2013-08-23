@@ -32,27 +32,27 @@ package com.upokecenter.html;
 import com.upokecenter.util.IntList;
 
 class Text extends Node implements IText {
-	public IntList text=new IntList();
-	public Text() {
-		super(NodeType.TEXT_NODE);
-	}
+  public IntList text=new IntList();
+  public Text() {
+    super(NodeType.TEXT_NODE);
+  }
 
-	@Override
-	public String getData(){
-		return text.toString();
-	}
+  @Override
+  public String getData(){
+    return text.toString();
+  }
 
-	public String getName(){
-		return "#text";
-	}
+  public String getName(){
+    return "#text";
+  }
 
-	@Override
-	public  String getTextContent(){
-		return text.toString();
-	}
+  @Override
+  public  String getTextContent(){
+    return text.toString();
+  }
 
-	@Override
-	 String toDebugString(){
-		return "\""+text.toString().replace("\n","~~~~")+"\"\n";
-	}
+  @Override
+   String toDebugString(){
+    return "\""+text.toString().replace("\n","~~~~")+"\"\n";
+  }
 }

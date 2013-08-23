@@ -35,152 +35,152 @@ import java.util.List;
 import com.upokecenter.util.StringUtility;
 
 class Document extends Node implements IDocument {
-	 DocumentType doctype;
-	 String encoding;
-	private DocumentMode docmode=DocumentMode.NoQuirksMode;
+   DocumentType doctype;
+   String encoding;
+  private DocumentMode docmode=DocumentMode.NoQuirksMode;
 
-	 String address;
+   String address;
 
-	 String defaultLanguage;
+   String defaultLanguage;
 
-	 Document() {
-		super(NodeType.DOCUMENT_NODE);
-	}
+   Document() {
+    super(NodeType.DOCUMENT_NODE);
+  }
 
-	private void collectElements(INode c, String s, List<IElement> nodes){
-		if(c.getNodeType()==NodeType.ELEMENT_NODE){
-			Element e=(Element)c;
-			if(s==null || e.getLocalName().equals(s)){
-				nodes.add(e);
-			}
-		}
-		for(INode node : c.getChildNodes()){
-			collectElements(node,s,nodes);
-		}
-	}
-
-
-	private void collectElementsHtml(INode c, String s,
-			String sLowercase, List<IElement> nodes){
-		if(c.getNodeType()==NodeType.ELEMENT_NODE){
-			Element e=(Element)c;
-			if(s==null){
-				nodes.add(e);
-			} else if(HtmlParser.HTML_NAMESPACE.equals(e.getNamespaceURI()) &&
-					e.getLocalName().equals(sLowercase)){
-				nodes.add(e);
-			} else if(e.getLocalName().equals(s)){
-				nodes.add(e);
-			}
-		}
-		for(INode node : c.getChildNodes()){
-			collectElements(node,s,nodes);
-		}
-	}
-
-	@Override
-	public String getCharacterSet() {
-		return (encoding==null) ? "utf-8" : encoding;
-	}
-
-	@Override
-	public IDocumentType getDoctype(){
-		return doctype;
-	}
+  private void collectElements(INode c, String s, List<IElement> nodes){
+    if(c.getNodeType()==NodeType.ELEMENT_NODE){
+      Element e=(Element)c;
+      if(s==null || e.getLocalName().equals(s)){
+        nodes.add(e);
+      }
+    }
+    for(INode node : c.getChildNodes()){
+      collectElements(node,s,nodes);
+    }
+  }
 
 
-	@Override
-	public IElement getDocumentElement() {
-		for(INode node : getChildNodes()){
-			if(node instanceof IElement)
-				return (IElement)node;
-		}
-		return null;
-	}
+  private void collectElementsHtml(INode c, String s,
+      String sLowercase, List<IElement> nodes){
+    if(c.getNodeType()==NodeType.ELEMENT_NODE){
+      Element e=(Element)c;
+      if(s==null){
+        nodes.add(e);
+      } else if(HtmlParser.HTML_NAMESPACE.equals(e.getNamespaceURI()) &&
+          e.getLocalName().equals(sLowercase)){
+        nodes.add(e);
+      } else if(e.getLocalName().equals(s)){
+        nodes.add(e);
+      }
+    }
+    for(INode node : c.getChildNodes()){
+      collectElements(node,s,nodes);
+    }
+  }
 
-	@Override
-	public IElement getElementById(String id) {
-		if(id==null)
-			throw new IllegalArgumentException();
-		for(INode node : getChildNodes()){
-			if(node instanceof IElement){
-				if(id.equals(((IElement)node).getId()))
-					return (IElement)node;
-				IElement element=((IElement)node).getElementById(id);
-				if(element!=null)return element;
-			}
-		}
-		return null;
-	}
-	@Override
-	public List<IElement> getElementsByTagName(String tagName) {
-		if(tagName==null)
-			throw new IllegalArgumentException();
-		if(tagName.equals("*")) {
-			tagName=null;
-		}
-		List<IElement> ret=new ArrayList<IElement>();
-		if(isHtmlDocument()){
-			collectElementsHtml(this,tagName,
-					StringUtility.toLowerCaseAscii(tagName),ret);
-		} else {
-			collectElements(this,tagName,ret);
-		}
-		return ret;
-	}
+  @Override
+  public String getCharacterSet() {
+    return (encoding==null) ? "utf-8" : encoding;
+  }
 
-	@Override public  String getLanguage(){
-		return (defaultLanguage==null) ? "" : defaultLanguage;
-	}
+  @Override
+  public IDocumentType getDoctype(){
+    return doctype;
+  }
 
-	 DocumentMode getMode() {
-		return docmode;
-	}
 
-	@Override
-	public  String getNodeName(){
-		return "#document";
-	}
+  @Override
+  public IElement getDocumentElement() {
+    for(INode node : getChildNodes()){
+      if(node instanceof IElement)
+        return (IElement)node;
+    }
+    return null;
+  }
 
-	@Override
-	public  IDocument getOwnerDocument(){
-		return null;
-	}
+  @Override
+  public IElement getElementById(String id) {
+    if(id==null)
+      throw new IllegalArgumentException();
+    for(INode node : getChildNodes()){
+      if(node instanceof IElement){
+        if(id.equals(((IElement)node).getId()))
+          return (IElement)node;
+        IElement element=((IElement)node).getElementById(id);
+        if(element!=null)return element;
+      }
+    }
+    return null;
+  }
+  @Override
+  public List<IElement> getElementsByTagName(String tagName) {
+    if(tagName==null)
+      throw new IllegalArgumentException();
+    if(tagName.equals("*")) {
+      tagName=null;
+    }
+    List<IElement> ret=new ArrayList<IElement>();
+    if(isHtmlDocument()){
+      collectElementsHtml(this,tagName,
+          StringUtility.toLowerCaseAscii(tagName),ret);
+    } else {
+      collectElements(this,tagName,ret);
+    }
+    return ret;
+  }
 
-	@Override
-	public String getURL() {
-		return address;
-	}
-	 boolean isHtmlDocument(){
-		return true;
-	}
+  @Override public  String getLanguage(){
+    return (defaultLanguage==null) ? "" : defaultLanguage;
+  }
 
-	 void setMode(DocumentMode mode) {
-		docmode=mode;
-	}
+   DocumentMode getMode() {
+    return docmode;
+  }
 
-	@Override
-	 String toDebugString(){
-		StringBuilder builder=new StringBuilder();
-		for(Node node : getChildNodesInternal()){
-			String str=node.toDebugString();
-			if(str==null) {
-				continue;
-			}
-			String[] strarray=StringUtility.splitAt(str,"\n");
-			int len=strarray.length;
-			if(len>0 && strarray[len-1].length()==0)
-			{
-				len--; // ignore trailing empty string
-			}
-			for(int i=0;i<len;i++){
-				String el=strarray[i];
-				builder.append("| ");
-				builder.append(el.replace("~~~~","\n"));
-				builder.append("\n");
-			}
-		}
-		return builder.toString();
-	}
+  @Override
+  public  String getNodeName(){
+    return "#document";
+  }
+
+  @Override
+  public  IDocument getOwnerDocument(){
+    return null;
+  }
+
+  @Override
+  public String getURL() {
+    return address;
+  }
+   boolean isHtmlDocument(){
+    return true;
+  }
+
+   void setMode(DocumentMode mode) {
+    docmode=mode;
+  }
+
+  @Override
+   String toDebugString(){
+    StringBuilder builder=new StringBuilder();
+    for(Node node : getChildNodesInternal()){
+      String str=node.toDebugString();
+      if(str==null) {
+        continue;
+      }
+      String[] strarray=StringUtility.splitAt(str,"\n");
+      int len=strarray.length;
+      if(len>0 && strarray[len-1].length()==0)
+      {
+        len--; // ignore trailing empty string
+      }
+      for(int i=0;i<len;i++){
+        String el=strarray[i];
+        builder.append("| ");
+        builder.append(el.replace("~~~~","\n"));
+        builder.append("\n");
+      }
+    }
+    return builder.toString();
+  }
 
 }

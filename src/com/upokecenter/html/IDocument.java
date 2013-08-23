@@ -40,41 +40,41 @@ import java.util.List;
  *
  */
 public interface IDocument extends INode {
-	/**
-	 * 
-	 * Gets the character encoding used in this document.
-	 * 
-	 * @return A character encoding name.
-	 */
-	String getCharacterSet();
-	/**
-	 * 
-	 * Gets the document type of this document, if any.
-	 * 
-	 * 
-	 */
-	public IDocumentType getDoctype();
-	/**
-	 * 
-	 * Gets the root element of this document.
-	 * 
-	 * 
-	 */
-	public IElement getDocumentElement();
-	IElement getElementById(String id);
-	/**
-	 * 
-	 * Gets all descendents, both direct and indirect, that have
-	 * the specified tag name, using ASCII case-insensitive matching.
-	 * 
-	 * @param string A tag name.
-	 * 
-	 */
-	List<IElement> getElementsByTagName(String string);
-	/**
-	 * Gets the document's address
-	 * 
-	 * @return An absolute URL.
-	 */
-	String getURL();
+  /**
+   * 
+   * Gets the character encoding used in this document.
+   * 
+   * @return A character encoding name.
+   */
+  String getCharacterSet();
+  /**
+   * 
+   * Gets the document type of this document, if any.
+   * 
+   * 
+   */
+  public IDocumentType getDoctype();
+  /**
+   * 
+   * Gets the root element of this document.
+   * 
+   * 
+   */
+  public IElement getDocumentElement();
+  IElement getElementById(String id);
+  /**
+   * 
+   * Gets all descendents, both direct and indirect, that have
+   * the specified tag name, using ASCII case-insensitive matching.
+   * 
+   * @param string A tag name.
+   * 
+   */
+  List<IElement> getElementsByTagName(String string);
+  /**
+   * Gets the document's address
+   * 
+   * @return An absolute URL.
+   */
+  String getURL();
 }

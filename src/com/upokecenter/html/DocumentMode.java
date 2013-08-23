@@ -30,7 +30,7 @@ THE SOFTWARE.
 package com.upokecenter.html;
 
 enum DocumentMode {
-	NoQuirksMode,
-	LimitedQuirksMode,
-	QuirksMode
+  NoQuirksMode,
+  LimitedQuirksMode,
+  QuirksMode
 }

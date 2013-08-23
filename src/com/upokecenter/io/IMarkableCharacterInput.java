@@ -12,14 +12,14 @@ import java.io.IOException;
 
 public interface IMarkableCharacterInput extends ICharacterInput {
 
-	public int getMarkPosition();
+  public int getMarkPosition();
 
-	public void moveBack(int count) throws IOException;
+  public void moveBack(int count) throws IOException;
 
-	public int setHardMark();
+  public int setHardMark();
 
-	public void setMarkPosition(int pos) throws IOException;
+  public void setMarkPosition(int pos) throws IOException;
 
-	public int setSoftMark();
+  public int setSoftMark();
 
 }

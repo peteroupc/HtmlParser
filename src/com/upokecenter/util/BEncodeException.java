@@ -12,14 +12,14 @@ import java.io.IOException;
 
 public class BEncodeException extends RuntimeException {
 
-	private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-	public BEncodeException(String string) {
-		super(string);
-	}
+  public BEncodeException(String string) {
+    super(string);
+  }
 
-	public BEncodeException(String s, IOException e) {
-		super(s,e);
-	}
+  public BEncodeException(String s, IOException e) {
+    super(s,e);
+  }
 
 }

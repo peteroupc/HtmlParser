@@ -37,8 +37,8 @@ package com.upokecenter.html;
  *
  */
 public interface IComment extends INode {
-	/**
-	 * Gets the comment's text.
-	 */
-	public String getData();
+  /**
+   * Gets the comment's text.
+   */
+  public String getData();
 }

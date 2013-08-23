@@ -17,9 +17,9 @@ package com.upokecenter.util;
  * @param <T>  An arbitrary object type.
  */
 public interface IAction<T> {
-	/**
-	 * Does an arbitrary action.
-	 * @param parameters An array of parameters that the action accepts.
-	 */
-	public void action(T... parameters);
+  /**
+   * Does an arbitrary action.
+   * @param parameters An array of parameters that the action accepts.
+   */
+  public void action(T... parameters);
 }
