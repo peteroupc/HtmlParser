@@ -1,10 +1,10 @@
 /*
-Written in 2013 by Peter Occil.  
+Written in 2013 by Peter Occil.
 Any copyright is dedicated to the Public Domain.
 http://creativecommons.org/publicdomain/zero/1.0/
 
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
+at: http://peteroupc.github.io/
 */
 package com.upokecenter.io;
 
@@ -13,15 +13,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 
+ *
  * A character input stream where additional inputs can be stacked on
  * top of it.  It supports advanced marking capabilities.
- * 
+ *
  * @author Peter
  *
  */
 public final class StackableCharacterInput implements IMarkableCharacterInput {
-
 
   private static class InputAndBuffer implements ICharacterInput {
 

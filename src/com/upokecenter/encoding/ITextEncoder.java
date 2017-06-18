@@ -1,8 +1,6 @@
 /*
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
-
-
+at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -31,7 +29,7 @@ package com.upokecenter.encoding;
 import java.io.IOException;
 import java.io.OutputStream;
 /**
- * 
+ *
  * Converts Unicode characters to bytes.
  * @author Peter
  *
@@ -39,7 +37,7 @@ import java.io.OutputStream;
 public interface ITextEncoder {
   /**
    * Writes Unicode characters as bytes in an output stream.
-   * 
+   *
    * @param stream stream where bytes will be written
    * @param buffer an array of Unicode characters
    * @param offset offset into the array
@@ -51,7 +49,7 @@ public interface ITextEncoder {
 
   /**
    * Writes Unicode characters as bytes in an output stream.
-   * 
+   *
    * @param stream stream where bytes will be written
    * @param buffer an array of Unicode characters
    * @param offset offset into the array

@@ -36,7 +36,6 @@ public final class Microformats {
     complexLegacyMap.put("url",new String[]{"p-item","h-item","u-url"});
   }
 
-
   private static final String[] legacyLabels=new String[]{
     "additional-name", "p-additional-name", "adr", "h-adr", "bday", "dt-bday", "best", "p-best", "brand", "p-brand", "category", "p-category", "count", "p-count", "country-name", "p-country-name", "description", "e-description", "dtend", "dt-end", "dtreviewed", "dt-dtreviewed", "dtstart", "dt-start", "duration", "dt-duration", "e-entry-summary", "e-summary", "email", "u-email", "entry-content", "e-content", "entry-summary", "p-summary", "entry-title",
     "p-name", "extended-address", "p-extended-address", "family-name", "p-family-name", "fn", "p-name", "geo", "h-geo", "given-name", "p-given-name", "hentry", "h-entry", "honorific-prefix", "p-honorific-prefix", "honorific-suffix", "p-honorific-suffix", "hproduct", "h-product", "hrecipe", "h-recipe", "hresume", "h-resume", "hreview", "h-review", "hreview-aggregate", "h-review-aggregate", "identifier", "u-identifier", "ingredient", "p-ingredient",
@@ -65,13 +64,11 @@ public final class Microformats {
     arr.put(value);
   }
 
-
   private static void append2d(StringBuilder builder, int value){
     value=Math.abs(value);
     builder.append((char)('0'+((value/10)%10)));
     builder.append((char)('0'+((value)%10)));
   }
-
 
   private static void append3d(StringBuilder builder, int value){
     value=Math.abs(value);
@@ -376,12 +373,12 @@ public final class Microformats {
   }
 
   /**
-   * 
+   *
    * Scans an HTML document for Microformats.org metadata.
    * The resulting object will contain an "items" property,
    * an array of all Microformats items.  Each item will
    * have a "type" and "properties" properties.
-   * 
+   *
    * @param root the document to scan.
    * @return a JSON object containing Microformats metadata
    */
@@ -391,12 +388,12 @@ public final class Microformats {
   }
 
   /**
-   * 
+   *
    * Scans an HTML element for Microformats.org metadata.
    * The resulting object will contain an "items" property,
    * an array of all Microformats items.  Each item will
    * have a "type" and "properties" properties.
-   * 
+   *
    * @param root the element to scan.
    * @return a JSON object containing Microformats metadata
    */
@@ -408,8 +405,6 @@ public final class Microformats {
     obj.put("items", items);
     return obj;
   }
-
-
 
   private static int[] getMonthAndDay(int year, int day){
     assert day>=0;
@@ -448,7 +443,6 @@ public final class Microformats {
     if((root)==null)throw new NullPointerException("root");
     return getRelJSON(root.getDocumentElement());
   }
-
 
   public static JSONObject getRelJSON(IElement root){
     if((root)==null)throw new NullPointerException("root");
@@ -502,7 +496,7 @@ public final class Microformats {
    * Gets a Microformats "u-*" value from an HTML element.
    * It tries to find the URL from the element's attributes,
    * if possible; otherwise from the element's text.
-   * 
+   *
    * @param e an HTML element.
    * @return a URL, or the empty string if none was found.
    */
@@ -593,7 +587,6 @@ public final class Microformats {
     } else
       return getTrimmedTextContent(valueElement);
   }
-
 
   private static boolean hasClassName(IElement e, String className){
     String attr=e.getAttribute("class");

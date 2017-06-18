@@ -1,8 +1,6 @@
 /*
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
-
-
+at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -324,13 +322,10 @@ final class DownloadHelperImpl {
     return new LegacyHttpCacheResponse(body,headers);
   }
 
-
   public static Object newResponseCache(File cachePath) {
     return new LegacyHttpResponseCache(cachePath);
   }
 
-
   private DownloadHelperImpl(){}
-
 
 }

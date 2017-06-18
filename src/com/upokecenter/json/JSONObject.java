@@ -1,5 +1,5 @@
 // Modified by Peter O. to use generics, among
-// other things; also moved from org.json.  
+// other things; also moved from org.json.
 // Still in the public domain;
 // public domain dedication: http://creativecommons.org/publicdomain/zero/1.0/
 package com.upokecenter.json;
@@ -8,7 +8,6 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
-
 
 /**
  * A JSONObject is an unordered collection of name/value pairs. Its
@@ -60,7 +59,6 @@ public class JSONObject {
     public Null() {
     }
 
-
     /**
      * There is only intended to be a single instance of the NULL object,
      * so the clone method returns itself.
@@ -82,11 +80,9 @@ public class JSONObject {
       return object == null || object == this;
     }
 
-
     @Override public int hashCode(){
       return 0;
     }
-
 
     /**
      * Get the "null" string value.
@@ -97,7 +93,6 @@ public class JSONObject {
       return "null";
     }
   }
-
 
   /**
    * Produce a string in double quotes with backslash sequences in all the
@@ -195,7 +190,6 @@ public class JSONObject {
     return s;
   }
 
-
   public static String toLowerCaseAscii(String s){
     if(s==null)return null;
     int len=s.length();
@@ -222,14 +216,12 @@ public class JSONObject {
     return builder.toString();
   }
 
-
   /**
    * Construct an empty JSONObject.
    */
   public JSONObject() {
     myHashMap = new HashMap<String, Object>();
   }
-
 
   private void addCommentIfAny(JSONTokener x) throws ParseException{
     if((x.getOptions()&OPTION_ADD_COMMENTS)!=0){
@@ -238,7 +230,7 @@ public class JSONObject {
       if(comment.length()>0){
         myHashMap.put("@comment", comment);
       }
-    }    
+    }
   }
 
   /**
@@ -302,7 +294,6 @@ public class JSONObject {
     }
   }
 
-
   /**
    * Construct a JSONObject from a Map.
    * @param map A map object that can be used to initialize the contents of
@@ -311,7 +302,6 @@ public class JSONObject {
   public JSONObject(Map<String, ?> map) {
     myHashMap = new HashMap<String, Object>(map);
   }
-
 
   /**
   * Trailing commas are allowed in the JSON string.
@@ -331,7 +321,6 @@ public class JSONObject {
    * objects, not JSON arrays.
    */
   public static final int OPTION_ADD_COMMENTS = 4;
-
 
   /**
    * Construct a JSONObject from a string.
@@ -390,7 +379,6 @@ public class JSONObject {
     return this;
   }
 
-
   @Override
   public boolean equals(Object obj) {
     if (this == obj)
@@ -408,7 +396,6 @@ public class JSONObject {
     return true;
   }
 
-
   /**
    * Get the value object associated with a key.
    *
@@ -424,7 +411,6 @@ public class JSONObject {
           quote(key) + "] not found.");
     return o;
   }
-
 
   /**
    * Get the boolean value associated with a key.
@@ -446,7 +432,6 @@ public class JSONObject {
         quote(key) + "] is not a Boolean.");
   }
 
-
   /**
    * Get the double value associated with a key.
    * @param key   A key string.
@@ -467,7 +452,6 @@ public class JSONObject {
         quote(key) + "] is not a number.");
   }
 
-
   /**
    * Get the HashMap the holds that contents of the JSONObject.
    * @return The getHashMap.
@@ -475,7 +459,6 @@ public class JSONObject {
    HashMap<String, Object> getHashMap() {
     return myHashMap;
   }
-
 
   /**
    * Get the int value associated with a key.
@@ -492,7 +475,6 @@ public class JSONObject {
     return (int)getDouble(key);
   }
 
-
   /**
    * Get the JSONArray value associated with a key.
    * @param key   A key string.
@@ -507,7 +489,6 @@ public class JSONObject {
     throw new NoSuchElementException("JSONObject[" +
         quote(key) + "] is not a JSONArray.");
   }
-
 
   /**
    * Get the JSONObject value associated with a key.
@@ -525,7 +506,6 @@ public class JSONObject {
         quote(key) + "] is not a JSONObject.");
   }
 
-
   /**
    * Get the string associated with a key.
    * @param key   A key string.
@@ -536,7 +516,6 @@ public class JSONObject {
     return get(key).toString();
   }
 
-
   /**
    * Determine if the JSONObject contains a specific key.
    * @param key   A key string.
@@ -546,7 +525,6 @@ public class JSONObject {
     return myHashMap.containsKey(key);
   }
 
-
   @Override
   public int hashCode() {
     final int prime = 31;
@@ -555,7 +533,6 @@ public class JSONObject {
         + ((myHashMap == null) ? 0 : myHashMap.hashCode());
     return result;
   }
-
 
   /**
    * Determine if the value associated with the key is null or if there is
@@ -567,7 +544,6 @@ public class JSONObject {
   public boolean isNull(String key) {
     return JSONObject.NULL.equals(opt(key));
   }
-
 
   /**
    * Get an enumeration of the keys of the JSONObject.
@@ -589,7 +565,6 @@ public class JSONObject {
     return myHashMap.size();
   }
 
-
   /**
    * Produce a JSONArray containing the names of the elements of this
    * JSONObject.
@@ -606,7 +581,6 @@ public class JSONObject {
     return ja;
   }
 
-
   /**
    * Get an optional value associated with a key.
    * @param key   A key string.
@@ -619,7 +593,6 @@ public class JSONObject {
     return myHashMap.get(key);
   }
 
-
   /**
    * Get an optional boolean associated with a key.
    * It returns false if there is no such key, or if the value is not
@@ -631,7 +604,6 @@ public class JSONObject {
   public boolean optBoolean(String key) {
     return optBoolean(key, false);
   }
-
 
   /**
    * Get an optional boolean associated with a key.
@@ -653,7 +625,6 @@ public class JSONObject {
     return defaultValue;
   }
 
-
   /**
    * Get an optional double associated with a key,
    * or NaN if there is no such key or if its value is not a number.
@@ -666,7 +637,6 @@ public class JSONObject {
   public double optDouble(String key)  {
     return optDouble(key, Double.NaN);
   }
-
 
   /**
    * Get an optional double associated with a key, or the
@@ -692,7 +662,6 @@ public class JSONObject {
     return defaultValue;
   }
 
-
   /**
    * Get an optional int value associated with a key,
    * or zero if there is no such key or if the value is not a number.
@@ -705,7 +674,6 @@ public class JSONObject {
   public int optInt(String key) {
     return optInt(key, 0);
   }
-
 
   /**
    * Get an optional int value associated with a key,
@@ -730,7 +698,6 @@ public class JSONObject {
     return defaultValue;
   }
 
-
   /**
    * Get an optional JSONArray associated with a key.
    * It returns null if there is no such key, or if its value is not a
@@ -745,7 +712,6 @@ public class JSONObject {
       return (JSONArray) o;
     return null;
   }
-
 
   /**
    * Get an optional JSONObject associated with a key.
@@ -762,7 +728,6 @@ public class JSONObject {
     return null;
   }
 
-
   /**
    * Get an optional string associated with a key.
    * It returns an empty string if there is no such key. If the value is not
@@ -774,7 +739,6 @@ public class JSONObject {
   public String optString(String key) {
     return optString(key, "");
   }
-
 
   /**
    * Get an optional string associated with a key.
@@ -791,7 +755,6 @@ public class JSONObject {
     return defaultValue;
   }
 
-
   /**
    * Put a key/boolean pair in the JSONObject.
    *
@@ -803,7 +766,6 @@ public class JSONObject {
     put(key, Boolean.valueOf(value));
     return this;
   }
-
 
   /**
    * Put a key/double pair in the JSONObject.
@@ -817,7 +779,6 @@ public class JSONObject {
     return this;
   }
 
-
   /**
    * Put a key/int pair in the JSONObject.
    *
@@ -829,7 +790,6 @@ public class JSONObject {
     put(key, Integer.valueOf(value));
     return this;
   }
-
 
   /**
    * Put a key/value pair in the JSONObject. If the value is null,
@@ -851,7 +811,6 @@ public class JSONObject {
     }
     return this;
   }
-
 
   /**
    * Put a key/value pair in the JSONObject, but only if the
@@ -935,7 +894,6 @@ public class JSONObject {
     return sb.toString();
   }
 
-
   /**
    * Make a prettyprinted JSON external form string of this JSONObject.
    * <p>
@@ -950,7 +908,6 @@ public class JSONObject {
   public String toString(int indentFactor) {
     return toString(indentFactor, 0);
   }
-
 
   /**
    * Make a prettyprinted JSON string of this JSONObject.

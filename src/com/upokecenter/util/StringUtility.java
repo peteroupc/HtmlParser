@@ -1,19 +1,19 @@
 /*
-Written in 2013 by Peter Occil.  
+Written in 2013 by Peter Occil.
 Any copyright is dedicated to the Public Domain.
 http://creativecommons.org/publicdomain/zero/1.0/
 
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
+at: http://peteroupc.github.io/
 */
 package com.upokecenter.util;
 
 import java.util.ArrayList;
 
 /**
- * 
+ *
  * Contains utility methods for working with strings.
- * 
+ *
  * @author Peter
  *
  */
@@ -75,10 +75,10 @@ public final class StringUtility {
   }
 
   /**
-   * 
+   *
    * Compares two strings in an ASCII case-insensitive
    * manner.
-   * 
+   *
    * @param a the first string
    * @param b the second string
    * @return true if both strings, when converted to ASCII
@@ -114,14 +114,14 @@ public final class StringUtility {
   }
 
   /**
-   * 
+   *
    * Splits a string by a delimiter.  If the string ends
    * with the delimiter, the result will end with an
    * empty string.  If the string begins with the
    * delimiter, the result will start with an empty string.
    * If the delimiter is null or empty, throws an exception.
-   * 
-   * 
+   *
+   *
    * @param s a string to split.
    * @param delimiter a string to signal where each substring
    * begins and ends.
@@ -156,14 +156,14 @@ public final class StringUtility {
     return strings.toArray(emptyStringArray);
   }
   /**
-   * 
+   *
    * Splits a string separated by space characters other than
    * form feed. This method acts as though it strips
    * leading and trailing space
    * characters from the string before splitting it.
    * The space characters used
    * here are U+0009, U+000A, U+000D, and U+0020.
-   * 
+   *
    * @param s a string. Can be null.
    * @return an array of all items separated by spaces. If string
    * is null or empty, returns an empty array.
@@ -208,14 +208,14 @@ public final class StringUtility {
   }
 
   /**
-   * 
+   *
    * Splits a string separated by space characters.
    * This method acts as though it strips leading and
    * trailing space
    * characters from the string before splitting it.
    * The space characters are
    * U+0009, U+000A, U+000C, U+000D, and U+0020.
-   * 
+   *
    * @param s a string. Can be null.
    * @return an array of all items separated by spaces. If string
    * is null or empty, returns an empty array.
@@ -269,7 +269,7 @@ public final class StringUtility {
   /**
    * Returns a string with all ASCII upper-case letters
    * converted to lower-case.
-   * 
+   *
    * @param s a string.
    */
   public static String toLowerCaseAscii(String s){
@@ -301,7 +301,7 @@ public final class StringUtility {
   /**
    * Returns a string with all ASCII lower-case letters
    * converted to upper-case.
-   * 
+   *
    * @param s a string.
    */
 
@@ -336,7 +336,7 @@ public final class StringUtility {
    * trailing space characters removed.  The space characters are
    * U+0009, U+000A, U+000C, U+000D, and U+0020.
    * @param s a string. Can be null.
-   * 
+   *
    */
   public static String trimSpaces(String s){
     if(s==null || s.length()==0)return s;

@@ -10,7 +10,7 @@ import java.util.Map;
 // http://creativecommons.org/publicdomain/zero/1.0/
 //
 // If you like this, you should donate to Peter O.
-// at: http://upokecenter.com/d/
+// at: http://peteroupc.github.io/
 //
 
 public final class QueryStringHelper

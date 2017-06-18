@@ -1,8 +1,6 @@
 /*
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
-
-
+at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -39,7 +37,6 @@ final class Utf8Encoding implements ITextEncoder, ITextDecoder {
   int bytesNeeded=0;
   int lower=0x80;
   int upper=0xBF;
-
 
   @Override
   public int decode(InputStream stream) throws IOException {

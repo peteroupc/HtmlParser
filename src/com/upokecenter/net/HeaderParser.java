@@ -1,8 +1,6 @@
 /*
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
-
-
+at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -38,11 +36,10 @@ import com.upokecenter.util.DateTimeUtility;
 import com.upokecenter.util.StringUtility;
 import com.upokecenter.util.URIUtility;
 
-
 /**
- * 
+ *
  * Contains methods useful for parsing header fields.
- * 
+ *
  * @author Peter
  *
  */
@@ -80,7 +77,7 @@ public final class HeaderParser {
   /**
    * Formats a date and time to a string that complies
    * with HTTP/1.1 (RFC2616).
-   * 
+   *
    * @param date the number of milliseconds since midnight,
    * January 1, 1970 GMT.
    * @return a string formatted under the rules of HTTP/1.1.
@@ -156,7 +153,7 @@ public final class HeaderParser {
    * media type begins.
    * @param endIndex an index into the end of the string.
    * @param data a string containing a MIME media type.
-   * 
+   *
    * @return the charset parameter, converted to ASCII lower-case,
    * if it exists, or "us-ascii" if the media type is null, absent, or
    * ill-formed (RFC2045 sec. 5.2), or if the media type is
@@ -192,7 +189,6 @@ public final class HeaderParser {
     String path=dataURL.substring(components[4],components[5]);
     return getDataURLBytesInternal(path);
   }
-
 
   private static byte[] getDataURLBytesInternal(String dataPath){
     // assumes "data" consists of just the path extracted from a URL/URI
@@ -318,14 +314,14 @@ public final class HeaderParser {
     else return 0;
   }
   /**
-   * 
+   *
    * Parses a string consisting of language tags under
    * Best Current Practice 47.  Examples include "en"
    * for English, or "fr-ca" for Canadian French.
-   * 
+   *
    * The string is treated as a Content-Language header
    * value under RFC 3282.
-   * 
+   *
    * @param str a string.
    * @return an array of language tags within the given
    * string, or an empty
@@ -419,7 +415,6 @@ public final class HeaderParser {
     return StringUtility.toLowerCaseAscii(str.substring(index,i2));
   }
 
-
   public static String getMimeParameter(String data, int index, int endIndex, String parameter){
     if(data==null)return null;
     return getMimeParameter(data, index, data.length(), parameter,false);
@@ -478,7 +473,7 @@ public final class HeaderParser {
    * This method skips folding whitespace and comments
    * where allowed under RFC5322.  For example,
    * a string like "text/plain;\r\n  charset=utf-8" is allowed.
-   * 
+   *
    * @param str a string containing a MIME media type.
    * Parameters are compared case-insensitively.
    * @param index the index into the string where the
@@ -491,7 +486,6 @@ public final class HeaderParser {
     if(data==null)return null;
     return getMimeParameter(data, index, data.length(), parameter);
   }
-
 
   private static String getMimeParameterRaw(
       String data, int index, int endIndex,
@@ -627,7 +621,6 @@ public final class HeaderParser {
         (c>='A' && c<='F') ||
         (c>='0' && c<='9'));
   }
-
 
   static boolean isValidAddrSpecRfc5322(String s){
     if(s==null)return false;
@@ -904,7 +897,7 @@ public final class HeaderParser {
    * in a mailbox string under that specification.
    * Length restrictions on "local parts" and "domains"
    * under section 4.5.3 are checked.
-   * 
+   *
    * @param s a string to check
    * @return true if the string is a well-formed
    * mailbox under SMTP, or false otherwise.
@@ -1004,7 +997,7 @@ public final class HeaderParser {
   /**
    * Parses a date string in one of the three formats
    * allowed by RFC2616 (HTTP/1.1).
-   * 
+   *
    * @param v a string to parse.
    * @param defaultValue a value to return if the string
    * isn't a valid date.
@@ -1488,8 +1481,6 @@ public final class HeaderParser {
     return ret;
   }
 
-
-
   /* comment (RFC5322 sec. 3.2.1) */
    static int skipComment(String s, int index, int endIndex){
     int startIndex=index;
@@ -1817,7 +1808,6 @@ public final class HeaderParser {
     return startIndex;
   }
 
-
   static int skipDomainSMTP(String s, int index, int endIndex, StringBuilder builder){
     int startIndex=index;
     int i2=skipSubdomain(s,index,endIndex,builder,false);
@@ -2011,7 +2001,6 @@ public final class HeaderParser {
       return Math.max(i2,skipObsFws(s,startIndex,endIndex));
   }
 
-
   /* Folding white space (RFC5322 sec. 3.2.2) */
    static int skipFws(String s, int index, int endIndex, StringBuilder builder){
     int ret=skipFws(s,index,endIndex);
@@ -2135,7 +2124,7 @@ public final class HeaderParser {
     }
     return i2;
   }
-   static int skipMimeToken(String str, int index, int endIndex, 
+   static int skipMimeToken(String str, int index, int endIndex,
      StringBuilder builder, boolean httpRules){
     int i=index;
     while(i<endIndex){
@@ -2280,7 +2269,6 @@ public final class HeaderParser {
     b.append('"');
   }
 
-
   private static int skipQtextOrQuotedPair(
       String s, int index, int endIndex, QuotedStringRule rule){
     if(index>=endIndex)return index;
@@ -2336,7 +2324,6 @@ public final class HeaderParser {
       int endIndex, StringBuilder builder){
     return skipQuotedString(s,index,endIndex,builder,QuotedStringRule.Rfc5322);
   }
-
 
    static int skipQuotedString(
       String s,

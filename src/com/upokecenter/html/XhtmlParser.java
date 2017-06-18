@@ -1,6 +1,5 @@
 package com.upokecenter.html;
 
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -60,8 +59,6 @@ class XhtmlParser {
       getTextNodeToInsert(getCurrentNode()).text.appendString(new String(arg0,arg1,arg2));
     }
 
-
-
     @Override
     public  void comment(char[] arg0, int arg1, int arg2)
         throws SAXException {
@@ -85,7 +82,6 @@ class XhtmlParser {
       if(elements.size()==0)return document;
       return elements.get(elements.size()-1);
     }
-
 
      Document getDocument(){
       return this.document;
@@ -343,13 +339,9 @@ class XhtmlParser {
     return "utf-8";
   }
 
-
   private final String address;
 
-
-
   private XMLReader reader;
-
 
   private final InputSource isource;
 
@@ -363,7 +355,6 @@ class XhtmlParser {
   public XhtmlParser(InputStream s, String string, String charset) throws IOException {
     this(s,string,charset,null);
   }
-
 
   public XhtmlParser(InputStream source, String address, String charset, String lang)
       throws IOException {

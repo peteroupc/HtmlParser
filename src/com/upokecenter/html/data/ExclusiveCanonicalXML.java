@@ -21,14 +21,14 @@ import com.upokecenter.util.StringUtility;
 import com.upokecenter.util.URIUtility;
 
 /**
- * 
+ *
  * Implements Exclusive XML Canonicalization
  * as specified at:
  * http://www.w3.org/TR/xml-exc-c14n/
- * 
+ *
  * @author Peter
  */
- 
+
 final class ExclusiveCanonicalXML {
   private static final class AttrComparer implements Comparator<IAttr> {
     @Override

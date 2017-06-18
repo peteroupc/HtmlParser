@@ -1,5 +1,5 @@
 // Modified by Peter O. to use generics, among
-// other things; also moved from org.json.  
+// other things; also moved from org.json.
 // Still in the public domain;
 // public domain dedication: http://creativecommons.org/publicdomain/zero/1.0/
 
@@ -54,14 +54,12 @@ public class JSONArray {
    */
   private final ArrayList<Object> myArrayList;
 
-
   /**
    * Construct an empty JSONArray.
    */
   public JSONArray() {
     myArrayList = new ArrayList<Object>();
   }
-
 
   /**
    * Construct a JSONArray from a Collection.
@@ -70,7 +68,6 @@ public class JSONArray {
   public JSONArray(/*covar*/Collection<?> collection) {
     myArrayList = new ArrayList<Object>(collection);
   }
-
 
   /**
    * Construct a JSONArray from a JSONTokener.
@@ -113,7 +110,6 @@ public class JSONArray {
     }
   }
 
-
   public JSONArray(List<String> collection) {
     myArrayList = new ArrayList<Object>();
     for(String str : collection){
@@ -150,18 +146,15 @@ public class JSONArray {
     return this;
   }
 
-
   public JSONArray add(int index, double value) {
     add(index,Double.valueOf(value));
     return this;
   }
 
-
   public JSONArray add(int index, int value) {
     add(index,Integer.valueOf(value));
     return this;
   }
-
 
   public JSONArray add(int index, Object value) {
     if (index < 0)
@@ -174,7 +167,6 @@ public class JSONArray {
     }
     return this;
   }
-
 
   @Override
   public boolean equals(Object obj) {
@@ -193,7 +185,6 @@ public class JSONArray {
     return true;
   }
 
-
   /**
    * Get the object value associated with an index.
    * @param index
@@ -209,7 +200,6 @@ public class JSONArray {
     return o;
   }
 
-
   /**
    * Get the ArrayList which is holding the elements of the JSONArray.
    * @return      The ArrayList.
@@ -217,7 +207,6 @@ public class JSONArray {
   ArrayList<Object> getArrayList() {
     return myArrayList;
   }
-
 
   /**
    * Get the boolean value associated with an index.
@@ -238,7 +227,6 @@ public class JSONArray {
         "] not a Boolean.");
   }
 
-
   /**
    * Get the double value associated with an index.
    * @param index The index must be between 0 and length() - 1.
@@ -258,7 +246,6 @@ public class JSONArray {
     throw new NumberFormatException("JSONObject[" +
         index + "] is not a number.");
   }
-
 
   /**
    * Get the int value associated with an index.
@@ -293,7 +280,6 @@ public class JSONArray {
         "] is not a JSONArray.");
   }
 
-
   /**
    * Get the JSONObject associated with an index.
    * @param index subscript
@@ -309,7 +295,6 @@ public class JSONArray {
         "] is not a JSONObject.");
   }
 
-
   /**
    * Get the string associated with an index.
    * @param index The index must be between 0 and length() - 1.
@@ -320,7 +305,6 @@ public class JSONArray {
     return get(index).toString();
   }
 
-
   @Override
   public int hashCode() {
     final int prime = 31;
@@ -329,7 +313,6 @@ public class JSONArray {
         + ((myArrayList == null) ? 0 : myArrayList.hashCode());
     return result;
   }
-
 
   /**
    * Determine if the value is null.
@@ -341,7 +324,6 @@ public class JSONArray {
     // Peter O. 3/15/2013: Replaced equals(null) with equals(JSONObject.NULL)
     return o == null || o.equals(JSONObject.NULL);
   }
-
 
   /**
    * Make a string from the contents of this JSONArray. The separator string
@@ -372,7 +354,6 @@ public class JSONArray {
     return sb.toString();
   }
 
-
   /**
    * Get the length of the JSONArray.
    *
@@ -381,7 +362,6 @@ public class JSONArray {
   public int length() {
     return myArrayList.size();
   }
-
 
   /**
    * Get the optional object value associated with an index.
@@ -396,7 +376,6 @@ public class JSONArray {
       return myArrayList.get(index);
   }
 
-
   /**
    * Get the optional boolean value associated with an index.
    * It returns false if there is no value at that index,
@@ -408,7 +387,6 @@ public class JSONArray {
   public boolean optBoolean(int index)  {
     return optBoolean(index, false);
   }
-
 
   /**
    * Get the optional boolean value associated with an index.
@@ -430,7 +408,6 @@ public class JSONArray {
     return defaultValue;
   }
 
-
   /**
    * Get the optional double value associated with an index.
    * NaN is returned if the index is not found,
@@ -442,7 +419,6 @@ public class JSONArray {
   public double optDouble(int index) {
     return optDouble(index, Double.NaN);
   }
-
 
   /**
    * Get the optional double value associated with an index.
@@ -467,7 +443,6 @@ public class JSONArray {
     return defaultValue;
   }
 
-
   /**
    * Get the optional int value associated with an index.
    * Zero is returned if the index is not found,
@@ -479,7 +454,6 @@ public class JSONArray {
   public int optInt(int index) {
     return optInt(index, 0);
   }
-
 
   /**
    * Get the optional int value associated with an index.
@@ -503,7 +477,6 @@ public class JSONArray {
     return defaultValue;
   }
 
-
   /**
    * Get the optional JSONArray associated with an index.
    * @param index subscript
@@ -516,7 +489,6 @@ public class JSONArray {
       return (JSONArray)o;
     return null;
   }
-
 
   /**
    * Get the optional JSONObject associated with an index.
@@ -533,7 +505,6 @@ public class JSONArray {
     return null;
   }
 
-
   /**
    * Get the optional string value associated with an index. It returns an
    * empty string if there is no value at that index. If the value
@@ -545,7 +516,6 @@ public class JSONArray {
   public String optString(int index){
     return optString(index, "");
   }
-
 
   /**
    * Get the optional string associated with an index.
@@ -562,7 +532,6 @@ public class JSONArray {
     return defaultValue;
   }
 
-
   /**
    * Append a boolean value.
    *
@@ -573,7 +542,6 @@ public class JSONArray {
     put(Boolean.valueOf(value));
     return this;
   }
-
 
   /**
    * Append a double value.
@@ -664,7 +632,6 @@ public class JSONArray {
     return this;
   }
 
-
   /**
    * Append an object value.
    * @param value An object value.  The value should be a
@@ -677,17 +644,15 @@ public class JSONArray {
     return this;
   }
 
-
   /**
-   * 
+   *
    * Removes the item at the specified index.
    * Added by Peter O. 2013-04-05
-   * 
+   *
    */
   public void removeAt(int index){
     myArrayList.remove(index);
   }
-
 
   /**
    * Produce a JSONObject by combining a JSONArray of names with the values
@@ -720,7 +685,6 @@ public class JSONArray {
     return '[' + join(",") + ']';
   }
 
-
   /**
    * Make a prettyprinted JSON string of this JSONArray.
    * Warning: This method assumes that the data structure is non-cyclical.
@@ -734,7 +698,6 @@ public class JSONArray {
   public String toString(int indentFactor) {
     return toString(indentFactor, 0);
   }
-
 
   /**
    * Make a prettyprinted string of this JSONArray.
@@ -778,6 +741,5 @@ public class JSONArray {
     sb.append(']');
     return sb.toString();
   }
-
 
 }

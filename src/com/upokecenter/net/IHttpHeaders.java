@@ -1,8 +1,6 @@
 /*
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
-
-
+at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -27,7 +25,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 package com.upokecenter.net;
-
 
 import java.util.List;
 import java.util.Map;

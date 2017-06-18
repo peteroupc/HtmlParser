@@ -1,8 +1,6 @@
 /*
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
-
-
+at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -41,13 +39,11 @@ class Node implements INode {
 
   int nodeType;
 
-
   private String baseURI=null;
   public Node(int nodeType){
     this.nodeType=nodeType;
     childNodes=new ArrayList<Node>();
   }
-
 
   public void appendChild(Node node){
     if(node==this)
@@ -305,7 +301,6 @@ class Node implements INode {
    String toDebugString() {
     return null;
   }
-
 
   @Override
   public String toString() {

@@ -1,8 +1,6 @@
 /*
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
-
-
+at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -41,7 +39,6 @@ import com.upokecenter.util.Reflection;
 public final class LightweightCacheService {
 
   ScheduledExecutorService pool;
-
 
   volatile long cacheSize=2L*1024L*1024L;
 

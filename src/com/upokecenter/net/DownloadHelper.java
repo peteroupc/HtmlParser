@@ -1,8 +1,6 @@
 /*
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
-
-
+at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -102,8 +100,6 @@ public final class DownloadHelper {
       return defaultValue;
     }
 
-
-
     @Override
     public String getHeaderFieldKey(int name) {
       if(name==0)
@@ -169,8 +165,6 @@ public final class DownloadHelper {
     public long getHeaderFieldDate(String field, long defaultValue) {
       return defaultValue;
     }
-
-
 
     @Override
     public String getHeaderFieldKey(int name) {
@@ -283,9 +277,9 @@ public final class DownloadHelper {
   }
 
   /**
-   * 
+   *
    * Connects to a URL to download data from that URL.
-   * 
+   *
    * @param urlString a URL string.  All schemes (protocols)
    * supported by Java's URLConnection are supported.  Data
    * URLs are also supported.
@@ -306,13 +300,10 @@ public final class DownloadHelper {
     return downloadUrl(urlString, callback, false);
   }
 
-
-
-
   /**
-   * 
+   *
    * Connects to a URL to download data from that URL.
-   * 
+   *
    * @param urlString a URL string.  All schemes (protocols)
    * supported by Java's URLConnection are supported.  Data
    * URLs are also supported.
@@ -425,7 +416,6 @@ public final class DownloadHelper {
     //
     return DownloadHelperImpl.downloadUrl(urlString, callback, handleErrorResponses);
   }
-
 
    static CacheResponseInfo getCachedResponse(
       String urlString,
@@ -608,10 +598,6 @@ public final class DownloadHelper {
       if(count==0)return;
     }
   }
-
-
-
-
 
   private static void recursiveListFiles(File file, List<File> files){
     for(File f : file.listFiles()){

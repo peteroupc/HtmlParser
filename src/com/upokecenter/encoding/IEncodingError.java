@@ -1,8 +1,6 @@
 /*
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
-
-
+at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -32,18 +30,18 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * 
+ *
  * An interface implemented by classes that handle errors that
  * occur when converting bytes to and from Unicode characters.
- * 
+ *
  * @author Peter
  *
  */
 public interface IEncodingError {
   /**
-   * 
+   *
    * Handles an error when decoding bytes into Unicode characters.
-   * 
+   *
    * @param buffer an array to output Unicode characters
    * @param offset the offset to the array to write characters
    * @param length the number of characters available
@@ -61,7 +59,7 @@ public interface IEncodingError {
   public int emitDecoderError(int[] buffer, int offset, int length) throws IOException;
   /**
    * Handles an error when encoding Unicode characters into bytes.
-   * 
+   *
    * @param stream a stream to write bytes
    * @param codePoint the code point that caused the encoder error
    * @throws IOException if the method decides to handle the

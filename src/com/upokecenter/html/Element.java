@@ -1,8 +1,6 @@
 /*
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
-
-
+at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -47,7 +45,6 @@ class Element extends Node implements IElement {
     }
   }
 
-
    static Element fromToken(HtmlParser.StartTagToken token){
     return fromToken(token,HtmlParser.HTML_NAMESPACE);
   }
@@ -83,11 +80,9 @@ class Element extends Node implements IElement {
     this.name=name;
   }
 
-
    void addAttribute(Attr value) {
     attributes.add(value);
   }
-
 
   private void collectElements(INode c, String s, List<IElement> nodes){
     if(c.getNodeType()==NodeType.ELEMENT_NODE){
@@ -244,7 +239,6 @@ class Element extends Node implements IElement {
     return builder.toString();
   }
 
-
    boolean isHtmlElement(String name){
     return name.equals(this.name) && HtmlParser.HTML_NAMESPACE.equals(namespace);
   }
@@ -273,7 +267,6 @@ class Element extends Node implements IElement {
     }
     attributes.add(new Attr(string,value));
   }
-
 
    void setLocalName(String name) {
     this.name = name;

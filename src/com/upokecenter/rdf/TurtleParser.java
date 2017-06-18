@@ -1,10 +1,10 @@
 /*
-Written in 2013 by Peter Occil.  
+Written in 2013 by Peter Occil.
 Any copyright is dedicated to the Public Domain.
 http://creativecommons.org/publicdomain/zero/1.0/
 
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
+at: http://peteroupc.github.io/
 */
 package com.upokecenter.rdf;
 
@@ -70,7 +70,6 @@ public class TurtleParser implements IRDFParser {
   private TurtleObject curSubject;
 
   private RDFTerm curPredicate;
-
 
   private final StackableCharacterInput input;
   private int curBlankNode=0;
@@ -623,8 +622,6 @@ public class TurtleParser implements IRDFParser {
     }
   }
 
-
-
   private void readObjectList(Set<RDFTriple> triples) throws IOException {
     boolean haveObject=false;
     while(true){
@@ -656,7 +653,6 @@ public class TurtleParser implements IRDFParser {
       throw new ParserException();
     return;
   }
-
 
   private void readObjectListToProperties(
       RDFTerm predicate,
@@ -796,7 +792,6 @@ public class TurtleParser implements IRDFParser {
       return null;
     }
   }
-
 
   private void readPredicateObjectList(Set<RDFTriple> triples) throws IOException {
     boolean havePredObject=false;

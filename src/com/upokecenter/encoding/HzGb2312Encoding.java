@@ -1,8 +1,6 @@
 /*
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
-
-
+at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -34,10 +32,8 @@ import java.io.OutputStream;
 
 final class HzGb2312Encoding implements ITextEncoder, ITextDecoder {
 
-
   boolean flag=false;
   int lead=0;
-
 
   @Override
   public int decode(InputStream stream) throws IOException {
@@ -214,4 +210,3 @@ final class HzGb2312Encoding implements ITextEncoder, ITextDecoder {
     }
   }
 }
-

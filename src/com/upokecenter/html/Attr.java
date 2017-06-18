@@ -1,6 +1,5 @@
 package com.upokecenter.html;
 
-
  class Attr implements IAttr {
   StringBuilder name;
   StringBuilder value;

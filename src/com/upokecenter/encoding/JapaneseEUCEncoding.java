@@ -1,8 +1,6 @@
 /*
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
-
-
+at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -31,7 +29,6 @@ package com.upokecenter.encoding;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
 
 final class JapaneseEUCEncoding implements ITextEncoder, ITextDecoder {
 

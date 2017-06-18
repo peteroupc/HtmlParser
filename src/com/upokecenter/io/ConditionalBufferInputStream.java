@@ -1,10 +1,10 @@
 /*
-Written in 2013 by Peter Occil.  
+Written in 2013 by Peter Occil.
 Any copyright is dedicated to the Public Domain.
 http://creativecommons.org/publicdomain/zero/1.0/
 
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
+at: http://peteroupc.github.io/
 */
 package com.upokecenter.io;
 
@@ -12,13 +12,13 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * 
+ *
  * An input stream that stores the first bytes of the stream
  * in a buffer and supports rewinding to the beginning of the stream.
  * However, when the buffer is disabled, no further bytes
  * are put into the buffer, but any remaining bytes in the buffer
  * will still be used until it's exhausted.
- * 
+ *
  * @author Peter O.
  *
  */
@@ -32,7 +32,6 @@ public final class ConditionalBufferInputStream extends InputStream {
   private int posAtMark=0;
   private long marklimit=0;
   private InputStream stream=null;
-
 
   public ConditionalBufferInputStream(InputStream input) {
     this.stream=input;
@@ -62,7 +61,7 @@ public final class ConditionalBufferInputStream extends InputStream {
    * buffered can still be read until the buffer is exhausted.
    * After the buffer is exhausted, this stream will fully
    * delegate to the underlying stream.
-   * 
+   *
    */
   public synchronized void disableBuffer(){
     disabled=true;
@@ -254,8 +253,6 @@ public final class ConditionalBufferInputStream extends InputStream {
     return (total==0) ? -1 : total;
   }
 
-
-
   @Override
   public synchronized void reset() throws IOException {
     //DebugUtility.log("reset: %s",isDisabled());
@@ -268,10 +265,10 @@ public final class ConditionalBufferInputStream extends InputStream {
     pos=posAtMark;
   }
   /**
-   * 
+   *
    * Resets the stream to the beginning of the input.  This will
    * invalidate the mark placed on the stream, if any.
-   * 
+   *
    * @throws IOException if disableBuffer() was already called.
    */
   public synchronized void rewind() throws IOException {

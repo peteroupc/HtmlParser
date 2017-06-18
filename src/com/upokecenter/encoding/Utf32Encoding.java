@@ -1,8 +1,6 @@
 /*
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
-
-
+at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -41,7 +39,6 @@ final class Utf32Encoding implements ITextEncoder, ITextDecoder {
     this.utf32be=utf16be;
   }
 
-
   @Override
   public int decode(InputStream stream) throws IOException {
     return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
@@ -60,7 +57,6 @@ final class Utf32Encoding implements ITextEncoder, ITextDecoder {
       throws IOException {
     return decode(stream, buffer, offset, length, TextEncoding.ENCODING_ERROR_THROW);
   }
-
 
   @Override
   public int decode(InputStream stream, int[] buffer, int offset, int length, IEncodingError error)
@@ -124,7 +120,6 @@ final class Utf32Encoding implements ITextEncoder, ITextDecoder {
       throws IOException {
     encode(stream, array, offset, length, TextEncoding.ENCODING_ERROR_THROW);
   }
-
 
   @Override
   public void encode(OutputStream stream, int[] array, int offset, int length, IEncodingError error)

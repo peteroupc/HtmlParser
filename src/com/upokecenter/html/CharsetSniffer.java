@@ -1,8 +1,6 @@
 /*
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
-
-
+at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -809,7 +807,7 @@ final class CharsetSniffer {
       return new EncodingConfidence("iso-8859-2");
     if(lang.equals("ja"))
       return new EncodingConfidence("shift_jis");
-    if(lang.equals("zh") && (country.equals("CN") || 
+    if(lang.equals("zh") && (country.equals("CN") ||
           country.equals("CHS") || country.equals("HANS")))
       return new EncodingConfidence("gb18030");
     else if(lang.equals("zh"))
@@ -925,7 +923,6 @@ final class CharsetSniffer {
     }
     return NoFeed;
   }
-
 
   private static String sniffTextOrBinary(InputStream input) throws IOException {
     byte[] header=new byte[512];

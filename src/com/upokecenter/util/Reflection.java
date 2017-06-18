@@ -1,10 +1,10 @@
 /*
-Written in 2013 by Peter Occil.  
+Written in 2013 by Peter Occil.
 Any copyright is dedicated to the Public Domain.
 http://creativecommons.org/publicdomain/zero/1.0/
 
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
+at: http://peteroupc.github.io/
 */
 package com.upokecenter.util;
 
@@ -16,7 +16,7 @@ import java.lang.reflect.Method;
 /**
  * Contains utility methods for accessing and
  * invoking the fields and methods of a class.
- * 
+ *
  * @author Peter
  *
  */

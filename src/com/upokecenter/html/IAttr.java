@@ -2,7 +2,7 @@ package com.upokecenter.html;
 
 /*
  * Represents one of the attributes within an HTML element.
- * 
+ *
  * @author Peter
  *
  */

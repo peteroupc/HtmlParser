@@ -5,7 +5,7 @@ package com.upokecenter.util;
 /**
  * Subset of Robert Harder's Base64 library, whose homepage is:
  * Homepage: <a href="http://iharder.net/base64">http://iharder.net/base64</a>.
- * 
+ *
  * The original library had this notice:
  * <p>
  * I am placing this code in the Public Domain. Do with it as you will.
@@ -20,14 +20,10 @@ public class Base64
 
   /* ********  P U B L I C   F I E L D S  ******** */
 
-
   /** No options specified. Value is zero. */
   private final static int NO_OPTIONS = 0;
 
-
-
   /* ********  P R I V A T E   F I E L D S  ******** */
-
 
   /**
    * Encode using Base64-like encoding that is URL- and Filename-safe as described
@@ -39,29 +35,20 @@ public class Base64
    */
   private final static int URL_SAFE = 16;
 
-
   /**
    * Encode using the special "ordered" dialect of Base64 described here:
    * <a href="http://www.faqs.org/qa/rfcc-1940.html">http://www.faqs.org/qa/rfcc-1940.html</a>.
    */
   private final static int ORDERED = 32;
 
-
   /** The equals sign (=) as a byte. */
   private final static byte EQUALS_SIGN = (byte)'=';
-
-
-
-
-
 
   /* ********  S T A N D A R D   B A S E 6 4   A L P H A B E T  ******** */
 
   private final static byte WHITE_SPACE_ENC = -5; // Indicates white space in encoding
 
-
   private final static byte EQUALS_SIGN_ENC = -1; // Indicates equals sign in encoding
-
 
   /* ********  U R L   S A F E   B A S E 6 4   A L P H A B E T  ******** */
 
@@ -102,8 +89,6 @@ public class Base64
     -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,     // Decimal 231 - 243
     -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9         // Decimal 244 - 255
   };
-
-
 
   /* ********  O R D E R E D   B A S E 6 4   A L P H A B E T  ******** */
 
@@ -148,9 +133,7 @@ public class Base64
     -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9         // Decimal 244 - 255
   };
 
-
   /* ********  D E T E R M I N E   W H I C H   A L P H A B E T  ******** */
-
 
   /**
    * Used in decoding the "ordered" dialect of Base64.
@@ -193,8 +176,6 @@ public class Base64
     -9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9,-9         // Decimal 244 - 255
   };
 
-
-
   /**
    * Low-level access to decoding ASCII characters in
    * the form of a byte array. <strong>Ignores GUNZIP option, if
@@ -214,9 +195,6 @@ public class Base64
     decoded = decode( source, 0, source.length, Base64.NO_OPTIONS );
     return decoded;
   }
-
-
-
 
   /**
    * Low-level access to decoding ASCII characters in
@@ -297,7 +275,6 @@ public class Base64
     return output;
   }   // end decode
 
-
   /**
    * Decodes four bytes from array <var>source</var>
    * and writes the resulting bytes (up to three of them)
@@ -313,7 +290,7 @@ public class Base64
    * were converted from the Base64 encoding.
    * <p>This is the lowest level of the decoding methods with
    * all possible parameters.</p>
-   * 
+   *
    *
    * @param source the array to convert
    * @param srcOffset the index where conversion begins
@@ -344,7 +321,6 @@ public class Base64
           "Destination array with length "+Integer.toString(destination.length)+
           " cannot have offset of "+Integer.toString(srcOffset)+" and still store three bytes." );
 
-
     byte[] DECODABET = getDecodabet( options );
 
     // Example: Dk==
@@ -374,7 +350,6 @@ public class Base64
           | ( ( DECODABET[ source[ srcOffset + 2 ] ] & 0xFF ) <<  6)
           | ( ( DECODABET[ source[ srcOffset + 3 ] ] & 0xFF )      );
 
-
       destination[ destOffset     ] = (byte)( outBuff >> 16 );
       destination[ destOffset + 1 ] = (byte)( outBuff >>  8 );
       destination[ destOffset + 2 ] = (byte)( outBuff       );
@@ -383,24 +358,9 @@ public class Base64
     }
   }   // end decodeToBytes
 
-
-
-
-
-
-
-
-
-
   /* ********  D E C O D I N G   M E T H O D S  ******** */
 
-
-
-
-
   /* ********  I N N E R   C L A S S   I N P U T S T R E A M  ******** */
-
-
 
   /**
    * Returns one of the _SOMETHING_DECODABET byte arrays depending on
@@ -418,17 +378,9 @@ public class Base64
       return _STANDARD_DECODABET;
   }  // end getAlphabet
 
-
-
-
-
-
   /* ********  I N N E R   C L A S S   O U T P U T S T R E A M  ******** */
-
-
 
   /** Defeats instantiation. */
   private Base64(){}
-
 
 }   // end class Base64

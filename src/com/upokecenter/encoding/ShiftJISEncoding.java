@@ -1,8 +1,6 @@
 /*
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
-
-
+at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -34,7 +32,6 @@ import java.io.OutputStream;
 final class ShiftJISEncoding implements ITextEncoder, ITextDecoder {
 
   int lead=0;
-
 
   @Override
   public int decode(InputStream stream) throws IOException {

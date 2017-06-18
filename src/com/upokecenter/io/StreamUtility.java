@@ -1,10 +1,10 @@
 /*
-Written in 2013 by Peter Occil.  
+Written in 2013 by Peter Occil.
 Any copyright is dedicated to the Public Domain.
 http://creativecommons.org/publicdomain/zero/1.0/
 
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
+at: http://peteroupc.github.io/
 */
 package com.upokecenter.io;
 
@@ -91,12 +91,11 @@ public final class StreamUtility {
     return builder.toString();
   }
 
-
   /**
-   * 
+   *
    * Writes a string in UTF-8 to the specified file.
    * If the file exists, it will be overwritten
-   * 
+   *
    * @param s a string to write. Illegal code unit
    * sequences are replaced with
    * with U+FFFD REPLACEMENT CHARACTER when writing to the stream.
@@ -117,9 +116,9 @@ public final class StreamUtility {
   }
 
   /**
-   * 
+   *
    * Writes a string in UTF-8 to the specified output stream.
-   * 
+   *
    * @param s a string to write. Illegal code unit
    * sequences are replaced with
    * U+FFFD REPLACEMENT CHARACTER when writing to the stream.

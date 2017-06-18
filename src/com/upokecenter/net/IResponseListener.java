@@ -1,8 +1,6 @@
 /*
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
-
-
+at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -42,7 +40,7 @@ public interface IResponseListener<T> {
    * @param stream Input stream for the response body.
    *   The listener must not close the stream.
    * @param headers Contains the headers returned by the response.
-   * 
+   *
    * @throws IOException
    */
   public T processResponse(String url,

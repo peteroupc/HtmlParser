@@ -1,8 +1,6 @@
 /*
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
-
-
+at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -30,18 +28,18 @@ THE SOFTWARE.
 package com.upokecenter.html;
 
 /**
- * 
+ *
  * Represents text within an HTML document.
- * 
+ *
  * @author Peter
  *
  */
 public interface IText extends INode {
   /**
-   * 
+   *
    * Gets this node's text.
-   * 
-   * 
+   *
+   *
    */
   public String getData();
 }

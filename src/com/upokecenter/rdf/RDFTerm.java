@@ -1,10 +1,10 @@
 /*
-Written in 2013 by Peter Occil.  
+Written in 2013 by Peter Occil.
 Any copyright is dedicated to the Public Domain.
 http://creativecommons.org/publicdomain/zero/1.0/
 
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
+at: http://peteroupc.github.io/
 */
 package com.upokecenter.rdf;
 
@@ -240,7 +240,7 @@ public final class RDFTerm {
   /**
    * Gets the IRI, blank node identifier, or
    * lexical form of an RDF literal.
-   * 
+   *
    */
   public String getValue() {
     return value;
@@ -265,11 +265,11 @@ public final class RDFTerm {
     return kind==TYPEDSTRING && "http://www.w3.org/2001/XMLSchema#string".equals(typeOrLanguage);
   }
   /**
-   * 
+   *
    * Gets a string representation of this RDF term
    * in N-Triples format.  The string will not end
    * in a line break.
-   * 
+   *
    */
   @Override
   public String toString(){

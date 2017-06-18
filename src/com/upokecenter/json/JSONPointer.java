@@ -1,10 +1,10 @@
 /*
-Written in 2013 by Peter Occil.  
+Written in 2013 by Peter Occil.
 Any copyright is dedicated to the Public Domain.
 http://creativecommons.org/publicdomain/zero/1.0/
 
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
+at: http://peteroupc.github.io/
 */
 package com.upokecenter.json;
 
@@ -101,10 +101,10 @@ public final class JSONPointer {
   }
 
   /**
-   * 
+   *
    * Gets the JSON object referred to by a JSON Pointer
    * according to RFC6901.
-   * 
+   *
    * The syntax for pointers is:
    * <pre>
    *  '/' KEY '/' KEY [...]
@@ -119,10 +119,10 @@ public final class JSONPointer {
    *  obj['foo'][2]['bar']
    * </pre>
    * in JavaScript.
-   * 
+   *
    * If "~" and "/" occur in a key, they must be escaped
    * with "~0" and "~1", respectively, in a JSON pointer.
-   * 
+   *
    * @param obj An object, especially a JSONObject or JSONArray
    * @param pointer A JSON pointer according to RFC 6901.
    * @return An object within the specified JSON object,
@@ -200,10 +200,10 @@ public final class JSONPointer {
   }
 
   /**
-   * 
+   *
    * Gets an index into the specified object, if the object
    * is an array and is not greater than the array's length.
-   * 
+   *
    * @return The index contained in this instance, or -1 if
    * the object isn't a JSON array or is greater than the
    * array's length.
@@ -241,7 +241,6 @@ public final class JSONPointer {
     else
       return (ref.length()==0) ? jsonobj : null;
   }
-  
 
   /**
    * Gets all children of the specified JSON object
@@ -268,7 +267,7 @@ public final class JSONPointer {
    *  {"bar":"barvalue"},
    *  {"baz","bazvalue"}]
    * </pre>
-   * 
+   *
    * @param root object to search
    * @param keyToFind the key to search for.
    * @return a map:<ul>
@@ -309,8 +308,8 @@ public final class JSONPointer {
    * }
    * </pre>
    * and the JSON object will remain unchanged.
-   * 
-   * 
+   *
+   *
    * @param root object to search
    * @param keyToFind the key to search for.
    * @return a map:<ul>

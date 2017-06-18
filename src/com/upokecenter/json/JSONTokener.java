@@ -1,7 +1,7 @@
-// Modified by Peter O. to use generics and 
+// Modified by Peter O. to use generics and
 // to use int and -1 as the terminating
 // value rather than char and 0, among
-// other things; also moved from org.json.  
+// other things; also moved from org.json.
 // Still in the public domain;
 // public domain dedication: http://creativecommons.org/publicdomain/zero/1.0/
 package com.upokecenter.json;
@@ -58,7 +58,6 @@ class JSONTokener {
     return "";
   }
 
-
   /**
    * Convert <code>%</code><i>hh</i> sequences to single characters, and convert plus to space.
    * @param s A string that may contain <code>+</code>&nbsp;<small>(plus)</small> and <code>%</code><i>hh</i> sequences.
@@ -84,18 +83,15 @@ class JSONTokener {
     return b.toString();
   }
 
-
   /**
    * The index of the next character.
    */
   private int myIndex;
 
-
   /**
    * The source string being tokenized.
    */
   private String mySource;
-
 
   private int options;
 
@@ -110,7 +106,6 @@ class JSONTokener {
     this.options=options;
   }
 
-
   /**
    * Back up one character. This provides a sort of lookahead capability,
    * so that you can test for a digit or letter before attempting to parse
@@ -122,7 +117,6 @@ class JSONTokener {
     }
   }
 
-
   /**
    * Determine if the source string still contains characters that next()
    * can consume.
@@ -131,7 +125,6 @@ class JSONTokener {
   public boolean more() {
     return myIndex < mySource.length();
   }
-
 
   /**
    * Get the next character in the source string.
@@ -143,7 +136,6 @@ class JSONTokener {
     myIndex += 1;
     return c;
   }
-
 
   /**
    * Consume the next character, and check that it matches a specified
@@ -160,7 +152,6 @@ class JSONTokener {
     return n;
   }
 
-
   /**
    * Get the next n characters.
    * @param n     The number of characters to take.
@@ -176,7 +167,7 @@ class JSONTokener {
       throw syntaxError("Substring bounds error");
     myIndex += n;
     return mySource.substring(i, j);
-  }  
+  }
 
   public int getOptions(){
     return options;
@@ -274,7 +265,6 @@ class JSONTokener {
     }
   }
 
-
   /**
    * Return the characters up to the next close quote character.
    * Backslash processing is done. The formal JSON format does not
@@ -332,7 +322,6 @@ class JSONTokener {
     }
   }
 
-
   /**
    * Get the text up but not including the specified character or the
    * end of line, whichever comes first.
@@ -352,7 +341,6 @@ class JSONTokener {
       sb.append((char)c);
     }
   }
-
 
   /**
    * Get the text up but not including one of the specified delimeter
@@ -375,7 +363,6 @@ class JSONTokener {
       sb.append((char)c);
     }
   }
-
 
   /**
    * Get the next value. The value can be a Boolean, Double, Integer,
@@ -428,7 +415,6 @@ class JSONTokener {
     return s;
   }
 
-
   /**
    * Skip characters until past the requested string.
    * If it is not found, we are left at the end of the source.
@@ -442,7 +428,6 @@ class JSONTokener {
       myIndex += to.length();
     }
   }
-
 
   /**
    * Skip characters until the next character is the requested character.
@@ -465,7 +450,6 @@ class JSONTokener {
     return c;
   }
 
-
   /**
    * Make a ParseException to signal a syntax error.
    *
@@ -475,7 +459,6 @@ class JSONTokener {
   public ParseException syntaxError(String message) {
     return new ParseException(message + toString(), myIndex);
   }
-
 
   /**
    * Make a printable string of this JSONTokener.

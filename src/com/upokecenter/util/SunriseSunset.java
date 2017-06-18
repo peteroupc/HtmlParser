@@ -9,16 +9,16 @@ package com.upokecenter.util;
 /**
  * Contains utility methods for calculating
  * sunrise and sunset times.
- * 
+ *
  * @author Peter
  *
  */
 public final class SunriseSunset {
 
   /**
-   * 
+   *
    * A rough time of day.
-   * 
+   *
    * @author Peter
    *
    */
@@ -202,22 +202,19 @@ public final class SunriseSunset {
     return rc;
   }  /* __sunriset__ */
 
-
   /* The "workhorse" function for sun rise/set times */
 
   private static long days_since_2000_Jan_0(long y, long m, long d){
     return  (367L*(y)-((7*((y)+(((m)+9)/12)))/4)+((275*(m))/9)+(d)-730530L);
   }
 
-
-
   /* The "workhorse" function */
 
   /**
-   * 
+   *
    * Gets whether it's currently day or night at
    * the given geographic location.
-   * 
+   *
    * @param lat a geographic latitude, in degrees.
    * South coordinates are negative.
    * @param lon a geographic longitude, in degrees.
@@ -254,7 +251,6 @@ public final class SunriseSunset {
     if(hours<twiset[0])return DayState.DayToNight;
     return DayState.Night;
   }
-
 
   /* This function computes the Sun's position at any instant */
 
@@ -301,7 +297,6 @@ public final class SunriseSunset {
   {
     return( x - 360.0 * Math.floor( x * INV360 + 0.5 ) );
   }  /* revolution */
-
 
   static double revolution( double x )
   /*****************************************/
@@ -368,7 +363,6 @@ public final class SunriseSunset {
     }
     return new double[]{lon, r};
   }
-
 
   private SunriseSunset(){}
 

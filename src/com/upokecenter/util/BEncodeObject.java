@@ -1,10 +1,10 @@
 /*
-Written in 2013 by Peter Occil.  
+Written in 2013 by Peter Occil.
 Any copyright is dedicated to the Public Domain.
 http://creativecommons.org/publicdomain/zero/1.0/
 
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
+at: http://peteroupc.github.io/
  */
 
 package com.upokecenter.util;
@@ -51,11 +51,11 @@ public final class BEncodeObject {
   /**
    * Gets a BEncoded object from parsing a byte array
    * of data in BEncoding.
-   * 
+   *
    * @param buf
    * @param off
    * @param len
-   * 
+   *
    * @throws BEncodeException if an error occurs when
    * parsing the object.
    */
@@ -98,7 +98,7 @@ public final class BEncodeObject {
 
   /**
    * Parses a BEncoded object from an input stream.
-   * 
+   *
    * @param stream An input stream.  This stream
    * must support marking.
    * @return A BEncoded object.
@@ -334,18 +334,18 @@ public final class BEncodeObject {
     return builder.toString();
   }
   /**
-   * 
+   *
    * Gets a BEncoded object with the value of the given integer.
-   * 
+   *
    * @param value A 32-bit integer.
    */
   public static BEncodeObject valueOf(int value){
     return new BEncodeObject((long)value);
   }
   /**
-   * 
+   *
    * Gets a BEncoded object with the value of the given long.
-   * 
+   *
    * @param value A 64-bit integer.
    */
   public static BEncodeObject valueOf(long value){
@@ -353,7 +353,7 @@ public final class BEncodeObject {
   }
   /**
    * Gets a BEncoded object with the value of the given string.
-   * 
+   *
    * @param value A string.  Cannot be null.
    */
   public static BEncodeObject valueOf(String value){
@@ -429,7 +429,7 @@ public final class BEncodeObject {
    * For lists and dictionaries, the values of
    * the new copy are the same as those of this
    * object; they are not copies.
-   * 
+   *
    * @return If this is a dictionary or list,
    * then a new BEncoded object with the same type
    * as this object.  If this
@@ -469,7 +469,7 @@ public final class BEncodeObject {
   }
   /**
    * Gets the integer represented by this object, if possible.
-   * 
+   *
    * @return the 32-bit integer for this object.
    * @throws ClassCastException if this object isn't an Integer
    * or its value exceeds the range of int.
@@ -486,7 +486,7 @@ public final class BEncodeObject {
   }
   /**
    * Gets the long represented by this object, if possible.
-   * 
+   *
    * @return the 64-bit integer for this object.
    * @throws ClassCastException if this object isn't a Long.
    */
@@ -525,7 +525,6 @@ public final class BEncodeObject {
   public void set(int key,int value){
     set(key,BEncodeObject.valueOf(value));
   }
-
 
   public void set(int key,long value){
     set(key,BEncodeObject.valueOf(value));
@@ -591,4 +590,3 @@ public final class BEncodeObject {
       throw new BEncodeException("unexpected object type");
   }
 }
-

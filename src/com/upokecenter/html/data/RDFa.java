@@ -152,7 +152,6 @@ public class RDFa implements IRDFParser {
   private static final RDFTerm RDFA_USES_VOCABULARY=
       RDFTerm.fromIRI("http://www.w3.org/ns/rdfa#usesVocabulary");
 
-
   private static final String RDF_XMLLITERAL="http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral";
   private static final String[] emptyStringArray=new String[]{};
   private static int getCuriePrefixLength(String s, int offset, int length){

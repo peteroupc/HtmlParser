@@ -1,8 +1,6 @@
 /*
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
-
-
+at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -53,9 +51,9 @@ public final class HtmlDocument {
     }
   }
   /**
-   * 
+   *
    * Gets the absolute URL from an HTML element.
-   * 
+   *
    * @param node A HTML element containing a URL
    * @return an absolute URL of the element's SRC, DATA, or HREF, or an
    * empty string if none exists.
@@ -86,7 +84,7 @@ public final class HtmlDocument {
   /**
    * Utility method for converting a relative URL to an absolute
    * one, using the base URI and the encoding of the given node.
-   * 
+   *
    * @param node An HTML node, usually an IDocument or IElement
    * @param href A relative or absolute URL.
    * @return An absolute URL.
@@ -98,12 +96,12 @@ public final class HtmlDocument {
   }
 
   /**
-   * 
+   *
    * Parses an HTML document from a file on the file system.
    * Its address will correspond to that file.
-   * 
+   *
    * @param file
-   * 
+   *
    * @throws IOException
    */
   public static IDocument parseFile(String file)
@@ -124,9 +122,9 @@ public final class HtmlDocument {
   /**
    * Parses an HTML document from an input stream, using "about:blank"
    * as its address.
-   * 
+   *
    * @param stream an input stream
-   * 
+   *
    * @throws IOException if an I/O error occurs.
    */
   public static IDocument parseStream(InputStream stream)
@@ -147,10 +145,10 @@ public final class HtmlDocument {
   }
 
   /**
-   * 
+   *
    * Parses an HTML document from an input stream, using the given
    * URL as its address.
-   * 
+   *
    * @param stream an input stream representing an HTML document.
    * @param address an absolute URL representing an address.
    * @param contentType Desired MIME media type of the document, including the
@@ -188,9 +186,9 @@ public final class HtmlDocument {
   }
 
   /**
-   * 
+   *
    * Parses an HTML document from a URL.
-   * 
+   *
    * @param url URL of the HTML document. In addition to HTTP
    * and other URLs supported by URLConnection, this method also
    * supports Data URLs.

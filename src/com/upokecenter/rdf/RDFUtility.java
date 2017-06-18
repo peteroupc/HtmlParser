@@ -1,12 +1,11 @@
 /*
-Written in 2013 by Peter Occil.  
+Written in 2013 by Peter Occil.
 Any copyright is dedicated to the Public Domain.
 http://creativecommons.org/publicdomain/zero/1.0/
 
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
+at: http://peteroupc.github.io/
 */
-
 
 package com.upokecenter.rdf;
 
@@ -42,10 +41,10 @@ public final class RDFUtility {
   /**
    * A lax comparer of RDF triples which doesn't compare
    * blank node labels
-   * 
+   *
    * @param a
    * @param b
-   * 
+   *
    */
   private static boolean laxEqual(RDFTriple a, RDFTriple b){
     if(a==null)return (b==null);
@@ -67,16 +66,16 @@ public final class RDFUtility {
     return true;
   }
   /**
-   * 
+   *
    * Converts a set of RDF Triples to a JSON object.  The object
    * contains all the subjects, each of which contains a dictionary
    * of predicates for that subject, and each dictionary contains
    * a list of objects for the subject and predicate.  The
    * subject can either be a URI or a blank node (which starts
    * with "_:".
-   * 
+   *
    * @param triples
-   * 
+   *
    */
   /*
   public static com.upokecenter.json.JSONObject RDFtoJSON(Set<RDFTriple> triples){

@@ -48,7 +48,6 @@ public final class Microdata {
     return -1;
   }
 
-
   private static String getHref(IElement node){
     String name=StringUtility.toLowerCaseAscii(node.getLocalName());
     String href="";
@@ -87,8 +86,6 @@ public final class Microdata {
     result.put("items", items);
     return result;
   }
-
-
 
   private static JSONObject getMicrodataObject(IElement item, List<IElement> memory){
     String[] itemtypes=StringUtility.splitAtSpaces(item.getAttribute("itemtype"));

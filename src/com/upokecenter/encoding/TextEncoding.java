@@ -1,8 +1,6 @@
 /*
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
-
-
+at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -42,10 +40,10 @@ import java.util.Map;
 import com.upokecenter.util.StringUtility;
 
 /**
- * 
+ *
  * Main class for an API that converts bytes to and from
  * Unicode characters.
- * 
+ *
  * @author Peter
  *
  */
@@ -76,20 +74,20 @@ public final class TextEncoding {
   }
 
   /**
-   * 
+   *
    * An encoding error handler that throws exceptions
    * on decoder and encoder errors.
-   * 
+   *
    */
   public static final IEncodingError ENCODING_ERROR_THROW = new EncodingErrorThrow();
 
   /**
-   * 
+   *
    * An encoding error handler that replaces ill-formed
    * bytes with U+FFFD replacement characters, and replaces
    * values that are not Unicode characters or Unicode characters
    * that can't be converted to bytes with the byte 0x3F.
-   * 
+   *
    */
   public static final IEncodingError ENCODING_ERROR_REPLACE = new EncodingErrorReplace();
   private static Map<String,String> encodingMap=new HashMap<String,String>();
@@ -317,14 +315,14 @@ public final class TextEncoding {
 
   /**
    * Utility method to decode an input byte stream into a string.
-   * 
+   *
    * @param input an input stream containing character data
    * encoded as bytes. If null, throws IllegalArgumentException.
    * @param decoder a text decoder.
    * @param error an object that handles encoding errors.  You
    * can use TextEncoding.ENCODING_ERROR_THROW or
    * TextEncoding.ENCODING_ERROR_REPLACE for this.
-   * 
+   *
    * @throws IOException if the error handler throws an exception
    * or another I/O error occurs
    */
@@ -356,9 +354,9 @@ public final class TextEncoding {
   }
 
   /**
-   * 
+   *
    * Utility method to write a string to an output byte stream.
-   * 
+   *
    * @param str String. If null, throws IllegalArgumentException.
    * Any unpaired surrogates in the string are kept intact in the
    * input to the encoder.
@@ -525,7 +523,7 @@ public final class TextEncoding {
   /**
    * Gets whether an encoding is ASCII compatible
    * within the meaning of the WHATWG's HTML specification.
-   * 
+   *
    * @param name a name of a character encoding
    * @return true or false.  Will return false if the name
    * does not resolve to a supported encoding.
@@ -544,7 +542,7 @@ public final class TextEncoding {
    * Converts a name to a supported character encoding.
    * In this implementation, the return value will be the name preferred in the
    * WHATWG's Encoding specification.
-   * 
+   *
    * @param encoding the name of an encoding
    * @return a character encoding, or null if the name
    * does not resolve to a supported encoding
@@ -573,7 +571,6 @@ public final class TextEncoding {
       return encodingMap.get(encoding);
     return null;
   }
-
 
   private static ITextEncoder setIndexEncoding(String name, ITextEncoder enc){
     synchronized(syncRoot){

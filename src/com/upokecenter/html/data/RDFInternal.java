@@ -70,7 +70,6 @@ final class RDFInternal {
     }
   }
 
-
   private static String suggestBlankNodeName(
       String node, int[] nodeindex, Map<String,RDFTerm> bnodeLabels){
     boolean validnode=(node.length()>0);
@@ -98,7 +97,6 @@ final class RDFInternal {
       nodeindex[0]++;
     }
   }
-
 
   private RDFInternal(){}
 }

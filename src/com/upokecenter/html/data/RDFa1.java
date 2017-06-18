@@ -23,7 +23,6 @@ import com.upokecenter.util.URIUtility;
 
 class RDFa1 implements IRDFParser {
 
-
   private static String getTextNodeText(INode node){
     StringBuilder builder=new StringBuilder();
     for(INode child : node.getChildNodes()){
@@ -266,7 +265,6 @@ class RDFa1 implements IRDFParser {
     bnodeLabels.put(str,term);
     return term;
   }
-
 
   private String getRelTermOrCurie(String attribute,
       Map<String,String> prefixMapping){

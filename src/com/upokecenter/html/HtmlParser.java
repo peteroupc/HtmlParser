@@ -1,8 +1,6 @@
 /*
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
-
-
+at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -99,7 +97,6 @@ final class HtmlParser {
       return "FormattingElement [marker=" + marker + ", token=" + token + "]\n";
     }
   }
-
 
   private enum InsertionMode {
     Initial,
@@ -240,7 +237,6 @@ final class HtmlParser {
       return null;
     }
 
-
     public List<Attr> getAttributes(){
       if(attributes==null)
         return Arrays.asList(new Attr[0]);
@@ -264,7 +260,6 @@ final class HtmlParser {
     public boolean isSelfClosingAck(){
       return selfClosingAck;
     }
-
 
     public void setAttribute(String attrname, String value) {
       if(attributes==null){
@@ -365,12 +360,9 @@ final class HtmlParser {
     CData
   }
 
-
-
   public static final String MATHML_NAMESPACE = "http://www.w3.org/1998/Math/MathML";
 
   public static final String SVG_NAMESPACE = "http://www.w3.org/2000/svg";
-
 
    static int TOKEN_EOF= 0x10000000;
 
@@ -444,11 +436,9 @@ final class HtmlParser {
     "-//webtechs//dtd mozilla html//"
   };
 
-
   private final ConditionalBufferInputStream inputStream;
   private IMarkableCharacterInput charInput=null;
   private EncodingConfidence encoding=null;
-
 
   private boolean error=false;
   private TokenizerState lastState=TokenizerState.Data;
@@ -491,7 +481,6 @@ final class HtmlParser {
   public static final String XML_NAMESPACE="http://www.w3.org/XML/1998/namespace";
   private static final String XMLNS_NAMESPACE="http://www.w3.org/2000/xmlns/";
 
-
   private static <T> T removeAtIndex(List<T> array, int index){
     T ret=array.get(index);
     array.remove(index);
@@ -505,7 +494,6 @@ final class HtmlParser {
   public HtmlParser(InputStream s, String address, String charset) throws IOException {
     this(s,address,charset,null);
   }
-
 
   public HtmlParser(InputStream source, String address,
       String charset, String contentLanguage) throws IOException{
@@ -524,7 +512,6 @@ final class HtmlParser {
     decoder=new Html5Decoder(TextEncoding.getDecoder(encoding.getEncoding()));
     charInput=new StackableCharacterInput(new DecoderCharacterInput(inputStream,decoder));
   }
-
 
   private void addCommentNodeToCurrentNode(int token){
     insertInCurrentNode(createCommentNode(token));
@@ -586,7 +573,6 @@ final class HtmlParser {
     }
   }
 
-
   private void adjustMathMLAttributes(StartTagToken token){
     List<Attr> attributes=token.getAttributes();
     for(Attr attr : attributes){
@@ -595,7 +581,6 @@ final class HtmlParser {
       }
     }
   }
-
 
   private void adjustSvgAttributes(StartTagToken token){
     List<Attr> attributes=token.getAttributes();
@@ -2954,7 +2939,6 @@ final class HtmlParser {
       } else if((token&TOKEN_TYPE_MASK)==TOKEN_COMMENT){
         addCommentNodeToFirst(token);
 
-
       } else if(token==TOKEN_EOF){
         stopParsing();
 
@@ -3009,7 +2993,6 @@ final class HtmlParser {
 
       } else if((token&TOKEN_TYPE_MASK)==TOKEN_COMMENT){
         addCommentNodeToCurrentNode(token);
-
 
       } else if(token==TOKEN_EOF){
         if(!getCurrentNode().isHtmlElement("html")) {
@@ -3192,7 +3175,6 @@ final class HtmlParser {
     return ret;
   }
 
-
   private void fosterParent(Node element) {
     if(openElements.size()==0)return;
     Node fosterParent=openElements.get(0);
@@ -3289,7 +3271,6 @@ final class HtmlParser {
     }
     return null;
   }
-
 
   private Text getFosterParentedTextNode() {
     if(openElements.size()==0)return null;
@@ -3515,8 +3496,6 @@ final class HtmlParser {
 
   }
 
-
-
   private boolean hasHtmlHeaderElementInScope() {
     for(int i=openElements.size()-1;i>=0;i--){
       Element e=openElements.get(i);
@@ -3669,7 +3648,6 @@ final class HtmlParser {
       node.appendChild(element);
     }
   }
-
 
   private void insertString(Node node, String str){
     Text textNode=getTextNodeToInsert(node);
@@ -5782,6 +5760,5 @@ final class HtmlParser {
     openElements.clear();
     formattingElements.clear();
   }
-
 
 }

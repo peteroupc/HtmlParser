@@ -1,8 +1,6 @@
 /*
 If you like this, you should donate to Peter O.
-at: http://upokecenter.com/d/
-
-
+at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -287,7 +285,6 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
     return gb18030table[v]+offset;
   }
 
-
   int gbk1=0;
 
   int gbk2=0;
@@ -301,7 +298,6 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
     return decode(stream, TextEncoding.ENCODING_ERROR_THROW);
   }
 
-
   @Override
   public int decode(InputStream stream, IEncodingError error) throws IOException {
     int[] value=new int[1];
@@ -309,7 +305,6 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
     if(c<=0)return -1;
     return value[0];
   }
-
 
   @Override
   public int decode(InputStream stream, int[] buffer, int offset, int length)
@@ -424,13 +419,11 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
     return (count==0) ? -1 : count;
   }
 
-
   @Override
   public void encode(OutputStream stream, int[] buffer, int offset, int length)
       throws IOException {
     encode(stream,buffer,offset,length,TextEncoding.ENCODING_ERROR_THROW);
   }
-
 
   @Override
   public void encode(OutputStream stream, int[] array, int offset, int length, IEncodingError error)
@@ -478,6 +471,5 @@ final class GbkEncoding implements ITextEncoder, ITextDecoder {
       }
     }
   }
-
 
 }
