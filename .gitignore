@@ -25,6 +25,7 @@ Thumbs.db
 assets/
 bin/
 encoding/
+encodingfldr/
 gen/
 lint.xml
 local.properties
