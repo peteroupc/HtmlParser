@@ -5,6 +5,7 @@
 *.launch
 *.log
 *.map
+*.snk
 *.swp
 *.tmp
 *.userprefs
