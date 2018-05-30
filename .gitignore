@@ -5,6 +5,7 @@
 *.launch
 *.log
 *.map
+*.pyc
 *.snk
 *.swp
 *.tmp
