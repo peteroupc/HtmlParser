@@ -1,6 +1,7 @@
 *.Cache
 *.bak
 *.bat
+*.cache
 *.jar
 *.launch
 *.log
