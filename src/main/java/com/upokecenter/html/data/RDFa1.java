@@ -197,7 +197,7 @@ using com.upokecenter.util;
       int prefix = getCuriePrefixLength (attribute, refIndex, refLength);
       String prefixIri = null;
       if (prefix >= 0) {
-        String prefixName = DataUtilities.ToLowerCaseAscii(
+        String prefixName = com.upokecenter.util.DataUtilities.ToLowerCaseAscii(
             attribute.substring(
               refIndex, (
               refIndex)+((refIndex + prefix) - (refIndex))));
@@ -248,7 +248,7 @@ using com.upokecenter.util;
       String prefixName = null;
       if (prefix >= 0) {
         String blank = "_";
-        prefixName = DataUtilities.ToLowerCaseAscii(
+        prefixName = com.upokecenter.util.DataUtilities.ToLowerCaseAscii(
             attribute.substring(
               refIndex, (
               refIndex)+((refIndex + prefix) - (refIndex))));
@@ -309,9 +309,9 @@ using com.upokecenter.util;
     private String getRelTermOrCurie(
       String attribute,
       Map<String, String> prefixMapping) {
-      return relterms.contains(DataUtilities.ToLowerCaseAscii (attribute)) ?
+      return relterms.contains(com.upokecenter.util.DataUtilities.ToLowerCaseAscii (attribute)) ?
         ("http://www.w3.org/1999/xhtml/vocab#" +
-          DataUtilities.ToLowerCaseAscii (attribute)) :
+          com.upokecenter.util.DataUtilities.ToLowerCaseAscii (attribute)) :
         this.getCurie (attribute, prefixMapping);
     }
 
@@ -365,8 +365,7 @@ using com.upokecenter.util;
           node.getAttribute ("xml:lang") : evalContext.getValueLanguage();
         if (childElement.getLocalName().equals ("Description") &&
           RDF_NAMESPACE.equals (childElement.getNamespaceURI())) {
-          RDFTerm about =
-            this.relativeResolve (childElement.getAttributeNS
+          RDFTerm about = this.relativeResolve (childElement.getAttributeNS
 (RDF_NAMESPACE, "about"
 ));
           // System.out.println("about=%s.charAt(%s)"
@@ -449,7 +448,7 @@ using com.upokecenter.util;
       }
       // Support XML namespaces
       for (Object attrib : node.getAttributes()) {
-        String name = DataUtilities.ToLowerCaseAscii (attrib.getName());
+        String name = com.upokecenter.util.DataUtilities.ToLowerCaseAscii (attrib.getName());
         // System.out.println(attrib);
         if (name.equals ("xmlns")) {
           // System.out.println("xmlns %s",attrib.getValue());

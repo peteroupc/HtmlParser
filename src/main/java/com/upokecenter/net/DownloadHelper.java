@@ -1,7 +1,5 @@
 package com.upokecenter.util;
 /*
-If you like this, you should donate to Peter O.
-at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -54,13 +52,12 @@ using com.upokecenter.util
 
     /**
      * * Connects to a URL to download data from that URL. @param urlString a URL
-     * _string. All schemes (protocols) supported by Java's URLConnection
-     * are supported. Data URLs are also supported. @param callback an
-     * _object to call back on, particularly when the data is ready to be
-     * downloaded. Can be null. If the _object also implements
-     * IDownloadEventListener, it will also have its onConnecting and
-     * onConnected methods called. @return the _object returned by the
-     * callback's processResponse method. @ if an I/O error occurs,
+     * _string. All schemes (protocols) supported by Java's URLConnection are
+     * supported. Data URLs are also supported. @param callback an _object to call
+     * back on, particularly when the data is ready to be downloaded. Can be null.
+     * If the _object also implements IDownloadEventListener, it will also have its
+     * onConnecting and onConnected methods called. @return the _object returned by
+     * the callback's processResponse method. @ if an I/O error occurs,
      * particularly network errors. @ if urlString is null.
      * @param urlString The parameter {@code urlString} is not documented yet.
      * @param callback The parameter {@code callback} is not documented yet.
@@ -74,21 +71,19 @@ using com.upokecenter.util
 
     /**
      * * Connects to a URL to download data from that URL. @param urlString a URL
-     * _string. All schemes (protocols) supported by Java's URLConnection
-     * are supported. Data URLs are also supported. @param callback an
-     * _object to call back on, particularly when the data is ready to be
-     * downloaded. Can be null. If the _object also implements
-     * IDownloadEventListener, it will also have its onConnecting and
-     * onConnected methods called. @param handleErrorResponses if true, the
-     * processResponse method of the supplied callback _object will also be
-     * called if an error response is returned. In this case, the _stream_
-     * argument of that method will contain the error response body, if
-     * any, or null otherwise. If false and an error response is received,
-     * an IOException may be thrown instead of calling the processResponse
-     * method. This parameter does not affect whether an exception is
-     * thrown if the connection fails. @return the _object returned by the
-     * callback's processResponse method. @ if an I/O error occurs,
-     * particularly network errors. @ if urlString is null.
+     * _string. All schemes (protocols) supported by Java's URLConnection are
+     * supported. Data URLs are also supported. @param callback an _object to call
+     * back on, particularly when the data is ready to be downloaded. Can be null.
+     * If the _object also implements IDownloadEventListener, it will also have its
+     * onConnecting and onConnected methods called. @param handleErrorResponses if
+     * true, the processResponse method of the supplied callback _object will also
+     * be called if an error response is returned. In this case, the _stream_
+     * argument of that method will contain the error response body, if any, or
+     * null otherwise. If false and an error response is received, an IOException
+     * may be thrown instead of calling the processResponse method. This parameter
+     * does not affect whether an exception is thrown if the connection fails.
+     * @return the _object returned by the callback's processResponse method. @ if
+     * an I/O error occurs, particularly network errors. @ if urlString is null.
      * @param urlString The parameter {@code urlString} is not documented yet.
      * @param callback The parameter {@code callback} is not documented yet.
      * @param handleErrorResponses The parameter {@code handleErrorResponses} is
@@ -170,8 +165,7 @@ PeterO.Support.File(crinfo.trueCachedFile.toString() + ".cache");
                   }
                 }
                 headers = (cc == null) ? new FileBasedHeaders(urlString,
-  cacheFile.length) :
-                  cc.getHeaders (cacheFile.length);
+  cacheFile.length) : cc.getHeaders (cacheFile.length);
               } catch (IOException ex) {
                 //System.out.println(e.getStackTrace());
                 fresh = false;

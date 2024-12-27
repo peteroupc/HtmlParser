@@ -3,8 +3,6 @@ package com.upokecenter.util;
 using Com.Upokecenter.util;
 
 /*
-If you like this, you should donate to Peter O.
-at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 

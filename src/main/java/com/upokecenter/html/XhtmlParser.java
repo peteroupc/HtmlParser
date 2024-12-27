@@ -38,7 +38,8 @@ using com.upokecenter.util
         xmlBaseElements = new ArrayList<Element>();
       }
       @Override public void Characters(char[] arg0, int arg1, int arg2) {
-        getTextNodeToInsert (getCurrentNode()).text.appendString (new String(arg0, arg1, arg2));
+        getTextNodeToInsert (getCurrentNode()).text.appendString (new
+String(arg0, arg1, arg2));
       }
 
       @Override public void Comment(char[] arg0, int arg1, int arg2) {
@@ -90,7 +91,8 @@ NodeType.TEXT_NODE) {
       }
       @Override public void IgnorableWhitespace(char[] arg0, int arg1, int
 arg2) {
-        getTextNodeToInsert (getCurrentNode()).text.appendString (new String(arg0, arg1, arg2));
+        getTextNodeToInsert (getCurrentNode()).text.appendString (new
+String(arg0, arg1, arg2));
       }
 
       @Override public void ProcessingInstruction(String arg0, String arg1) {
@@ -103,7 +105,7 @@ arg2) {
       public InputSource<InputStream> resolveEntity(String name, String publicId,
         String baseURI, String systemId) {
         // Always load a blank external entity
-        return new InputSource<InputStream>(new MemoryStream(new byte[] { }));
+        return new InputSource<InputStream>(new java.io.ByteArrayInputStream(new byte[] { }));
       }
 
       void setDocument(Document doc) {

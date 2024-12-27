@@ -1,7 +1,5 @@
 package com.upokecenter.util;
 /*
-If you like this, you should donate to Peter O.
-at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -41,8 +39,8 @@ import java.util.*;
 
     /**
      * Gets an attribute of this element, with the given _namespace name and local
-     * name. @param _namespace the attribute's _namespace name. @param name
-     * the attribute's local name.
+     * name. @param _namespace the attribute's _namespace name. @param name the
+     * attribute's local name.
      * @return The return value is not documented yet.
      */
     String GetAttributeNS (String _namespace, String name);
@@ -63,10 +61,10 @@ import java.util.*;
 
     /**
      * Gets all descendents, both direct and indirect, that have the specified tag
-     * name, using a basic case-insensitive comparison. (Two strings are
-     * equal in such a comparison, if they match after converting the basic
-     * upper-case letters A to Z (U+0041 to U+005A) in both strings to
-     * basic lower-case letters.).
+     * name, using a basic case-insensitive comparison. (Two strings are equal in
+     * such a comparison, if they match after converting the basic uppercase
+     * letters A to Z (U+0041 to U+005A) in both strings to basic lowercase
+     * letters.).
      * @param tagName A tag name.
      * @return The return value is not documented yet.
      */
@@ -93,7 +91,7 @@ import java.util.*;
 
     /**
      * Gets the _namespace name of this element. For HTML elements, it will equal
-     *  "http://www.w3.org/1999/xhtml".
+     * "http://www.w3.org/1999/xhtml".
      * @return The return value is not documented yet.
      */
     String GetNamespaceURI();

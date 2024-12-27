@@ -1,11 +1,10 @@
 package com.upokecenter.util;
 /*
 Written in 2013 by Peter Occil.
-Any copyright is dedicated to the Public Domain.
-http://creativecommons.org/publicdomain/zero/1.0/
+Any copyright to this work is released to the Public Domain.
+In case this is not possible, this work is also
+licensed under the Unlicense: https://unlicense.org/
 
-If you like this, you should donate to Peter O.
-at: http://peteroupc.github.io/
 */
 
 import java.util.*;
@@ -566,7 +565,7 @@ import com.upokecenter.text.*;
               atflag = true;
               String bstr = buffer.toString();
               for (int i = 0; i < bstr.length(); ++i) {
-                int cp = DataUtilities.CodePointAt (bstr, i);
+                int cp = com.upokecenter.util.DataUtilities.CodePointAt (bstr, i);
                 if (cp >= 0x10000) {
                   ++i;
                 }
@@ -693,7 +692,7 @@ import com.upokecenter.text.*;
           case Port:
             if (c >= '0' && c <= '9') {
               if (c != '0') {
-                portstate = 2; // first non-zero found
+                portstate = 2; // first nonzero found
               } else if (portstate == 0) {
                 portstate = 1; // have a port number
               }
@@ -755,7 +754,7 @@ import com.upokecenter.text.*;
                 // this case
                 String bstr = buffer.toString();
                 for (int i = 0; i < bstr.length(); ++i) {
-                  int ch = DataUtilities.CodePointAt (bstr, i);
+                  int ch = com.upokecenter.util.DataUtilities.CodePointAt (bstr, i);
                   if (ch >= 0x10000) {
                     ++i;
                   }

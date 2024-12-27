@@ -1,17 +1,16 @@
 package com.upokecenter.util;
 /*
 Written in 2013 by Peter Occil.
-Any copyright is dedicated to the Public Domain.
-http://creativecommons.org/publicdomain/zero/1.0/
+Any copyright to this work is released to the Public Domain.
+In case this is not possible, this work is also
+licensed under the Unlicense: https://unlicense.org/
 
-If you like this, you should donate to Peter O.
-at: http://peteroupc.github.io/
 */
 
 import java.util.*;
 
   /**
-   * Contains utility methods for working with strings.
+   * Contains auxiliary methods for working with strings.
    */
   public final class StringUtility {
 private StringUtility() {
@@ -42,13 +41,12 @@ private StringUtility() {
     /**
      * Splits a string by a delimiter. If the string ends with the delimiter, the
      * result will end with an empty string. If the string begins with the
-     * delimiter, the result will start with an empty string. If the
-     * delimiter is null or empty, exception. @param s a string to split.
+     * delimiter, the result will start with an empty string. If the delimiter is
+     * null or empty, exception. @param s a string to split.
      * @param str The parameter {@code str} is a text string.
      * @param delimiter A string to signal where each substring begins and ends.
      * @return An array containing strings that are split by the delimiter. If s is
-     * null or empty, returns an array whose sole element is the empty
-     * string.
+     * null or empty, returns an array whose sole element is the empty string.
      * @throws NullPointerException The parameter {@code delimiter} is null.
      * @throws IllegalArgumentException Delimiter is empty.
      */
@@ -85,14 +83,14 @@ private StringUtility() {
           index = index2 + delimLength;
         }
       }
-      return strings.toArray(new String[] { });
+      return (String[])strings.toArray(new String[] { });
     }
 
     /**
      * Splits a string separated by space characters other than form feed. This
-     * method acts as though it strips leading and trailing space
-     * characters from the string before splitting it. The space characters
-     * used here are U+0009, U+000A, U+000D, and U+0020.
+     * method acts as though it strips leading and trailing space characters from
+     * the string before splitting it. The space characters used here are U+0009,
+     * U+000A, U+000D, and U+0020.
      * @param s A string. Can be null.
      * @return An array of all items separated by spaces. If string is null or
      * empty, returns an empty array.
@@ -136,14 +134,14 @@ private StringUtility() {
         }
         strings.add(s.substring(lastIndex, (lastIndex)+(index - lastIndex)));
       }
-      return strings.ToArray();
+      return strings.toArray(new String[] { });
     }
 
     /**
      * Splits a string separated by space characters. This method acts as though it
      * strips leading and trailing space characters from the string before
-     * splitting it. The space characters are U+0009, U+000A, U+000C,
-     * U+000D, and U+0020.
+     * splitting it. The space characters are U+0009, U+000A, U+000C, U+000D, and
+     * U+0020.
      * @param s A string. Can be null.
      * @return An array of all items separated by spaces. If string is null or
      * empty, returns an empty array.
@@ -187,6 +185,6 @@ private StringUtility() {
         }
         strings.add(s.substring(lastIndex, (lastIndex)+(index - lastIndex)));
       }
-      return strings.ToArray();
+      return strings.toArray(new String[] { });
     }
   }

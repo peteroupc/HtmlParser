@@ -205,7 +205,7 @@ import com.upokecenter.cbor.*;
     }
 
     private static String ElementName(IElement element) {
-      return DataUtilities.ToLowerCaseAscii (element.getLocalName());
+      return com.upokecenter.util.DataUtilities.ToLowerCaseAscii (element.getLocalName());
     }
 
     private static List<IElement> GetChildElements(INode e) {
@@ -347,7 +347,7 @@ import com.upokecenter.cbor.*;
           }
         } else if (
           MatchDateTimePattern(
-            DataUtilities.ToLowerCaseAscii (text),
+            com.upokecenter.util.DataUtilities.ToLowerCaseAscii (text),
             null,
         new String[] {
           "%h:%m:%sa.m.",
@@ -368,7 +368,7 @@ import com.upokecenter.cbor.*;
           }
         } else if (
           MatchDateTimePattern(
-            DataUtilities.ToLowerCaseAscii (text),
+            com.upokecenter.util.DataUtilities.ToLowerCaseAscii (text),
             null,
         new String[] {
           "%h:%m:%sp.m.",
@@ -435,7 +435,7 @@ import com.upokecenter.cbor.*;
     }
 
     private static String GetHref(IElement node) {
-      String name = DataUtilities.ToLowerCaseAscii (node.getLocalName());
+      String name = com.upokecenter.util.DataUtilities.ToLowerCaseAscii (node.getLocalName());
       String href = "";
       if ("a".equals(name) ||
         "link".equals(name) ||
@@ -509,8 +509,8 @@ import com.upokecenter.cbor.*;
 
     /**
      * Scans an HTML document for Microformats.org metadata. The resulting object
-     *  will contain an "items" property, an array of all Microformats
-     *  items. Each item will have a "type" and "properties" properties.
+     * will contain an "items" property, an array of all Microformats items. Each
+     * item will have a "type" and "properties" properties.
      * @param root The document to scan.
      * @return A JSON object containing Microformats metadata.
      * @throws NullPointerException The parameter {@code root} is null.
@@ -524,8 +524,8 @@ import com.upokecenter.cbor.*;
 
     /**
      * Scans an HTML element for Microformats.org metadata. The resulting object
-     *  will contain an "items" property, an array of all Microformats
-     *  items. Each item will have a "type" and "properties" properties.
+     * will contain an "items" property, an array of all Microformats items. Each
+     * item will have a "type" and "properties" properties.
      * @param root The element to scan.
      * @return A JSON object containing Microformats metadata.
      * @throws NullPointerException The parameter {@code root} is null.
@@ -534,8 +534,8 @@ import com.upokecenter.cbor.*;
       if (root == null) {
         throw new NullPointerException("root");
       }
-      var obj = CBORObject.NewMap();
-      var items = CBORObject.NewArray();
+      CBORObject obj = CBORObject.NewMap();
+      CBORObject items = CBORObject.NewArray();
       PropertyWalk (root, null, items);
       obj.Add ("items", items);
       return obj;
@@ -569,7 +569,7 @@ import com.upokecenter.cbor.*;
       if (root.getAttribute ("title") != null) {
         return root.getAttribute ("title");
       }
-      return (DataUtilities.ToLowerCaseAscii (root.getLocalName()).equals(
+      return (com.upokecenter.util.DataUtilities.ToLowerCaseAscii (root.getLocalName()).equals(
         "img") &&
           !StringUtility.isNullOrSpaces (root.getAttribute ("alt"))) ?
         root.getAttribute ("alt") : GetValueContent (root, false);
@@ -600,11 +600,11 @@ import com.upokecenter.cbor.*;
       if (root == null) {
         throw new NullPointerException("root");
       }
-      var obj = CBORObject.NewMap();
-      var items = CBORObject.NewArray();
-      var item = CBORObject.NewMap();
+      CBORObject obj = CBORObject.NewMap();
+      CBORObject items = CBORObject.NewArray();
+      CBORObject item = CBORObject.NewMap();
       AccumulateValue (item, "type", "rel");
-      var props = CBORObject.NewMap();
+      CBORObject props = CBORObject.NewMap();
       RelWalk (root, props);
       item.Add ("properties", props);
       items.Add (item);
@@ -614,7 +614,7 @@ import com.upokecenter.cbor.*;
 
     private static String[] GetRelNames(IElement element) {
       String[] ret = StringUtility.SplitAtSpTabCrLfFf(
-          DataUtilities.ToLowerCaseAscii (element.getAttribute ("rel")));
+          com.upokecenter.util.DataUtilities.ToLowerCaseAscii (element.getAttribute ("rel")));
       if (ret.length == 0) {
         return ret;
       }
@@ -678,8 +678,8 @@ import com.upokecenter.cbor.*;
 
     /**
      * Gets a Microformats "u-*" value from an HTML element. It tries to find the
-     * URL from the element's attributes, if possible; otherwise from the
-     * element's text.
+     * URL from the element's attributes, if possible; otherwise from the element's
+     * text.
      * @param e An HTML element.
      * @return A URL, or the empty _string if none was found.
      */
@@ -809,12 +809,12 @@ import com.upokecenter.cbor.*;
     private static boolean ImplyForLink(
       IElement root,
       CBORObject subProperties) {
-      if (DataUtilities.ToLowerCaseAscii (root.getLocalName()).equals("a") && root.getAttribute ("href") != null) {
+      if (com.upokecenter.util.DataUtilities.ToLowerCaseAscii (root.getLocalName()).equals("a") && root.getAttribute ("href") != null) {
         // get the link's URL
         SetValueIfAbsent (subProperties, "url", GetUValue (root));
         List<IElement> elements = GetChildElements (root);
         if (elements.size() == 1 &&
-          DataUtilities.ToLowerCaseAscii (elements.get(0).getLocalName()).equals(
+          com.upokecenter.util.DataUtilities.ToLowerCaseAscii (elements.get(0).getLocalName()).equals(
             "img")) {
           // try to get the ALT/TITLE
           // from the image
@@ -1117,7 +1117,7 @@ import com.upokecenter.cbor.*;
 
     private static String[] ParseLegacyRel(String str) {
       String[] ret = StringUtility.SplitAtSpTabCrLfFf(
-          DataUtilities.ToLowerCaseAscii (str));
+          com.upokecenter.util.DataUtilities.ToLowerCaseAscii (str));
       if (ret.length == 0) {
         return ret;
       }
@@ -1198,14 +1198,14 @@ import com.upokecenter.cbor.*;
         } else if (types.size() > 0) {
           // this is a child microformat
           // with no properties
-          var obj = CBORObject.NewMap();
+          CBORObject obj = CBORObject.NewMap();
           obj.set("type",CBORObject.FromObject (types));
           // for holding child elements with
           // properties
-          var subProperties = CBORObject.NewMap();
+          CBORObject subProperties = CBORObject.NewMap();
           // for holding child microformats with no
           // property class
-          var subChildren = CBORObject.NewArray();
+          CBORObject subChildren = CBORObject.NewArray();
           for (Object child : root.getChildNodes()) {
             if (child instanceof IElement) {
               PropertyWalk(
@@ -1231,7 +1231,7 @@ import com.upokecenter.cbor.*;
               }
             }
             // Also imply u-photo
-            if (DataUtilities.ToLowerCaseAscii (root.getLocalName()).equals(
+            if (com.upokecenter.util.DataUtilities.ToLowerCaseAscii (root.getLocalName()).equals(
               "img") && root.getAttribute ("src") !=
 null) {
               SetValueIfAbsent (subProperties, "photo", GetUValue (root));

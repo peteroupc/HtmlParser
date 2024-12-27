@@ -8,7 +8,6 @@
 *.map
 *.nupkg
 *.pyc
-*.snk
 *.swp
 *.tmp
 *.userprefs

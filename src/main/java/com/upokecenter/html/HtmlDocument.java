@@ -25,8 +25,8 @@ private HtmlDocument() {
 
     /**
      * * Gets the absolute URL from an HTML element. @param node A HTML element
-     * containing a URL @return an absolute URL of the element's SRC, DATA,
-     * or HREF, or an empty _string if none exists.
+     * containing a URL @return an absolute URL of the element's SRC, DATA, or
+     * HREF, or an empty _string if none exists.
      * @param node The parameter {@code node} is not documented yet.
      * @return A string object.
      */
@@ -59,9 +59,9 @@ private HtmlDocument() {
 
     /**
      * Utility method for converting a relative URL to an absolute one, using the
-     * _base URI and the encoding of the given node. @param node An HTML
-     * node, usually an IDocument or IElement @param href A relative or
-     * absolute URL. @return An absolute URL.
+     * _base URI and the encoding of the given node. @param node An HTML node,
+     * usually an IDocument or IElement @param href A relative or absolute URL.
+     * @return An absolute URL.
      * @param node The parameter {@code node} is not documented yet.
      * @param href The parameter {@code href} is not documented yet.
      * @return A string object.
@@ -82,7 +82,7 @@ private HtmlDocument() {
      * @return An IDocument object.
      */
     public static IDocument FromString(String str) {
-      byte[] bytes = DataUtilities.GetUtf8Bytes (str, true);
+      byte[] bytes = com.upokecenter.util.DataUtilities.GetUtf8Bytes (str, true);
       return ParseStream (DataIO.ToReader (bytes));
     }
 
@@ -98,7 +98,7 @@ private HtmlDocument() {
       String str,
       String state,
       String lst) {
-      byte[] bytes = DataUtilities.GetUtf8Bytes (str, true);
+      byte[] bytes = com.upokecenter.util.DataUtilities.GetUtf8Bytes (str, true);
 
       // TODO: add lang (from Content-Language?)
       HtmlParser parser = new HtmlParser(
@@ -119,7 +119,7 @@ private HtmlDocument() {
      * @return An IDocument object.
      */
     public static IDocument FromString(String str, boolean checkError) {
-      byte[] bytes = DataUtilities.GetUtf8Bytes (str, true);
+      byte[] bytes = com.upokecenter.util.DataUtilities.GetUtf8Bytes (str, true);
       return ParseStream (DataIO.ToReader (bytes), checkError);
     }
 
@@ -188,7 +188,7 @@ private HtmlDocument() {
       String str,
       IElement context,
       boolean checkError) {
-      byte[] bytes = DataUtilities.GetUtf8Bytes (str, true);
+      byte[] bytes = com.upokecenter.util.DataUtilities.GetUtf8Bytes (str, true);
 
       // TODO: add lang (from Content-Language?)
       HtmlParser parser = new HtmlParser(
@@ -265,13 +265,13 @@ private HtmlDocument() {
 
     /**
      * * Parses an HTML document from an input stream, using the given URL as its
-     * address. @ if an I/O error occurs @ if the given address is not an
-     * absolute URL.
+     * address. @ if an I/O error occurs @ if the given address is not an absolute
+     * URL.
      * @param stream An input stream representing an HTML document.
      * @param address An absolute URL representing an address.
      * @param contentType Desired MIME media type of the document, including the
-     *  charset parameter, if any. Examples: "text/Html" or
-     *  "application/xhtml+xml; charset=utf-8".
+     * charset parameter, if any. Examples: "text/Html" or "application/xhtml+xml;
+     * charset=utf-8".
      * @param contentLang Language tag from the Content-Language header.
      * @param checkError Either {@code true} or {@code false}.
      * @return An IDocument representing the HTML document.

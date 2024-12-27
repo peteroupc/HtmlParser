@@ -1,7 +1,5 @@
 package com.upokecenter.util;
 /*
-If you like this, you should donate to Peter O.
-at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -88,7 +86,7 @@ using com.upokecenter.util;
       if (name == null) {
         return this.valueList.get(0);
       }
-      name = DataUtilities.ToLowerCaseAscii (name);
+      name = com.upokecenter.util.DataUtilities.ToLowerCaseAscii (name);
       String last = null;
       for (int i = 1; i < this.valueList.size(); i += 2) {
         String key = this.valueList.get(i);

@@ -10,8 +10,6 @@ import com.upokecenter.util.*;
 import com.upokecenter.text.*;
 
 /*
-If you like this, you should donate to Peter O.
-at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -145,7 +143,7 @@ THE SOFTWARE.
       if (value == null) {
         return value;
       }
-      // We assume value is lower-case here
+      // We assume value is lowercase here
       int index = 0;
       int length = value.length();
       char c = (char)0;
@@ -450,11 +448,9 @@ THE SOFTWARE.
             return AtomFeed;
           } else if (index + 7 <= endPos && (header[index] & 0xFF) == 'r' &&
             (header[index + 1] & 0xFF) == 'd' && (header[index + 2] & 0xFF)
-== 'f'
-            &&
+== 'f'&&
             (header[index + 3] & 0xFF) == ':' && (header[index + 4] & 0xFF)
-== 'R'
-            &&
+== 'R'&&
             (header[index + 5] & 0xFF) == 'D' && (header[index + 6] & 0xFF)
 == 'F'
 ) {

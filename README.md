@@ -35,4 +35,4 @@ images specified on a Web page.
 Copyright (C) 2013 Peter Occil.  Licensed under the Expat License.
 
 Sample code on this README file is dedicated to the public domain under CC0:
-[http://creativecommons.org/publicdomain/zero/1.0/](http://creativecommons.org/publicdomain/zero/1.0/)
+[https://creativecommons.org/publicdomain/zero/1.0/](https://creativecommons.org/publicdomain/zero/1.0/)

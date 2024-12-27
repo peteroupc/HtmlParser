@@ -3,8 +3,6 @@ package com.upokecenter.util;
 import java.util.*;
 
 /*
-If you like this, you should donate to Peter O.
-at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -60,10 +58,10 @@ THE SOFTWARE.
 
     /**
      * Gets all descendents, both direct and indirect, that have the specified tag
-     * name, using a basic case-insensitive comparison. (Two strings are
-     * equal in such a comparison, if they match after converting the basic
-     * upper-case letters A to Z (U+0041 to U+005A) in both strings to
-     * basic lower-case letters.) @param string A tag name.
+     * name, using a basic case-insensitive comparison. (Two strings are equal in
+     * such a comparison, if they match after converting the basic uppercase
+     * letters A to Z (U+0041 to U+005A) in both strings to basic lowercase
+     * letters.) @param string A tag name.
      * @param _string The parameter {@code _string} is a text string.
      * @return The return value is not documented yet.
      */

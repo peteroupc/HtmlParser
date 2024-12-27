@@ -5,8 +5,6 @@ import java.util.*;
 using Com.Upokecenter.util;
 import com.upokecenter.util.*;
 /*
-If you like this, you should donate to Peter O.
-at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -164,7 +162,7 @@ THE SOFTWARE.
       }
       List<IElement> ret = new ArrayList<IElement>();
       if (((Document)this.getOwnerDocument()).isHtmlDocument()) {
-        String lowerTagName = DataUtilities.ToLowerCaseAscii (tagName);
+        String lowerTagName = com.upokecenter.util.DataUtilities.ToLowerCaseAscii (tagName);
         for (Object node : this.getChildNodes()) {
           this.CollectElementsHtml (node, tagName, lowerTagName, ret);
         }
@@ -222,7 +220,7 @@ THE SOFTWARE.
       }
       return ((this.getOwnerDocument() is Document) &&
           HtmlCommon.HTML_NAMESPACE.equals(this._namespace)) ?
-        DataUtilities.ToUpperCaseAscii (tagName) : tagName;
+        com.upokecenter.util.DataUtilities.ToUpperCaseAscii (tagName) : tagName;
     }
 
     @Override public final String getTextContent() {

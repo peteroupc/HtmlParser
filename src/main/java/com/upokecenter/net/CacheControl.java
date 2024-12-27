@@ -1,7 +1,5 @@
 package com.upokecenter.util;
 /*
-If you like this, you should donate to Peter O.
-at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -43,7 +41,7 @@ using com.upokecenter.util
         for (int i = 1; i < cc.headers.size(); i += 2) {
           String key = cc.headers.get(i);
           if (key != null) {
-            key = DataUtilities.ToLowerCaseAscii (key);
+            key = com.upokecenter.util.DataUtilities.ToLowerCaseAscii (key);
             if ("content-length".equals (key) || "age".equals (key)) {
               continue;
             }
@@ -68,7 +66,7 @@ using com.upokecenter.util
         if (name == null) {
           return list.get(0);
         }
-        name = DataUtilities.ToLowerCaseAscii (name);
+        name = com.upokecenter.util.DataUtilities.ToLowerCaseAscii (name);
         String last = null;
         for (int i = 1; i < list.size(); i += 2) {
           String key = list.get(i);
@@ -135,7 +133,7 @@ using com.upokecenter.util
           cc.uri = jsonobj.get("uri").AsString();
           cc.requestMethod = jsonobj.get("requestMethod").AsString();
           if (cc.requestMethod != null) {
-            cc.requestMethod = DataUtilities.ToLowerCaseAscii
+            cc.requestMethod = com.upokecenter.util.DataUtilities.ToLowerCaseAscii
 (cc.requestMethod);
           }
           cc.headers = new ArrayList<String>();
@@ -143,7 +141,7 @@ using com.upokecenter.util
           for (int i = 0; i < jsonarr.size(); ++i) {
             String str = jsonarr.get(i).AsString();
             if (str != null && (i % 2) != 0) {
-              str = DataUtilities.ToLowerCaseAscii (str);
+              str = com.upokecenter.util.DataUtilities.ToLowerCaseAscii (str);
               if ("age".equals (str) ||
                              "connection".equals (str) ||
                              "keep-alive".equals (str) ||
@@ -306,7 +304,7 @@ storable
       }
       String pragma = headers.getHeaderField ("pragma");
       if (pragma != null && "no-cache"
-        .equals (DataUtilities.ToLowerCaseAscii (pragma))) {
+        .equals (com.upokecenter.util.DataUtilities.ToLowerCaseAscii (pragma))) {
         noCache = true;
         //System.out.println("returning early because it saw pragma no-cache");
         return null;
@@ -367,7 +365,7 @@ storable
         // caching responses other than GET responses not supported
         return null;
       }
-      cc.requestMethod = DataUtilities.ToLowerCaseAscii (reqmethod);
+      cc.requestMethod = com.upokecenter.util.DataUtilities.ToLowerCaseAscii (reqmethod);
       cc.cacheability = 2;
       if (noCache) {
         cc.cacheability = 0;
@@ -387,7 +385,7 @@ storable
           //System.out.println("null key");
           continue;
         }
-        key = DataUtilities.ToLowerCaseAscii (key);
+        key = com.upokecenter.util.DataUtilities.ToLowerCaseAscii (key);
         // to simplify matters, don't include Age header fields;
         // so-called hop-by-hop headers are also not included
         if (!"age".equals (key) &&

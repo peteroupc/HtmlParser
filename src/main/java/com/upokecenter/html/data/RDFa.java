@@ -208,9 +208,9 @@ private ChainingDirection propVarvaluedirection;
       if (key == null) {
         return map.get(null);
       }
-      key = DataUtilities.ToLowerCaseAscii (key);
+      key = com.upokecenter.util.DataUtilities.ToLowerCaseAscii (key);
       for (Object k : map.keySet()) {
-        if (key.equals (DataUtilities.ToLowerCaseAscii (k))) {
+        if (key.equals (com.upokecenter.util.DataUtilities.ToLowerCaseAscii (k))) {
           return map.get(k);
         }
       }
@@ -349,7 +349,7 @@ private ChainingDirection propVarvaluedirection;
           }
         } else if (state == 4) { // IRI
           if (c == 0x09 || c == 0x0a || c == 0x0d || c == 0x20) {
-            String prefixString = DataUtilities.ToLowerCaseAscii
+            String prefixString = com.upokecenter.util.DataUtilities.ToLowerCaseAscii
 (prefix.toString());
             // add prefix only if it isn't empty;
             // empty prefixes will not have a mapping
@@ -376,10 +376,10 @@ private ChainingDirection propVarvaluedirection;
         }
       }
       if (state == 4) {
-        strings.add(DataUtilities.ToLowerCaseAscii (prefix.toString()));
+        strings.add(com.upokecenter.util.DataUtilities.ToLowerCaseAscii (prefix.toString()));
         strings.add(iri.toString());
       }
-      return strings.ToArray();
+      return strings.toArray(new String[] { });
     }
 
     private int blankNode;
@@ -387,7 +387,6 @@ private ChainingDirection propVarvaluedirection;
     HashMap<String, RDFTerm>();
 
     /**
-     *
      * @param document The parameter {@code document} is an IDocument object.
      */
     public RDFa(IDocument document) {
@@ -419,7 +418,7 @@ private ChainingDirection propVarvaluedirection;
       this.context.getValueTermMap().put(
         "role",
         "http://www.w3.org/1999/xhtml/vocab#role");
-      this.context.getValueIriMap().put("cc", "http://creativecommons.org/ns#");
+      this.context.getValueIriMap().put("cc", "https://creativecommons.org/ns#");
       this.context.getValueIriMap().put("ctag", "http://commontag.org/ns#");
       this.context.getValueIriMap().put("dc", "http://purl.org/dc/terms/");
       this.context.getValueIriMap().put("dcterms", "http://purl.org/dc/terms/");
@@ -533,7 +532,7 @@ private ChainingDirection propVarvaluedirection;
       int prefix = getCuriePrefixLength (attribute, refIndex, refLength);
       String prefixIri = null;
       if (prefix >= 0) {
-        String prefixName = DataUtilities.ToLowerCaseAscii(
+        String prefixName = com.upokecenter.util.DataUtilities.ToLowerCaseAscii(
             attribute.substring(
               refIndex, (
               refIndex)+((refIndex + prefix) - (refIndex))));
@@ -576,7 +575,7 @@ private ChainingDirection propVarvaluedirection;
       String prefixName = null;
       if (prefix >= 0) {
         String blank = "_";
-        prefixName = DataUtilities.ToLowerCaseAscii(
+        prefixName = com.upokecenter.util.DataUtilities.ToLowerCaseAscii(
             attribute.substring(
               refIndex, (
               refIndex)+((refIndex + prefix) - (refIndex))));
@@ -742,7 +741,7 @@ private ChainingDirection propVarvaluedirection;
       }
       // Support deprecated XML ValueNamespaces
       for (Object attrib : node.getAttributes()) {
-        String name = DataUtilities.ToLowerCaseAscii (attrib.getName());
+        String name = com.upokecenter.util.DataUtilities.ToLowerCaseAscii (attrib.getName());
         // System.out.println(attrib);
         if (name.equals ("xmlns")) {
           // System.out.println("xmlns %s",attrib.getValue());

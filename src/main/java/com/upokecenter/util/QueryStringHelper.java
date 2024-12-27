@@ -1,10 +1,10 @@
 package com.upokecenter.util;
-// Written by Peter O. in 2013.
-// Any copyright is dedicated to the Public Domain.
-// http://creativecommons.org/publicdomain/zero/1.0/
+// Written by Peter O.
+// Any copyright to this work is released to the Public Domain.
+// In case this is not possible, this work is also
+// licensed under the Unlicense: https://unlicense.org/
 //
-// If you like this, you should donate to Peter O.
-// at: http://peteroupc.github.io/
+//
 //
 
 import java.util.*;
@@ -40,7 +40,7 @@ import java.util.*;
           index = index2 + delimLength;
         }
       }
-      return strings.ToArray();
+      return strings.toArray(new String[] { });
     }
 
     private static int ToHexNumber(int c) {
@@ -244,7 +244,7 @@ import java.util.*;
         }
         ++index; // move to after the start bracket
       }
-      return path.ToArray();
+      return path.toArray(new String[] { });
     }
 
     private static boolean IsList(Map<String, Object> dict) {

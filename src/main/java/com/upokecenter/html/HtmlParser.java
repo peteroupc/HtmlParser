@@ -1,7 +1,5 @@
 package com.upokecenter.util;
 /*
-If you like this, you should donate to Peter O.
-at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -1105,7 +1103,7 @@ this.IsMathMLTextIntegrationPoint (node) ||
         if (mathml && tag.getName().equals("annotation-xml")) {
           String encoding = tag.GetAttribute ("encoding");
           if (encoding != null) {
-            encoding = DataUtilities.ToLowerCaseAscii (encoding);
+            encoding = com.upokecenter.util.DataUtilities.ToLowerCaseAscii (encoding);
             if (encoding.equals("text/Html") ||
               encoding.equals("application/xhtml+xml")) {
               this.integrationElements.add(e);
@@ -1147,8 +1145,7 @@ this.IsMathMLTextIntegrationPoint (node) ||
               this.noforeign = true;
               return this.ApplyInsertionMode (valueToken, null);
             }
-            String nodeName =
-              DataUtilities.ToLowerCaseAscii (node.getLocalName());
+            String nodeName = com.upokecenter.util.DataUtilities.ToLowerCaseAscii (node.getLocalName());
             if (valueName.equals(nodeName)) {
               while (true) {
                 IElement node2 = this.PopCurrentNode();
@@ -1252,8 +1249,7 @@ this.IsMathMLTextIntegrationPoint (node) ||
               if (!matchesHtml || doctype.getForceQuirks()) {
                 this.valueDocument.setMode (DocumentMode.QuirksMode);
               } else {
-                doctypePublicLC =
-                  DataUtilities.ToLowerCaseAscii (doctypePublic);
+                doctypePublicLC = com.upokecenter.util.DataUtilities.ToLowerCaseAscii (doctypePublic);
                 if ("Html".equals(doctypePublicLC) ||
                                  "-//w3o//dtd w3 Html strict 3.0//en//"
                                  .equals (doctypePublicLC) ||
@@ -1271,10 +1267,10 @@ this.IsMathMLTextIntegrationPoint (node) ||
                 }
               }
               if (this.valueDocument.getMode() != DocumentMode.QuirksMode) {
-                doctypePublicLC = (doctypePublicLC == null) ? (DataUtilities.ToLowerCaseAscii (doctypePublic)) : doctypePublicLC;
+                doctypePublicLC = (doctypePublicLC == null) ? (com.upokecenter.util.DataUtilities.ToLowerCaseAscii (doctypePublic)) : doctypePublicLC;
                 if ("http://www.ibm.getCom()/data/dtd/v11/ibmxhtml1-transitional.dtd"
                   .equals(
-                    DataUtilities.ToLowerCaseAscii (doctypeSystem)) ||
+                    com.upokecenter.util.DataUtilities.ToLowerCaseAscii (doctypeSystem)) ||
                   (!hasSystemId && doctypePublicLC.startsWith(
                     "-//w3c//dtd Html 4.01 frameset//")) || (!hasSystemId &&
                     doctypePublicLC.startsWith(
@@ -1283,7 +1279,7 @@ this.IsMathMLTextIntegrationPoint (node) ||
                 }
               }
               if (this.valueDocument.getMode() != DocumentMode.QuirksMode) {
-                doctypePublicLC = (doctypePublicLC == null) ? (DataUtilities.ToLowerCaseAscii (doctypePublic)) : doctypePublicLC;
+                doctypePublicLC = (doctypePublicLC == null) ? (com.upokecenter.util.DataUtilities.ToLowerCaseAscii (doctypePublic)) : doctypePublicLC;
                 if (
                   doctypePublicLC.startsWith(
                     "-//w3c//dtd xhtml 1.0 frameset//") || doctypePublicLC.startsWith(
@@ -1444,12 +1440,12 @@ this.IsMathMLTextIntegrationPoint (node) ||
                   }
                   return true;
                 }
-                String value = DataUtilities.ToLowerCaseAscii(
+                String value = com.upokecenter.util.DataUtilities.ToLowerCaseAscii(
                     valueElement.GetAttribute ("http-equiv"));
                 if ("content-type".equals(value)) {
                   value = valueElement.GetAttribute ("content");
                   if (value != null) {
-                    value = DataUtilities.ToLowerCaseAscii (value);
+                    value = com.upokecenter.util.DataUtilities.ToLowerCaseAscii (value);
                     charset = CharsetSniffer.extractCharsetFromMeta (value);
                     if (true) {
                       // TODO
@@ -1465,7 +1461,7 @@ this.IsMathMLTextIntegrationPoint (node) ||
                   // HTML5 requires us to use this algorithm
                   // to Parse the Content-Language, rather than
                   // use HTTP parsing (with HeaderParser.getLanguages)
-                  // NOTE: this pragma is non-conforming
+                  // NOTE: this pragma is nonconforming
                   value = valueElement.GetAttribute ("content");
                   if (!((value)==null || (value).length()==0) && value.indexOf(',') <
                     0) {
@@ -2086,7 +2082,7 @@ this.IsMathMLTextIntegrationPoint (node) ||
               tag.AckSelfClosing();
               String attr = this.inputElement.GetAttribute ("type");
               if (attr == null || !"hidden"
-                .equals (DataUtilities.ToLowerCaseAscii (attr))) {
+                .equals (com.upokecenter.util.DataUtilities.ToLowerCaseAscii (attr))) {
                 this.framesetOk = false;
               }
             } else if ("param".equals(valueName) ||
@@ -2814,7 +2810,7 @@ this.IsMathMLTextIntegrationPoint (node) ||
             } else if (valueName.equals("input")) {
               String attr = tag.GetAttribute ("type");
               if (attr == null || !"hidden"
-                .equals (DataUtilities.ToLowerCaseAscii (attr))) {
+                .equals (com.upokecenter.util.DataUtilities.ToLowerCaseAscii (attr))) {
                 this.ParseError();
                 this.doFosterParent = true;
                 this.ApplyInsertionMode(
@@ -2898,7 +2894,7 @@ this.IsMathMLTextIntegrationPoint (node) ||
             boolean nonspace = false;
             String str = this.pendingTableCharacters.toString();
             for (int i = 0; i < str.length(); ++i) {
-              int c = DataUtilities.CodePointAt (str, i);
+              int c = com.upokecenter.util.DataUtilities.CodePointAt (str, i);
               if (c >= 0x10000) {
                 ++c;
               }
@@ -2912,7 +2908,7 @@ this.IsMathMLTextIntegrationPoint (node) ||
               this.ParseError();
               this.doFosterParent = true;
               for (int i = 0; i < str.length(); ++i) {
-                int c = DataUtilities.CodePointAt (str, i);
+                int c = com.upokecenter.util.DataUtilities.CodePointAt (str, i);
                 if (c >= 0x10000) {
                   ++c;
                 }
@@ -4923,7 +4919,7 @@ this.IsMathMLTextIntegrationPoint (node) ||
 
     public List<String[]> ParseTokens(String s, String lst) {
       this.Initialize();
-      ArrayList<String[] ret = new ArrayList<String[]>();
+      ArrayList<String[]> ret = new ArrayList<String[]>();
       StringBuilder characters = new StringBuilder();
       if (lst != null) {
         this.lastStartTag = new StartTagToken(lst);
@@ -4949,7 +4945,7 @@ this.IsMathMLTextIntegrationPoint (node) ||
         int valueToken = this.ParserRead();
         if ((valueToken & TOKEN_TYPE_MASK) != TOKEN_CHARACTER) {
           if (characters.length() > 0) {
-            ret.Add (new String[] { "Character", characters.toString() });
+            ret.add(new String[] { "Character", characters.toString() });
             characters.delete(0, characters.length());
           }
         } else {
@@ -4987,17 +4983,17 @@ this.IsMathMLTextIntegrationPoint (node) ||
           if (tag.IsSelfClosing()) {
             tagarray[index] = "true";
           }
-          ret.Add (tagarray);
+          ret.add(tagarray);
           continue;
         }
         if ((valueToken & TOKEN_TYPE_MASK) == TOKEN_END_TAG) {
           EndTagToken tag = (EndTagToken)this.GetToken (valueToken);
-          ret.Add (new String[] { "EndTag", tag.getName() });
+          ret.add(new String[] { "EndTag", tag.getName() });
           continue;
         }
         if ((valueToken & TOKEN_TYPE_MASK) == TOKEN_DOCTYPE) {
           DocTypeToken tag = (DocTypeToken)this.GetToken (valueToken);
-          ret.Add (new String[] {
+          ret.add(new String[] {
             "DOCTYPE",
             (tag.propVarname = = null ? null : tag.getName().toString()),
             (tag.propVarvaluepublicid = = null ? null : tag.getValuePublicID().toString()),
@@ -5009,7 +5005,7 @@ this.IsMathMLTextIntegrationPoint (node) ||
         if ((valueToken & TOKEN_TYPE_MASK) == TOKEN_COMMENT) {
           CommentToken tag = (CommentToken)this.GetToken (valueToken);
           StringBuilder cv = tag.getCommentValue();
-          ret.Add (new String[] { "Comment", cv.toString() });
+          ret.add(new String[] { "Comment", cv.toString() });
           continue;
         }
         throw new IllegalStateException();
@@ -5209,7 +5205,7 @@ this.IsMathMLTextIntegrationPoint (node) ||
               this.tokenQueue.add(0x2f);
               String tbs = this.tempBuilder.toString();
               for (int i = 0; i < tbs.length(); ++i) {
-                int c2 = DataUtilities.CodePointAt (tbs, i);
+                int c2 = com.upokecenter.util.DataUtilities.CodePointAt (tbs, i);
                 if (c2 >= 0x10000) {
                   ++i;
                 }
@@ -5634,7 +5630,7 @@ TokenizerState.ScriptDataDoubleEscaped :
               this.tokenQueue.add(0x2f); // solidus
               String tbs = this.tempBuilder.toString();
               for (int i = 0; i < tbs.length(); ++i) {
-                int c2 = DataUtilities.CodePointAt (tbs, i);
+                int c2 = com.upokecenter.util.DataUtilities.CodePointAt (tbs, i);
                 if (c2 >= 0x10000) {
                   ++i;
                 }
@@ -6578,7 +6574,7 @@ TokenizerState.ScriptDataDoubleEscaped :
               // Emit the tokens
               int ret1 = 0;
               for (int i = 0; i < size; ++i) {
-                int c2 = DataUtilities.CodePointAt (str, i);
+                int c2 = com.upokecenter.util.DataUtilities.CodePointAt (str, i);
                 if (i > 0) {
                   this.tokenQueue.add(c2);
                 } else {

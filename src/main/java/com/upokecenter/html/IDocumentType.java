@@ -1,7 +1,5 @@
 package com.upokecenter.util;
 /*
-If you like this, you should donate to Peter O.
-at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -32,7 +30,7 @@ THE SOFTWARE.
   public interface IDocumentType extends INode {
     /**
      * Gets the name of this document type. For HTML documents, this should be
-     *  "Html".
+     * "Html".
      * @return The return value is not documented yet.
      */
     String GetName();

@@ -1,7 +1,5 @@
 package com.upokecenter.util;
 /*
-If you like this, you should donate to Peter O.
-at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -35,10 +33,9 @@ import java.io.*;
   public interface IOnFinishedListener<T> {
     /**
      * Processes the data on the UI thread after it's downloaded. @param url URL of
-     * the data. @param value Data processed by 'processResponse'. @param
-     * exception If this value is non-null, an error has occurred and this
-     * exception contains further information on the error, and 'value'
-     * will be null.
+     * the data. @param value Data processed by 'processResponse'. @param exception
+     * If this value is nonnull, an error has occurred and this exception contains
+     * further information on the error, and 'value' will be null.
      */
     void OnFinished (String url, T value, IOException exception);
   }

@@ -56,7 +56,7 @@ private IElement propVarelement;
     }
 
     private static String GetHref(IElement node) {
-      String name = DataUtilities.ToLowerCaseAscii (node.getLocalName());
+      String name = com.upokecenter.util.DataUtilities.ToLowerCaseAscii (node.getLocalName());
       String href = "";
       if ("a".equals(name) ||
         "link".equals(name) ||
@@ -93,7 +93,7 @@ private IElement propVarelement;
         throw new NullPointerException("document");
       }
       PeterO.Cbor.CBORObject result = PeterO.Cbor.CBORObject.NewMap();
-      var items = CBORObject.NewArray();
+      CBORObject items = CBORObject.NewArray();
       for (Object node : document.getElementsByTagName ("*")) {
         if (node.getAttribute ("itemscope") != null &&
           node.getAttribute ("itemprop") == null) {
@@ -113,7 +113,7 @@ private IElement propVarelement;
       PeterO.Cbor.CBORObject result = PeterO.Cbor.CBORObject.NewMap();
       memory.add(item);
       if (itemtypes.length > 0) {
-        var array = CBORObject.NewArray();
+        CBORObject array = CBORObject.NewArray();
         for (Object itemtype : itemtypes) {
           array.Add (itemtype);
         }
@@ -143,7 +143,7 @@ private IElement propVarelement;
           if (properties.ContainsKey (name)) {
             properties.get(name).Add (obj);
           } else {
-            var arr = CBORObject.NewArray();
+            CBORObject arr = CBORObject.NewArray();
             arr.Add (obj);
             properties.Add (name, arr);
           }

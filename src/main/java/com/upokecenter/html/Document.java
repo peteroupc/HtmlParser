@@ -5,8 +5,6 @@ import java.util.*;
 using Com.Upokecenter.util;
 import com.upokecenter.util.*;
 /*
-If you like this, you should donate to Peter O.
-at: http://peteroupc.github.io/
 
 Licensed under the Expat License.
 
@@ -133,7 +131,7 @@ private String propVaraddress;
         this.CollectElementsHtml(
           this,
           tagName,
-          DataUtilities.ToLowerCaseAscii (tagName),
+          com.upokecenter.util.DataUtilities.ToLowerCaseAscii (tagName),
           ret);
       } else {
         this.CollectElements (this, tagName, ret);

@@ -1,10 +1,10 @@
 package com.upokecenter.util;
 /*
-Written by Peter O. in 2013.
-Any copyright is dedicated to the Public Domain.
-http://creativecommons.org/publicdomain/zero/1.0/
-If you like this, you should donate to Peter O.
-at: http://peteroupc.github.io/
+Written by Peter O.
+Any copyright to this work is released to the Public Domain.
+In case this is not possible, this work is also
+licensed under the Unlicense: https://unlicense.org/
+
  */
 
 import java.io.*;
@@ -409,8 +409,8 @@ try { if (ms != null) {
     }
 
     /**
-     * Returns a string with the basic upper-case letters A to Z (U+0041 to U+005A)
-     * converted to lower-case. Other characters remain unchanged.
+     * Returns a string with the basic uppercase letters A to Z (U+0041 to U+005A)
+     * converted to lowercase. Other characters remain unchanged.
      * @param str The parameter {@code str} is a text string.
      * @return The converted string, or null if {@code str} is null.
      */
@@ -444,8 +444,8 @@ try { if (ms != null) {
     }
 
     /**
-     * Returns a string with the basic lower-case letters A to Z (U+0061 to U+007A)
-     * converted to upper-case. Other characters remain unchanged.
+     * Returns a string with the basic lowercase letters A to Z (U+0061 to U+007A)
+     * converted to uppercase. Other characters remain unchanged.
      * @param str The parameter {@code str} is a text string.
      * @return The converted string, or null if {@code str} is null.
      */

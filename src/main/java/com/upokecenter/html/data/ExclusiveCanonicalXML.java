@@ -19,10 +19,10 @@ import com.upokecenter.util.*;
           "" : arg1.getNamespaceURI();
         // compare _namespace URIs (attributes without a valuePrefix
         // are considered to have no _namespace URI)
-        int cmp = DataUtilities.CodePointCompare (namespace1, namespace2);
+        int cmp = com.upokecenter.util.DataUtilities.CodePointCompare (namespace1, namespace2);
         if (cmp == 0) {
           // then compare their local names
-          cmp = DataUtilities.CodePointCompare(
+          cmp = com.upokecenter.util.DataUtilities.CodePointCompare(
               arg0.getLocalName(),
               arg1.getLocalName());
         }
@@ -73,7 +73,7 @@ import com.upokecenter.util.*;
 
     private static final class NamespaceAttrComparer implements Comparator<IAttr> {
       public int compare(IAttr arg0, IAttr arg1) {
-        return DataUtilities.CodePointCompare (arg0.getName(), arg1.getName());
+        return com.upokecenter.util.DataUtilities.CodePointCompare (arg0.getName(), arg1.getName());
       }
     }
 
