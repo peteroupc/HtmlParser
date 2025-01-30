@@ -16,5 +16,5 @@ licensed under the Unlicense: https://unlicense.org/
      * Does an arbitrary Action. @param parameters An array of parameters that the
      * Action accepts.
      */
-    void Action (T... parameters);
+    void Action(T... parameters);
   }

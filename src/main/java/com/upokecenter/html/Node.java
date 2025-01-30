@@ -1,8 +1,8 @@
-package com.upokecenter.util;
+package com.upokecenter.html;
 
 import java.util.*;
 
-using Com.Upokecenter.util;
+import com.upokecenter.util.*;
 /*
 
 Licensed under the Expat License.
@@ -42,7 +42,7 @@ THE SOFTWARE.
       this.childNodes = new ArrayList<INode>();
     }
 
-    public void appendChild(INode node) {
+    public void AppendChild(INode node) {
       if (node == this) {
         throw new IllegalArgumentException();
       }
@@ -55,56 +55,56 @@ THE SOFTWARE.
     private void FragmentSerializeInner(
       INode current,
       StringBuilder builder) {
-      if (current.getNodeType() == NodeType.ELEMENT_NODE) {
+      if (current.GetNodeType() == NodeType.ELEMENT_NODE) {
         IElement e = (IElement)current;
-        String tagname = e.getTagName();
-        String namespaceURI = e.getNamespaceURI();
+        String tagname = e.GetTagName();
+        String namespaceURI = e.GetNamespaceURI();
         if (HtmlCommon.HTML_NAMESPACE.equals(namespaceURI) ||
           HtmlCommon.SVG_NAMESPACE.equals(namespaceURI) ||
           HtmlCommon.MATHML_NAMESPACE.equals(namespaceURI)) {
-          tagname = e.getLocalName();
+          tagname = e.GetLocalName();
         }
-        builder.append ('<');
-        builder.append (tagname);
-        for (Object attr : e.getAttributes()) {
-          namespaceURI = attr.getNamespaceURI();
-          builder.append (' ');
+        builder.append('<');
+        builder.append(tagname);
+        for (IAttr attr : e.GetAttributes()) {
+          namespaceURI = attr.GetNamespaceURI();
+          builder.append(' ');
           if (namespaceURI == null || namespaceURI.length() == 0) {
-            builder.append (attr.getLocalName());
+            builder.append(attr.GetLocalName());
           } else if (namespaceURI.equals(HtmlCommon.XML_NAMESPACE)) {
-            builder.append ("xml:");
-            builder.append (attr.getLocalName());
+            builder.append("xml:");
+            builder.append(attr.GetLocalName());
           } else if (namespaceURI.equals(
             "http://www.w3.org/2000/xmlns/")) {
-            if (!"xmlns".equals(attr.getLocalName())) {
-              builder.append ("xmlns:");
+            if (!"xmlns".equals(attr.GetLocalName())) {
+              builder.append("xmlns:");
             }
-            builder.append (attr.getLocalName());
+            builder.append(attr.GetLocalName());
           } else if (namespaceURI.equals(HtmlCommon.XLINK_NAMESPACE)) {
-            builder.append ("xlink:");
-            builder.append (attr.getLocalName());
+            builder.append("xlink:");
+            builder.append(attr.GetLocalName());
           } else {
-            builder.append (attr.getName());
+            builder.append(attr.GetName());
           }
-          builder.append ("=\"");
-          String value = attr.getValue();
+          builder.append("=\"");
+          String value = attr.GetValue();
           for (int i = 0; i < value.length(); ++i) {
             char c = value.charAt(i);
             if (c == '&') {
-              builder.append ("&amp;");
+              builder.append("&amp;");
             } else if (c == 0xa0) {
-              builder.append ("&nbsp;");
+              builder.append("&nbsp;");
             } else if (c == '"') {
-              builder.append ("&#x22;");
+              builder.append("&#x22;");
             } else {
-              builder.append (c);
+              builder.append(c);
             }
           }
-          builder.append ('"');
+          builder.append('"');
         }
-        builder.append ('>');
+        builder.append('>');
         if (HtmlCommon.HTML_NAMESPACE.equals(namespaceURI)) {
-          String localName = e.getLocalName();
+          String localName = e.GetLocalName();
           if ("area".equals(localName) ||
             "base".equals(localName) ||
             "basefont".equals(localName) ||
@@ -129,27 +129,29 @@ THE SOFTWARE.
           if ("pre".equals(localName) ||
             "textarea".equals(localName) ||
             "listing".equals(localName)) {
-            for (Object node : e.getChildNodes()) {
-              if (node.getNodeType() == NodeType.TEXT_NODE &&
-                ((IText)node).getData().length > 0 &&
-                ((IText)node).getData()[0] == '\n') {
-                builder.append ('\n');
+            for (INode node : e.GetChildNodes()) {
+              if (node.GetNodeType() == NodeType.TEXT_NODE) {
+                String nodeData = ((IText)node).GetData();
+                if (nodeData.length() > 0 && nodeData.charAt(0) == '\n') {
+                  builder.append('\n');
+                }
               }
             }
           }
         }
         // Recurse
-        for (Object child : e.getChildNodes()) {
-          this.FragmentSerializeInner (child, builder);
+        for (INode child : e.GetChildNodes()) {
+          this.FragmentSerializeInner(child, builder);
         }
-        builder.append ("</");
-        builder.append (tagname);
-        builder.append (">");
-      } else if (current.getNodeType() == NodeType.TEXT_NODE) {
-        INode parent = current.getParentNode();
+        builder.append("</");
+        builder.append(tagname);
+        builder.append(">");
+      } else if (current.GetNodeType() == NodeType.TEXT_NODE) {
+        INode parent = current.GetParentNode();
         if (parent instanceof IElement &&
-          HtmlCommon.HTML_NAMESPACE.equals(((IElement)parent).getNamespaceURI())) {
-          String localName = ((IElement)parent).getLocalName();
+          HtmlCommon.HTML_NAMESPACE.equals((
+          (IElement)parent).GetNamespaceURI())) {
+          String localName = ((IElement)parent).GetLocalName();
           if ("script".equals(localName) ||
             "style".equals(localName) ||
             "script".equals(localName) ||
@@ -158,63 +160,67 @@ THE SOFTWARE.
             "noembed".equals(localName) ||
             "noframes".equals(localName) ||
             "plaintext".equals(localName)) {
-            builder.append (((IText)current).getData());
+            builder.append(((IText)current).GetData());
           } else {
-            String value = ((IText)current).getData();
+            String value = ((IText)current).GetData();
             for (int i = 0; i < value.length(); ++i) {
               char c = value.charAt(i);
               if (c == '&') {
-                builder.append ("&amp;");
+                builder.append("&amp;");
               } else if (c == 0xa0) {
-                builder.append ("&nbsp;");
+                builder.append("&nbsp;");
               } else if (c == '<') {
-                builder.append ("&lt;");
+                builder.append("&lt;");
               } else if (c == '>') {
-                builder.append ("&gt;");
+                builder.append("&gt;");
               } else {
-                builder.append (c);
+                builder.append(c);
               }
             }
           }
         }
-      } else if (current.getNodeType() == NodeType.COMMENT_NODE) {
-        builder.append ("<!--");
-        builder.append (((IComment)current).getData());
-        builder.append ("-->");
-      } else if (current.getNodeType() == NodeType.DOCUMENT_TYPE_NODE) {
-        builder.append ("<!DOCTYPE ");
-        builder.append (((IDocumentType)current).getName());
-        builder.append (">");
-      } else if (current.getNodeType() ==
-NodeType.PROCESSING_INSTRUCTION_NODE) {
-        builder.append ("<?");
-        builder.append (((IProcessingInstruction)current).getTarget());
-        builder.append (' ');
-        builder.append (((IProcessingInstruction)current).getData());
-        builder.append (">"); // NOTE: may be erroneous
+      } else if (current.GetNodeType() == NodeType.COMMENT_NODE) {
+        builder.append("<!--");
+        builder.append(((IComment)current).GetData());
+        builder.append("-->");
+      } else if (current.GetNodeType() == NodeType.DOCUMENT_TYPE_NODE) {
+        builder.append("<!DOCTYPE ");
+        builder.append(((IDocumentType)current).GetName());
+        builder.append(">");
+      } else if (current.GetNodeType() ==
+        NodeType.PROCESSING_INSTRUCTION_NODE) {
+        builder.append("<?");
+        builder.append(((IProcessingInstruction)current).GetTarget());
+        builder.append(' ');
+        builder.append(((IProcessingInstruction)current).GetData());
+        builder.append(">"); // NOTE: may be erroneous
       }
     }
 
-    public String getBaseURI() {
-      INode parent = this.getParentNode();
+    public String GetBaseURI() {
+      INode parent = this.GetParentNode();
       if (this.baseURI == null) {
         if (parent == null) {
           return "about:blank";
         } else {
-          return parent.getBaseURI();
+          return parent.GetBaseURI();
         }
       } else {
         if (parent == null) {
           return this.baseURI;
         } else {
-          URL ret = URL.parse (this.baseURI, URL.parse (parent.getBaseURI()));
-          return (ret == null) ? parent.getBaseURI() : ret.toString();
+          URL ret = URL.Parse(this.baseURI, URL.Parse(parent.GetBaseURI()));
+          return (ret == null) ? parent.GetBaseURI() : ret.toString();
         }
       }
     }
 
-    public List<INode> getChildNodes() {
-      return Arrays.asList(this.childNodes);
+    public List<INode> GetChildNodes() {
+      ArrayList<INode> cn = new ArrayList<INode>();
+      for (int i = 0; i < this.childNodes.size(); ++i) {
+        cn.add(this.childNodes.get(i));
+      }
+      return cn;
     }
 
     List<INode> GetChildNodesInternal() {
@@ -223,45 +229,45 @@ NodeType.PROCESSING_INSTRUCTION_NODE) {
 
     protected String GetInnerHtmlInternal() {
       StringBuilder builder = new StringBuilder();
-      for (Object child : this.getChildNodes()) {
-        this.FragmentSerializeInner (child, builder);
+      for (INode child : this.GetChildNodes()) {
+        this.FragmentSerializeInner(child, builder);
       }
       return builder.toString();
     }
 
-    public String getLanguage() {
-      INode parent = this.getParentNode();
+    public String GetLanguage() {
+      INode parent = this.GetParentNode();
       if (parent == null) {
-        parent = this.getOwnerDocument();
-        return (parent == null) ? "" : parent.getLanguage();
+        parent = this.GetOwnerDocument();
+        return (parent == null) ? "" : parent.GetLanguage();
       } else {
-        return parent.getLanguage();
+        return parent.GetLanguage();
       }
     }
 
-    public String getNodeName() {
+    public String GetNodeName() {
       return "";
     }
 
-    public int getNodeType() {
+    public int GetNodeType() {
       return this.valueNodeType;
     }
 
-    public IDocument getOwnerDocument() {
+    public IDocument GetOwnerDocument() {
       return this.ownerDocument;
     }
 
-    public INode getParentNode() {
+    public INode GetParentNode() {
       return this.parentNode;
     }
 
-    public String getTextContent() {
+    public String GetTextContent() {
       return null;
     }
 
     public void InsertBefore(Node child, Node sibling) {
       if (sibling == null) {
-        this.appendChild (child);
+        this.AppendChild(child);
         return;
       }
       if (this.childNodes.size() == 0) {
@@ -269,7 +275,7 @@ NodeType.PROCESSING_INSTRUCTION_NODE) {
       }
       int childNodesSize = this.childNodes.size();
       for (int j = 0; j < childNodesSize; ++j) {
-        if (this.childNodes.get(j).equals (sibling)) {
+        if (this.childNodes.get(j).equals(sibling)) {
           child.parentNode = this;
           child.ownerDocument = (child instanceof IDocument) ? (IDocument)this :
             this.ownerDocument;
@@ -280,19 +286,20 @@ NodeType.PROCESSING_INSTRUCTION_NODE) {
       throw new IllegalArgumentException();
     }
 
-    public void removeChild(INode node) {
+    public void RemoveChild(INode node) {
       ((Node)node).parentNode = null;
-      this.childNodes.Remove (node);
+      List<INode> cn = this.childNodes;
+      cn.remove(node);
     }
 
     void SetBaseURI(String value) {
-      INode parent = this.getParentNode();
+      INode parent = this.GetParentNode();
       if (parent == null) {
         this.baseURI = value;
       } else {
-        String val = URL.parse (value, URL.parse
-(parent.getBaseURI())).toString();
-        this.baseURI = (val == null) ? parent.getBaseURI() : val.toString();
+        String val = URL.Parse(value, URL.Parse(
+          parent.GetBaseURI())).toString();
+        this.baseURI = (val == null) ? parent.GetBaseURI() : val.toString();
       }
     }
 
@@ -300,11 +307,11 @@ NodeType.PROCESSING_INSTRUCTION_NODE) {
       this.ownerDocument = document;
     }
 
-    internal virtual String ToDebugString() {
+     String ToDebugString() {
       return null;
     }
 
     @Override public String toString() {
-      return this.getNodeName();
+      return this.GetNodeName();
     }
   }

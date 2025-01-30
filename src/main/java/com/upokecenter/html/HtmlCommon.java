@@ -1,7 +1,7 @@
-package com.upokecenter.util;
+package com.upokecenter.html;
 
 import java.util.*;
-using Com.Upokecenter.util;
+import com.upokecenter.util.*;
 
   final class HtmlCommon {
 private HtmlCommon() {
@@ -21,29 +21,29 @@ private HtmlCommon() {
     XMLNS_NAMESPACE = "http://www.w3.org/2000/xmlns/";
 
     static boolean IsHtmlElement(IElement ie, String name) {
-      return ie != null && name.equals(ie.getLocalName()) &&
-        HtmlCommon.HTML_NAMESPACE.equals(ie.getNamespaceURI());
+      return ie != null && name.equals(ie.GetLocalName()) &&
+        HtmlCommon.HTML_NAMESPACE.equals(ie.GetNamespaceURI());
     }
 
     static boolean IsMathMLElement(IElement ie, String name) {
-      return ie != null && name.equals(ie.getLocalName()) &&
-        HtmlCommon.MATHML_NAMESPACE.equals(ie.getNamespaceURI());
+      return ie != null && name.equals(ie.GetLocalName()) &&
+        HtmlCommon.MATHML_NAMESPACE.equals(ie.GetNamespaceURI());
     }
 
     static boolean IsSvgElement(IElement ie, String name) {
-      return ie != null && name.equals(ie.getLocalName()) &&
-        HtmlCommon.SVG_NAMESPACE.equals(ie.getNamespaceURI());
+      return ie != null && name.equals(ie.GetLocalName()) &&
+        HtmlCommon.SVG_NAMESPACE.equals(ie.GetNamespaceURI());
     }
 
     public static String ResolveURL(INode node, String url, String _base) {
-      String encoding = (node instanceof IDocument) ? ((IDocument)node).getCharset() :
-        node.getOwnerDocument().getCharset();
+      String encoding = (node instanceof IDocument) ? ((IDocument)node).GetCharset() :
+        node.GetOwnerDocument().GetCharset();
       if ("utf-16be".equals(encoding) ||
         "utf-16le".equals(encoding)) {
         encoding = "utf-8";
       }
-      _base = (_base == null) ? (node.getBaseURI()) : _base;
-      URL resolved = URL.parse (url, URL.parse (_base), encoding, true);
+      _base = (_base == null) ? (node.GetBaseURI()) : _base;
+      URL resolved = URL.Parse(url, URL.Parse(_base), encoding, true);
       return (resolved == null) ? _base : resolved.toString();
     }
   }

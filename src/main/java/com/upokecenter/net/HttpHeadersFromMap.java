@@ -1,4 +1,4 @@
-package com.upokecenter.util;
+package com.upokecenter.net;
 /*
 
 Licensed under the Expat License.
@@ -26,7 +26,7 @@ THE SOFTWARE.
 
 import java.util.*;
 import com.upokecenter.util.*;
-using com.upokecenter.util;
+import com.upokecenter.util.*;
 
   class HttpHeadersFromMap implements IHttpHeaders {
     private Map<String, List<String>> valueMap;
@@ -59,10 +59,10 @@ using com.upokecenter.util;
       }
       java.util.Collections.sort(keyset);
       // Add the remaining headers in sorted order
-      for (Object s : keyset) {
+      for (String s : keyset) {
         List<String> v = this.valueMap.get(s);
         if (v != null && v.size() > 0) {
-          for (Object ss : v) {
+          for (String ss : v) {
             this.valueList.add(s);
             this.valueList.add(ss);
           }
@@ -70,7 +70,7 @@ using com.upokecenter.util;
       }
     }
 
-    public String getHeaderField(int index) {
+    public String GetHeaderField(int index) {
       if (index == 0) {
         return this.valueList.get(0);
       }
@@ -82,28 +82,28 @@ using com.upokecenter.util;
         this.valueList.get(index + 1);
     }
 
-    public String getHeaderField(String name) {
+    public String GetHeaderField(String name) {
       if (name == null) {
         return this.valueList.get(0);
       }
-      name = com.upokecenter.util.DataUtilities.ToLowerCaseAscii (name);
+      name = com.upokecenter.util.DataUtilities.ToLowerCaseAscii(name);
       String last = null;
       for (int i = 1; i < this.valueList.size(); i += 2) {
         String key = this.valueList.get(i);
-        if (name.equals (key)) {
+        if (name.equals(key)) {
           last = this.valueList.get(i + 1);
         }
       }
       return last;
     }
 
-    public long getHeaderFieldDate(String field, long defaultValue) {
+    public long GetHeaderFieldDate(String field, long defaultValue) {
       return 0;
       // TODO
-      // return HeaderParser.parseHttpDate(getHeaderField(field), defaultValue);
+      // return HeaderParser.parseHttpDate(GetHeaderField(field), defaultValue);
     }
 
-    public String getHeaderFieldKey(int index) {
+    public String GetHeaderFieldKey(int index) {
       if (index == 0 || index < 0) {
         return null;
       }
@@ -112,23 +112,25 @@ using com.upokecenter.util;
         this.valueList.get(index);
     }
 
-    public Map<String, List<String>> getHeaderFields() {
-      return PeterO.Support.Collections.UnmodifiableMap (this.valueMap);
+    public Map<String, List<String>> GetHeaderFields() {
+      // TODO: Make unmodifiable
+      return this.valueMap;
+      // return PeterO.Support.Collections.UnmodifiableMap(this.valueMap);
     }
 
-    public String getRequestMethod() {
+    public String GetRequestMethod() {
       return this.valueRequestMethod;
     }
 
-    public int getResponseCode() {
-      String status = this.getHeaderField (null);
-      return -1;
+    public int GetResponseCode() {
+      String status = this.GetHeaderField(null);
+      return - 1;
       // TODO
       // return (status == null) ? (-1) :
-      // (HeaderParser.getResponseCode(status));
+      // (HeaderParser.GetResponseCode(status));
     }
 
-    public String getUrl() {
+    public String GetUrl() {
       return this.valueUrlString;
     }
   }

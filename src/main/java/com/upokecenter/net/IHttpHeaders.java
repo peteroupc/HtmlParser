@@ -1,4 +1,4 @@
-package com.upokecenter.util;
+package com.upokecenter.net;
 /*
 
 Licensed under the Expat License.
@@ -35,27 +35,27 @@ import java.util.*;
      * @param name The parameter {@code name} is a 32-bit signed integer.
      * @return The return value is not documented yet.
      */
-    String GetHeaderField (int name);
+    String GetHeaderField(int name);
 
     /**
      * Not documented yet.
      * @param name The parameter {@code name} is a text string.
      * @return The return value is not documented yet.
      */
-    String GetHeaderField (String name);
+    String GetHeaderField(String name);
 
     /**
      * Not documented yet.
      * @return The return value is not documented yet.
      */
-    long GetHeaderFieldDate (String field, long defaultValue);
+    long GetHeaderFieldDate(String field, long defaultValue);
 
     /**
      * Not documented yet.
      * @param name The parameter {@code name} is a 32-bit signed integer.
      * @return The return value is not documented yet.
      */
-    String GetHeaderFieldKey (int name);
+    String GetHeaderFieldKey(int name);
 
     /**
      * Not documented yet.

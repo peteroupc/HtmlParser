@@ -1,4 +1,4 @@
-package com.upokecenter.util;
+package com.upokecenter.html;
 
 import java.util.*;
 
@@ -54,18 +54,18 @@ THE SOFTWARE.
      * @param id The parameter {@code id} is a text string.
      * @return The return value is not documented yet.
      */
-    IElement GetElementById (String id);
+    IElement GetElementById(String id);
 
     /**
      * Gets all descendents, both direct and indirect, that have the specified tag
      * name, using a basic case-insensitive comparison. (Two strings are equal in
      * such a comparison, if they match after converting the basic uppercase
      * letters A to Z (U+0041 to U+005A) in both strings to basic lowercase
-     * letters.) @param string A tag name.
-     * @param _string The parameter {@code _string} is a text string.
+     * letters.).
+     * @param tagName The parameter {@code tagName} is not documented yet.
      * @return The return value is not documented yet.
      */
-    List<IElement> GetElementsByTagName (String _string);
+    List<IElement> GetElementsByTagName(String tagName);
 
     /**
      * Gets the document's address.

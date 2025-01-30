@@ -15,5 +15,5 @@ licensed under the Unlicense: https://unlicense.org/
     /**
      * Not documented yet.
      */
-    void Action (Object thisObject, T... parameters);
+    void Action(Object thisObject, T... parameters);
   }

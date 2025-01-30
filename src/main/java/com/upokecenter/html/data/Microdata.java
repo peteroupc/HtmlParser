@@ -1,8 +1,8 @@
-package com.upokecenter.util;
+package com.upokecenter.html.data;
 
 import java.util.*;
-using Com.Upokecenter.Html;
-using Com.Upokecenter.util;
+import com.upokecenter.html.*;
+import com.upokecenter.util.*;
 import com.upokecenter.util.*;
 import com.upokecenter.cbor.*;
 
@@ -23,8 +23,7 @@ private IElement propVarelement;
     private static final class SortInTreeOrderComparer implements Comparator<ElementAndIndex> {
       public int compare(ElementAndIndex arg0, ElementAndIndex arg1) {
         return (arg0.getIndex() == arg1.getIndex()) ? 0 : ((arg0.getIndex() < arg1.getIndex()) ?
--1 :
-            1);
+          -1 : 1);
       }
     }
 
@@ -33,7 +32,7 @@ private IElement propVarelement;
       IElement e,
       int startIndex) {
       int[] runningIndex = new int[] { startIndex };
-      return GetElementIndex (root, e, runningIndex);
+      return GetElementIndex(root, e, runningIndex);
     }
 
     private static int GetElementIndex(
@@ -41,12 +40,12 @@ private IElement propVarelement;
       IElement e,
       int[] runningIndex) {
       int valueIndex = runningIndex[0];
-      if (root.equals (e)) {
+      if (root.equals(e)) {
         return valueIndex;
       }
       ++valueIndex;
-      for (Object child : root.getChildNodes()) {
-        int idx = GetElementIndex (child, e, runningIndex);
+      for (INode child : root.GetChildNodes()) {
+        int idx = GetElementIndex(child, e, runningIndex);
         if (idx >= 0) {
           return idx;
         }
@@ -56,14 +55,14 @@ private IElement propVarelement;
     }
 
     private static String GetHref(IElement node) {
-      String name = com.upokecenter.util.DataUtilities.ToLowerCaseAscii (node.getLocalName());
+      String name = com.upokecenter.util.DataUtilities.ToLowerCaseAscii(node.GetLocalName());
       String href = "";
       if ("a".equals(name) ||
         "link".equals(name) ||
         "area".equals(name)) {
-        href = node.getAttribute ("href");
+        href = node.GetAttribute("href");
       } else if ("Object".equals(name)) {
-        href = node.getAttribute ("Data");
+        href = node.GetAttribute("Data");
       } else if ("img".equals(name) ||
         "source".equals(name) ||
         "track".equals(name) ||
@@ -71,14 +70,14 @@ private IElement propVarelement;
         "audio".equals(name) ||
         "video".equals(name) ||
         "embed".equals(name)) {
-        href = node.getAttribute ("src");
+        href = node.GetAttribute("src");
       } else {
         return null;
       }
       if (href == null || href.length() == 0) {
         return "";
       }
-      href = HtmlCommon.resolveURL (node, href, null);
+      href = HtmlCommon.ResolveURL(node, href, null);
       return (href == null || href.length() == 0) ? "" : href;
     }
 
@@ -87,69 +86,72 @@ private IElement propVarelement;
      * @param document The parameter {@code document} is
      * a.getUpokecenter().getHtml().IDocument object.
      * @return The return value is not documented yet.
+     * @throws NullPointerException The parameter {@code document} is null.
      */
-    public static PeterO.Cbor.CBORObject GetMicrodataJSON (IDocument document) {
+    public static CBORObject GetMicrodataJSON(IDocument document) {
       if (document == null) {
         throw new NullPointerException("document");
       }
-      PeterO.Cbor.CBORObject result = PeterO.Cbor.CBORObject.NewMap();
+      CBORObject result = CBORObject.NewMap();
       CBORObject items = CBORObject.NewArray();
-      for (Object node : document.getElementsByTagName ("*")) {
-        if (node.getAttribute ("itemscope") != null &&
-          node.getAttribute ("itemprop") == null) {
+      List<IElement> tagNameEl=document.GetElementsByTagName("*");
+      for (IElement node : tagNameEl) {
+        if (node.GetAttribute("itemscope") != null &&
+          node.GetAttribute("itemprop") == null) {
           List<IElement> memory = new ArrayList<IElement>();
-          items.Add (GetMicrodataObject (node, memory));
+          items.Add(GetMicrodataObject(node, memory));
         }
       }
-      result.Add ("items", items);
+      result.Add("items", items);
       return result;
     }
 
-    private static PeterO.Cbor.CBORObject GetMicrodataObject(
+    private static CBORObject GetMicrodataObject(
       IElement item,
       List<IElement> memory) {
-      String[] itemtypes = StringUtility.SplitAtSpTabCrLfFf (item.getAttribute(
-            "itemtype"));
-      PeterO.Cbor.CBORObject result = PeterO.Cbor.CBORObject.NewMap();
+      String[] itemtypes = StringUtility.SplitAtSpTabCrLfFf(item.GetAttribute(
+        "itemtype"));
+      CBORObject result = CBORObject.NewMap();
       memory.add(item);
       if (itemtypes.length > 0) {
         CBORObject array = CBORObject.NewArray();
-        for (Object itemtype : itemtypes) {
-          array.Add (itemtype);
+        for (String itemtype : itemtypes) {
+          array.Add(itemtype);
         }
-        result.Add ("type", array);
+        result.Add("type", array);
       }
-      String globalid = item.getAttribute ("itemid");
+      String globalid = item.GetAttribute("itemid");
       if (globalid != null) {
-        globalid = HtmlCommon.resolveURL(
+        globalid = HtmlCommon.ResolveURL(
             item,
             globalid,
-            item.getBaseURI());
-        result.Add ("id", globalid);
+            item.GetBaseURI());
+        result.Add("id", globalid);
       }
-      PeterO.Cbor.CBORObject properties = PeterO.Cbor.CBORObject.NewMap();
-      for (Object valueElement : GetMicrodataProperties (item)) {
+      CBORObject properties = CBORObject.NewMap();
+      List<IElement> mdprop = GetMicrodataProperties(item);
+      for (IElement valueElement : mdprop) {
         String[] names = StringUtility.SplitAtSpTabCrLfFf(
-            valueElement.getAttribute(
+            valueElement.GetAttribute(
               "itemprop"));
         Object obj = null;
-        if (valueElement.getAttribute ("itemscope") != null) {
+        if (valueElement.GetAttribute("itemscope") != null) {
           obj = memory.contains(valueElement) ? (Object)"ERROR" :
-            (Object)GetMicrodataObject (valueElement, Arrays.asList(memory));
-          } else {
-          obj = GetPropertyValue (valueElement);
+            (Object)GetMicrodataObject(valueElement, Arrays.asList(memory));
+        } else {
+          obj = GetPropertyValue(valueElement);
         }
-        for (Object name : names) {
-          if (properties.ContainsKey (name)) {
-            properties.get(name).Add (obj);
+        for (String name : names) {
+          if (properties.ContainsKey(name)) {
+            properties.get(name).Add(obj);
           } else {
             CBORObject arr = CBORObject.NewArray();
-            arr.Add (obj);
-            properties.Add (name, arr);
+            arr.Add(obj);
+            properties.Add(name, arr);
           }
         }
       }
-      result.Add ("properties", properties);
+      result.Add("properties", properties);
       return result;
     }
 
@@ -158,16 +160,16 @@ private IElement propVarelement;
       List<IElement> memory = new ArrayList<IElement>();
       List<IElement> pending = new ArrayList<IElement>();
       memory.add(root);
-      IDocument document = root.getOwnerDocument();
-      for (Object child : root.getChildNodes()) {
+      IDocument document = root.GetOwnerDocument();
+      for (INode child : root.GetChildNodes()) {
         if (child instanceof IElement) {
           pending.add((IElement)child);
         }
       }
-      String[] itemref = StringUtility.SplitAtSpTabCrLfFf (root.getAttribute(
-            "itemref"));
-      for (Object item : itemref) {
-        IElement valueElement = document.getElementById (item);
+      String[] itemref = StringUtility.SplitAtSpTabCrLfFf(root.GetAttribute(
+        "itemref"));
+      for (String item : itemref) {
+        IElement valueElement = document.GetElementById(item);
         if (valueElement != null) {
           pending.add(valueElement);
         }
@@ -179,52 +181,52 @@ private IElement propVarelement;
           continue;
         }
         memory.add(current);
-        if (current.getAttribute ("itemscope") == null) {
-          for (Object child : current.getChildNodes()) {
+        if (current.GetAttribute("itemscope") == null) {
+          for (INode child : current.GetChildNodes()) {
             if (child instanceof IElement) {
               pending.add((IElement)child);
             }
           }
         }
-        if (!StringUtility.isNullOrSpaces (current.getAttribute ("itemprop"))) {
+        if (!StringUtility.IsNullOrSpaces(current.GetAttribute("itemprop"))) {
           results.add(current);
         }
       }
-      return SortInTreeOrder (results, document);
+      return SortInTreeOrder(results, document);
     }
 
     private static String GetPropertyValue(IElement e) {
-      if (IsHtmlElement (e)) {
-        if (IsHtmlElement (e, "meta")) {
-          String attr = e.getAttribute ("content");
+      if (IsHtmlElement(e)) {
+        if (IsHtmlElement(e, "meta")) {
+          String attr = e.GetAttribute("content");
           return (attr == null) ? "" : attr;
         }
-        String href = GetHref (e);
+        String href = GetHref(e);
         if (href != null) {
           return href;
         }
-        if (IsHtmlElement (e, "Data")) {
-          String attr = e.getAttribute ("value");
+        if (IsHtmlElement(e, "Data")) {
+          String attr = e.GetAttribute("value");
           return (attr == null) ? "" : attr;
         }
-        if (IsHtmlElement (e, "time")) {
-          String attr = e.getAttribute ("datetime");
+        if (IsHtmlElement(e, "time")) {
+          String attr = e.GetAttribute("datetime");
           if (attr != null) {
             return attr;
           }
         }
       }
-      return e.getTextContent();
+      return e.GetTextContent();
     }
 
     private static boolean IsHtmlElement(IElement valueElement) {
       return "http://www.w3.org/1999/xhtml"
-        .equals (valueElement.getNamespaceURI());
+        .equals(valueElement.GetNamespaceURI());
     }
 
     private static boolean IsHtmlElement(IElement e, String name) {
-      return e.getLocalName().equals(name) &&
-        IsHtmlElement (e);
+      return e.GetLocalName().equals(name) &&
+        IsHtmlElement(e);
     }
 
     private static List<IElement> SortInTreeOrder(
@@ -234,15 +236,15 @@ private IElement propVarelement;
         return elements;
       }
       ArrayList<ElementAndIndex> elems = new ArrayList<ElementAndIndex>();
-      for (Object valueElement : elements) {
+      for (IElement valueElement : elements) {
         ElementAndIndex el = new ElementAndIndex();
         el.setElement(valueElement);
-        el.setIndex(GetElementIndex (root, valueElement, 0));
+        el.setIndex(GetElementIndex(root, valueElement, 0));
         elems.add(el);
       }
-      elems.Sort (new SortInTreeOrderComparer());
+      java.util.Collections.sort(elems, new SortInTreeOrderComparer());
       List<IElement> ret = new ArrayList<IElement>();
-      for (Object el : elems) {
+      for (ElementAndIndex el : elems) {
         ret.add(el.getElement());
       }
       return ret;

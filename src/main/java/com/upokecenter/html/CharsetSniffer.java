@@ -1,11 +1,11 @@
-package com.upokecenter.util;
+package com.upokecenter.html;
 
 import java.util.*;
 
 import java.io.*;
 
-using Com.Upokecenter.net;
-using Com.Upokecenter.util;
+import com.upokecenter.net.*;
+import com.upokecenter.util.*;
 import com.upokecenter.util.*;
 import com.upokecenter.text.*;
 
@@ -65,78 +65,78 @@ THE SOFTWARE.
         (byte)0xdf, (byte)0xdf, (byte)0xdf,
        },
       new byte[] { 0x3c, 0x48, 0x54, 0x4d, 0x4c }, new byte[] {
-  (byte)255,
-  (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf,
- },
+        (byte)255,
+        (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf,
+       },
       new byte[] { 0x3c, 0x48, 0x45, 0x41, 0x44 }, new byte[] {
-  (byte)255,
-  (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf,
- },
+        (byte)255,
+        (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf,
+       },
       new byte[] { 0x3c, 0x53, 0x43, 0x52, 0x49, 0x50, 0x54 }, new byte[] {
-  (byte)255, (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf,
-  (byte)0xdf,
- },
+        (byte)255, (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf,
+        (byte)0xdf,
+       },
       new byte[] { 0x3c, 0x49, 0x46, 0x52, 0x41, 0x4d, 0x45 }, new byte[] {
-  (byte)255, (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf,
-  (byte)0xdf,
- },
+        (byte)255, (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf,
+        (byte)0xdf,
+       },
       new byte[] { 0x3c, 0x48, 0x31 }, new byte[] {
-  (byte)255, (byte)0xdf,
-  (byte)255,
- },
+        (byte)255, (byte)0xdf,
+        (byte)255,
+       },
       new byte[] { 0x3c, 0x44, 0x49, 0x56 }, new byte[] {
-  (byte)255,
-  (byte)0xdf, (byte)0xdf, (byte)0xdf,
- },
+        (byte)255,
+        (byte)0xdf, (byte)0xdf, (byte)0xdf,
+       },
       new byte[] { 0x3c, 0x46, 0x4f, 0x4e, 0x54 }, new byte[] {
-  (byte)255,
-  (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf,
- },
+        (byte)255,
+        (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf,
+       },
       new byte[] { 0x3c, 0x54, 0x41, 0x42, 0x4c, 0x45 }, new byte[] {
-  (byte)255, (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf,
- },
+        (byte)255, (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf,
+       },
       new byte[] { 0x3c, 0x41 }, new byte[] { (byte)255, (byte)0xdf },
       new byte[] { 0x3c, 0x53, 0x54, 0x59, 0x4c, 0x45 }, new byte[] {
-  (byte)255, (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf,
- },
+        (byte)255, (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf,
+       },
       new byte[] { 0x3c, 0x54, 0x49, 0x54, 0x4c, 0x45 }, new byte[] {
-  (byte)255, (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf,
- },
+        (byte)255, (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf,
+       },
       new byte[] { 0x3c, 0x42 }, new byte[] { (byte)255, (byte)0xdf },
       new byte[] { 0x3c, 0x42, 0x4f, 0x44, 0x59 }, new byte[] {
-  (byte)255,
-  (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf,
- },
+        (byte)255,
+        (byte)0xdf, (byte)0xdf, (byte)0xdf, (byte)0xdf,
+       },
       new byte[] { 0x3c, 0x42, 0x52 }, new byte[] {
-  (byte)255, (byte)0xdf,
-  (byte)0xdf,
- },
+        (byte)255, (byte)0xdf,
+        (byte)0xdf,
+       },
       new byte[] { 0x3c, 0x50 }, new byte[] { (byte)255, (byte)0xdf },
       new byte[] { 0x3c, 0x21, 0x2d, 0x2d }, new byte[] {
-  (byte)255,
-  (byte)255, (byte)255, (byte)255,
- },
+        (byte)255,
+        (byte)255, (byte)255, (byte)255,
+       },
     };
 
+    private static byte[] VpFiveByte = new byte[] {
+      (byte)255,
+      (byte)255, (byte)255, (byte)255, (byte)255,
+     };
+
     private static byte[][] valuePatternsXml = new byte[][] {
-      new byte[] { 0x3c, 0x3f, 0x78, 0x6d, 0x6c }, new byte[] {
-  (byte)255,
-  (byte)255, (byte)255, (byte)255, (byte)255,
- },
+      new byte[] { 0x3c, 0x3f, 0x78, 0x6d, 0x6c }, VpFiveByte,
     };
 
     private static byte[][] valuePatternsPdf = new byte[][] {
-      new byte[] { 0x25, 0x50, 0x44, 0x46, 0x2d, }, new byte[] {
-  (byte)255,
-  (byte)255, (byte)255, (byte)255, (byte)255,
- }
+      new byte[] { 0x25, 0x50, 0x44, 0x46, 0x2d, }, VpFiveByte,
     };
-    byte[] vpps = new byte[] {
-      0x25, 0x21, 0x50, 0x53, 0x2d, 0x41,
+    private static byte[] Vpps = new byte[] {
+      0x25, 0x21, 0x50, 0x53, 0x2d,
+      0x41,
       0x64, 0x6f, 0x62, 0x65, 0x2d,
      };
     private static byte[][] valuePatternsPs = new byte[][] {
-      vpps, null
+      Vpps, null,
     };
 
     static String ExtractCharsetFromMeta(String value) {
@@ -207,7 +207,7 @@ THE SOFTWARE.
           ++nextIndex;
         }
         return
-          Encodings.ResolveAlias (value.substring(index, (index)+(nextIndex - index)));
+          Encodings.ResolveAlias(value.substring(index, (index)+(nextIndex - index)));
       }
     }
 
@@ -216,7 +216,7 @@ THE SOFTWARE.
       int offset,
       int count,
       byte[] pattern) {
-      int endIndex = Math.min (offset + count, array.length);
+      int endIndex = Math.min(offset + count, array.length);
       endIndex -= pattern.length - 1;
       if (endIndex < 0 || endIndex < offset) {
         return -1;
@@ -242,7 +242,7 @@ THE SOFTWARE.
       byte[] sequence,
       int seqIndex,
       int count) {
-      count = Math.min (count, sequence.length - seqIndex);
+      count = Math.min(count, sequence.length - seqIndex);
       int len = pattern.length;
       if (len <= count) {
         for (int i = 0; i < len; i++, seqIndex++) {
@@ -261,9 +261,9 @@ THE SOFTWARE.
       byte[] sequence,
       int seqIndex,
       int count) {
-      byte[] pattern = patterns.get(index);
-      count = Math.min (count, sequence.length - seqIndex);
-      byte[] mask = patterns.get(index + 1);
+      byte[] pattern = patterns[index];
+      count = Math.min(count, sequence.length - seqIndex);
+      byte[] mask = patterns[index + 1];
       int len = pattern.length;
       if (len <= count) {
         if (mask == null) {
@@ -290,9 +290,9 @@ THE SOFTWARE.
       byte[] sequence,
       int seqIndex,
       int count) {
-      byte[] pattern = patterns.get(index);
-      count = Math.min (count, sequence.length - seqIndex);
-      byte[] mask = patterns.get(index + 1);
+      byte[] pattern = patterns[index];
+      count = Math.min(count, sequence.length - seqIndex);
+      byte[] mask = patterns[index + 1];
       int len = pattern.length;
       if (len + 1 <= count) {
         for (int i = 0; i < len; i++, seqIndex++) {
@@ -309,12 +309,12 @@ THE SOFTWARE.
     public static String sniffContentType(
       PeterO.Support.InputStream input,
       IHttpHeaders headers) {
-      String contentType = headers.getHeaderField("content-type");
+      String contentType = headers.GetHeaderField("content-type");
       if (contentType != null && (contentType.equals("text/plain") ||
           contentType.equals("text/plain; charset=ISO-8859-1") ||
           contentType.equals("text/plain; charset=iso-8859-1") ||
           contentType.equals("text/plain; charset=UTF-8"))) {
-        String url = headers.getUrl();
+        String url = headers.GetUrl();
         if (url != null && url.length() >= 5 &&
           (url.charAt(0) == 'h' || url.charAt(0) == 'H') && (url.charAt(1) == 't' || url.charAt(0) == 'T'
 ) && (url.charAt(2) == 't' || url.charAt(0) == 'T') && (url.charAt(3) == 'p' || url.charAt(0) == 'P'
@@ -400,7 +400,7 @@ THE SOFTWARE.
             while (index < endPos) {
               int c = header[index] & 0xff;
               if (c == '-') {
-                hyphenCount = Math.min (2, hyphenCount + 1);
+                hyphenCount = Math.min(2, hyphenCount + 1);
               } else if (c == '>' && hyphenCount >= 2) {
                 ++index;
                 break;
@@ -438,8 +438,7 @@ THE SOFTWARE.
             break;
           } else if (index + 3 <= endPos && (header[index] & 0xFF) == 'r' &&
             (header[index + 1] & 0xFF) == 's' && (header[index + 2] & 0xFF)
-== 's'
-) {
+            == 's') {
             return RSSFeed;
           } else if (index + 4 <= endPos && (header[index] & 0xFF) == 'f' &&
             (header[index + 1] & 0xFF) == 'e' &&
@@ -448,16 +447,15 @@ THE SOFTWARE.
             return AtomFeed;
           } else if (index + 7 <= endPos && (header[index] & 0xFF) == 'r' &&
             (header[index + 1] & 0xFF) == 'd' && (header[index + 2] & 0xFF)
-== 'f'&&
+            == 'f' &&
             (header[index + 3] & 0xFF) == ':' && (header[index + 4] & 0xFF)
-== 'R'&&
+            == 'R' &&
             (header[index + 5] & 0xFF) == 'D' && (header[index + 6] & 0xFF)
-== 'F'
-) {
+            == 'F') {
             index += 7;
-            if (IndexOfBytes (header, index, endPos - index, ValueRdfNamespace)
+            if (IndexOfBytes(header, index, endPos - index, ValueRdfNamespace)
               >= 0 &&
-              IndexOfBytes (header, index, endPos - index, ValueRssNamespace)
+              IndexOfBytes(header, index, endPos - index, ValueRssNamespace)
               >= 0) {
               return RSSFeed;
             } else {
@@ -486,7 +484,7 @@ THE SOFTWARE.
       for (int i = 0; i < count; ++i) {
         int b = header[i] & 0xff;
         if (!(b >= 0x20 || b == 0x09 || b == 0x0a || b == 0x0c || b == 0x0d ||
-            b == 0x1b)) {
+          b == 0x1b)) {
           binary = true;
           break;
         }
@@ -547,7 +545,7 @@ THE SOFTWARE.
           }
         }
       }
-      if (MatchesPattern (valuePatternsPs, 0, header, 0, count)) {
+      if (MatchesPattern(valuePatternsPs, 0, header, 0, count)) {
         return "application/postscript";
       }
       if (count >= 4 && header[0] == (byte)0xfe && header[1] == (byte)0xff) {
@@ -561,13 +559,13 @@ THE SOFTWARE.
         return "text/plain";
       }
       // Image types
-      if (MatchesPattern (new byte[] { 0, 0, 1, 0 }, header, 0, count)) {
+      if (MatchesPattern(new byte[] { 0, 0, 1, 0 }, header, 0, count)) {
         return "image/x-icon"; // icon
       }
-      if (MatchesPattern (new byte[] { 0, 0, 2, 0 }, header, 0, count)) {
+      if (MatchesPattern(new byte[] { 0, 0, 2, 0 }, header, 0, count)) {
         return "image/x-icon"; // cursor
       }
-      if (MatchesPattern (new byte[] { 0x42, 0x4d }, header, 0, count)) {
+      if (MatchesPattern(new byte[] { 0x42, 0x4d }, header, 0, count)) {
         return "image/bmp";
       }
       if (
@@ -600,13 +598,10 @@ THE SOFTWARE.
       }
       if (
         MatchesPattern(
-      new byte[] {
-        (byte)0x89, 0x50, 0x4e, 0x47, 0x0d,
-        0x0a, 0x1a, 0x0a,
-       },
-      header,
-      0,
-      count)) {
+          new byte[] { (byte)0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, },
+          header,
+          0,
+          count)) {
         return "image/png";
       }
       if (
@@ -636,15 +631,12 @@ THE SOFTWARE.
       }
       if (
         MatchesPattern(
+          new byte[] { (byte)0x46, (byte)0x4f, (byte)0x52, (byte)0x4d, },
+          header,
+          0,
+          count) && MatchesPattern(
       new byte[] {
-        (byte)0x46, (byte)0x4f, (byte)0x52,
-        (byte)0x4d,
-       },
-      header,
-      0,
-      count) && MatchesPattern(
-      new byte[] {
-        (byte)0x41, (byte)0x49, (byte)0x46,
+      (byte)0x41, (byte)0x49, (byte)0x46,
         (byte)0x46,
        },
       header,
@@ -662,49 +654,46 @@ THE SOFTWARE.
       }
       if (
         MatchesPattern(
-      new byte[] {
-        (byte)0x4f, (byte)0x67, (byte)0x67,
-        (byte)0x53, 0,
-       },
-      header,
-      0,
-      count)) {
+          new byte[] { (byte)0x4f, (byte)0x67, (byte)0x67, (byte)0x53, 0, },
+          header,
+          0,
+          count)) {
         return "application/ogg";
       }
       if (
         MatchesPattern(
-      new byte[] {
-        (byte)0x4d, (byte)0x54, (byte)0x68,
-        (byte)0x64, 0, 0, 0, 6,
-       },
-      header,
-      0,
-      count)) {
+          new byte[] {
+            (byte)0x4d, (byte)0x54, (byte)0x68, (byte)0x64, 0, 0,
+            0, 6,
+           },
+          header,
+          0,
+          count)) {
         return "audio/midi";
       }
       if (
         MatchesPattern(
-      new byte[] {
-        (byte)0x52, (byte)0x49, (byte)0x46,
-        (byte)0x46,
-       },
-      header,
-      0,
-      count)) {
+          new byte[] { (byte)0x52, (byte)0x49, (byte)0x46, (byte)0x46, },
+          header,
+          0,
+          count)) {
         if (
           MatchesPattern(
-        new byte[] {
-          (byte)0x41, (byte)0x56, (byte)0x49,
-          (byte)' ',
-         }, header, 8, count - 8)) {
+            new byte[] {
+              (byte)0x41, (byte)0x56, (byte)0x49,
+              (byte)' ',
+             },
+            header,
+            8,
+            count - 8)) {
           return "video/avi";
         }
         if (
           MatchesPattern(
-        new byte[] { (byte)0x57, (byte)0x41, (byte)0x56, (byte)0x45, },
-        header,
-        8,
-        count - 8)) {
+            new byte[] { (byte)0x57, (byte)0x41, (byte)0x56, (byte)0x45, },
+            header,
+            8,
+            count - 8)) {
           return "audio/wave";
         }
       }
@@ -750,17 +739,20 @@ THE SOFTWARE.
       }
       if (
         MatchesPattern(
-      new byte[] {
-        (byte)0x52, (byte)0x61, (byte)0x72,
-        (byte)' ', 0x1a, 7, 0,
-       }, header, 0, count)) {
+          new byte[] {
+            (byte)0x52, (byte)0x61, (byte)0x72,
+            (byte)' ', 0x1a, 7, 0,
+           },
+          header,
+          0,
+          count)) {
         return "application/x-rar-compressed";
       }
       boolean binary = false;
       for (int i = 0; i < count; ++i) {
         int b = header[i] & 0xff;
         if (!(b >= 0x20 || b == 0x09 || b == 0x0a || b == 0x0c || b == 0x0d ||
-            b == 0x1b)) {
+          b == 0x1b)) {
           binary = true;
           break;
         }

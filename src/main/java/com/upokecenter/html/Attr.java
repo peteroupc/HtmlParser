@@ -1,4 +1,4 @@
-package com.upokecenter.util;
+package com.upokecenter.html;
 
   class Attr implements IAttr {
     private StringBuilder valueName;
@@ -16,30 +16,30 @@ package com.upokecenter.util;
       this.value = new StringBuilder();
     }
 
-    public Attr(Attr attr) {
-      this.valueNameString = attr.getName();
-      this.valueString = attr.getValue();
-      this.valuePrefix = attr.valuePrefix;
-      this.valueLocalName = attr.valueLocalName;
-      this.value_namespace = attr.value_namespace;
+    public Attr(IAttr attr) {
+      this.valueNameString = attr.GetName();
+      this.valueString = attr.GetValue();
+      this.valuePrefix = attr.GetPrefix();
+      this.valueLocalName = attr.GetLocalName();
+      this.value_namespace = attr.GetNamespaceURI();
     }
 
     public Attr(char ch) {
       this.valueName = new StringBuilder();
       this.value = new StringBuilder();
-      this.valueName.append (ch);
+      this.valueName.append(ch);
     }
 
     public Attr(int ch) {
       this.valueName = new StringBuilder();
       this.value = new StringBuilder();
       if (ch <= 0xffff) {
-        { this.valueName.append ((char)ch);
+        { this.valueName.append((char)ch);
         }
       } else if (ch <= 0x10ffff) {
-        this.valueName.append ((char)((((ch - 0x10000) >> 10) & 0x3ff) |
-0xd800));
-        this.valueName.append ((char)(((ch - 0x10000) & 0x3ff) | 0xdc00));
+        this.valueName.append((char)((((ch - 0x10000) >> 10) & 0x3ff) |
+          0xd800));
+        this.valueName.append((char)(((ch - 0x10000) & 0x3ff) | 0xdc00));
       }
     }
 
@@ -53,12 +53,12 @@ package com.upokecenter.util;
         throw new IllegalStateException();
       }
       if (ch <= 0xffff) {
-        { this.valueName.append ((char)ch);
+        { this.valueName.append((char)ch);
         }
       } else if (ch <= 0x10ffff) {
-        this.valueName.append ((char)((((ch - 0x10000) >> 10) & 0x3ff) |
-0xd800));
-        this.valueName.append ((char)(((ch - 0x10000) & 0x3ff) | 0xdc00));
+        this.valueName.append((char)((((ch - 0x10000) >> 10) & 0x3ff) |
+          0xd800));
+        this.valueName.append((char)(((ch - 0x10000) & 0x3ff) | 0xdc00));
       }
     }
 
@@ -67,11 +67,11 @@ package com.upokecenter.util;
         throw new IllegalStateException();
       }
       if (ch <= 0xffff) {
-        { this.value.append ((char)ch);
+        { this.value.append((char)ch);
         }
       } else if (ch <= 0x10ffff) {
-        this.value.append ((char)((((ch - 0x10000) >> 10) & 0x3ff) | 0xd800));
-        this.value.append ((char)(((ch - 0x10000) & 0x3ff) | 0xdc00));
+        this.value.append((char)((((ch - 0x10000) >> 10) & 0x3ff) | 0xd800));
+        this.value.append((char)(((ch - 0x10000) & 0x3ff) | 0xdc00));
       }
     }
 
@@ -84,46 +84,46 @@ package com.upokecenter.util;
     }
 
     /* (non-Javadoc)
-     * @see Com.Upokecenter.Html.IAttr#getLocalName()
+     * @see Com.Upokecenter.Html.IAttr#GetLocalName()
      */
-    public String getLocalName() {
-      return (this.value_namespace == null) ? this.getName() :
+    public String GetLocalName() {
+      return (this.value_namespace == null) ? this.GetName() :
         this.valueLocalName;
     }
 
     /* (non-Javadoc)
-     * @see Com.Upokecenter.Html.IAttr#getName()
+     * @see Com.Upokecenter.Html.IAttr#GetName()
      */
-    public String getName() {
+    public String GetName() {
       return (this.valueNameString != null) ? this.valueNameString :
         this.valueName.toString();
     }
 
     /* (non-Javadoc)
-     * @see Com.Upokecenter.Html.IAttr#getNamespaceURI()
+     * @see Com.Upokecenter.Html.IAttr#GetNamespaceURI()
      */
-    public String getNamespaceURI() {
+    public String GetNamespaceURI() {
       return this.value_namespace;
     }
 
     /* (non-Javadoc)
-     * @see Com.Upokecenter.Html.IAttr#getPrefix()
+     * @see Com.Upokecenter.Html.IAttr#GetPrefix()
      */
-    public String getPrefix() {
+    public String GetPrefix() {
       return this.valuePrefix;
     }
     /* (non-Javadoc)
-     * @see Com.Upokecenter.Html.IAttr#getValue()
+     * @see Com.Upokecenter.Html.IAttr#GetValue()
      */
-    public String getValue() {
+    public String GetValue() {
       return (this.valueString != null) ? this.valueString :
         this.value.toString();
     }
 
     boolean IsAttribute(String attrName, String value_namespace) {
-      String thisname = this.getLocalName();
+      String thisname = this.GetLocalName();
       boolean match = attrName == null ? thisname == null : attrName.equals(
-        thisname);
+          thisname);
       if (!match) {
         return false;
       }
@@ -145,14 +145,14 @@ package com.upokecenter.util;
         throw new IllegalArgumentException();
       }
       this.value_namespace = value;
-      this.valueNameString = this.getName();
+      this.valueNameString = this.GetName();
       int io = this.valueNameString.indexOf(':');
       if (io >= 1) {
         this.valuePrefix = this.valueNameString.substring(0, io - 0);
         this.valueLocalName = this.valueNameString.substring(io + 1);
       } else {
         this.valuePrefix = "";
-        this.valueLocalName = this.getName();
+        this.valueLocalName = this.GetName();
       }
     }
 
@@ -173,6 +173,6 @@ package com.upokecenter.util;
     }
 
     @Override public String toString() {
-      return "[Attribute: " + this.getName() + "=" + this.getValue() + "]";
+      return "[Attribute: " + this.GetName() + "=" + this.GetValue() + "]";
     }
   }

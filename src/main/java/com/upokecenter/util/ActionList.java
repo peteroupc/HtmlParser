@@ -59,7 +59,7 @@ import java.util.*;
       }
       if (postponed != null) {
         // System.out.println("Calling postponed action %d",actionID);
-        action.action (boundObject, postponed);
+        action.Action(boundObject, postponed);
       }
       return true;
     }
@@ -143,7 +143,7 @@ import java.util.*;
       if (action == null) {
         return false;
       }
-      action.action (boundObject, parameters);
+      action.Action(boundObject, parameters);
       return true;
     }
 

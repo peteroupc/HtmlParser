@@ -1,8 +1,8 @@
-package com.upokecenter.util;
+package com.upokecenter.html;
 
 import java.util.*;
 
-using Com.Upokecenter.util;
+import com.upokecenter.util.*;
 import com.upokecenter.util.*;
 /*
 
@@ -53,14 +53,14 @@ private String propVaraddress;
     }
 
     private void CollectElements(INode c, String s, List<IElement> nodes) {
-      if (c.getNodeType() == NodeType.ELEMENT_NODE) {
+      if (c.GetNodeType() == NodeType.ELEMENT_NODE) {
         IElement e = (IElement)c;
-        if (s == null || e.getLocalName().equals(s)) {
+        if (s == null || e.GetLocalName().equals(s)) {
           nodes.add(e);
         }
       }
-      for (Object node : c.getChildNodes()) {
-        this.CollectElements (node, s, nodes);
+      for (INode node : c.GetChildNodes()) {
+        this.CollectElements(node, s, nodes);
       }
     }
 
@@ -69,31 +69,32 @@ private String propVaraddress;
       String s,
       String valueSLowercase,
       List<IElement> nodes) {
-      if (c.getNodeType() == NodeType.ELEMENT_NODE) {
+      if (c.GetNodeType() == NodeType.ELEMENT_NODE) {
         IElement e = (IElement)c;
         if (s == null) {
           nodes.add(e);
-        } else if (HtmlCommon.HTML_NAMESPACE.equals(e.getNamespaceURI()) && e.getLocalName().equals(valueSLowercase)) {
+        } else if (HtmlCommon.HTML_NAMESPACE.equals(e.GetNamespaceURI()) && e.GetLocalName().equals(
+            valueSLowercase)) {
           nodes.add(e);
-        } else if (e.getLocalName().equals(s)) {
+        } else if (e.GetLocalName().equals(s)) {
           nodes.add(e);
         }
       }
-      for (Object node : c.getChildNodes()) {
-        this.CollectElements (node, s, nodes);
+      for (INode node : c.GetChildNodes()) {
+        this.CollectElements(node, s, nodes);
       }
     }
 
-    public String getCharset() {
+    public String GetCharset() {
       return (this.getEncoding() == null) ? "utf-8" : this.getEncoding();
     }
 
-    public IDocumentType getDoctype() {
+    public IDocumentType GetDoctype() {
       return this.getDoctype();
     }
 
-    public IElement getDocumentElement() {
-      for (Object node : this.getChildNodes()) {
+    public IElement GetDocumentElement() {
+      for (INode node : this.GetChildNodes()) {
         if (node instanceof IElement) {
           return (IElement)node;
         }
@@ -101,16 +102,16 @@ private String propVaraddress;
       return null;
     }
 
-    public IElement getElementById(String id) {
+    public IElement GetElementById(String id) {
       if (id == null) {
         throw new IllegalArgumentException();
       }
-      for (Object node : this.getChildNodes()) {
+      for (INode node : this.GetChildNodes()) {
         if (node instanceof IElement) {
-          if (id.equals(((IElement)node).getId())) {
+          if (id.equals(((IElement)node).GetId())) {
             return (IElement)node;
           }
-          IElement element = ((IElement)node).getElementById (id);
+          IElement element = ((IElement)node).GetElementById(id);
           if (element != null) {
             return element;
           }
@@ -119,7 +120,7 @@ private String propVaraddress;
       return null;
     }
 
-    public List<IElement> getElementsByTagName(String tagName) {
+    public List<IElement> GetElementsByTagName(String tagName) {
       if (tagName == null) {
         throw new IllegalArgumentException();
       }
@@ -131,15 +132,15 @@ private String propVaraddress;
         this.CollectElementsHtml(
           this,
           tagName,
-          com.upokecenter.util.DataUtilities.ToLowerCaseAscii (tagName),
+          com.upokecenter.util.DataUtilities.ToLowerCaseAscii(tagName),
           ret);
       } else {
-        this.CollectElements (this, tagName, ret);
+        this.CollectElements(this, tagName, ret);
       }
       return ret;
     }
 
-    @Override public String getLanguage() {
+    @Override public String GetLanguage() {
       return (this.getDefaultLanguage() == null) ? "" :
         this.getDefaultLanguage();
     }
@@ -148,15 +149,19 @@ private String propVaraddress;
       return this.docmode;
     }
 
-    @Override public String getNodeName() {
+    @Override public String GetNodeName() {
       return "#document";
     }
 
-    @Override public IDocument getOwnerDocument() {
+    @Override public IDocument GetOwnerDocument() {
       return null;
     }
 
-    public String getURL() {
+    public String GetURI() {
+      return this.getAddress();
+    }
+
+    public String GetURL() {
       return this.getAddress();
     }
 
@@ -172,27 +177,27 @@ private String propVaraddress;
       return this.ToDebugString();
     }
 
-    internal override String ToDebugString() {
-      return ToDebugString (this.getChildNodes());
+    @Override String ToDebugString() {
+      return ToDebugString(this.GetChildNodes());
     }
 
     static String ToDebugString(List<INode> nodes) {
       StringBuilder builder = new StringBuilder();
-      for (Object node : nodes) {
+      for (INode node : nodes) {
         String str = ((Node)node).ToDebugString();
         if (str == null) {
           continue;
         }
-        String[] strarray = StringUtility.splitAt (str, "\n");
+        String[] strarray = StringUtility.SplitAt(str, "\n");
         int len = strarray.length;
-        if (len > 0 && strarray[len - 1].length == 0) {
-          --len; // ignore trailing empty _string
+        if (len > 0 && ((strarray[len - 1]) == null || (strarray[len - 1]).length() == 0)) {
+          --len; // ignore trailing empty stringValue
         }
         for (int i = 0; i < len; ++i) {
           String el = strarray[i];
-          builder.append ("| ");
-          builder.append (el.replace("~~~~", "\n"));
-          builder.append ("\n");
+          builder.append("| ");
+          builder.append(el.replace("~~~~", "\n"));
+          builder.append("\n");
         }
       }
       return builder.toString();

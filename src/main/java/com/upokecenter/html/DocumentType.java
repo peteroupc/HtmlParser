@@ -1,4 +1,4 @@
-package com.upokecenter.util;
+package com.upokecenter.html;
 
 /*
 
@@ -42,37 +42,37 @@ private final String propVarpublicid;
     public final String getName() { return propVarname; }
 private final String propVarname;
 
-    @Override public final String getNodeName() {
-      return this.getName();
+    @Override public final String GetNodeName() {
+      return this.GetName();
     }
 
-    public String getPublicId() {
+    public String GetPublicId() {
       return this.getPublicId();
     }
 
-    @Override public final String getTextContent() {
+    @Override public final String GetTextContent() {
       return null;
     }
 
-    public String getSystemId() {
+    public String GetSystemId() {
       return this.getSystemId();
     }
 
-    public String getName() {
+    public String GetName() {
       return this.getName();
     }
 
-    internal override final String toDebugString() {
+    @Override final String ToDebugString() {
       StringBuilder builder = new StringBuilder();
-      builder.append ("<!DOCTYPE " + this.getName());
+      builder.append("<!DOCTYPE " + this.getName());
       if ((this.getPublicId() != null && this.getPublicId().length() > 0) ||
         (this.getSystemId() != null && this.getSystemId().length() > 0)) {
-        builder.append (this.getPublicId() != null && this.getPublicId().length() >
+        builder.append(this.getPublicId() != null && this.getPublicId().length() >
           0 ? " \"" + this.getPublicId().replace("\n", "~~~~") + "\"" : " \"\"");
-        builder.append (this.getSystemId() != null && this.getSystemId().length() >
+        builder.append(this.getSystemId() != null && this.getSystemId().length() >
           0 ? " \"" + this.getSystemId().replace("\n", "~~~~") + "\"" : " \"\"");
       }
-      builder.append (">\n");
+      builder.append(">\n");
       return builder.toString();
     }
   }

@@ -1,4 +1,4 @@
-package com.upokecenter.util;
+package com.upokecenter.html;
 /*
 
 Licensed under the Expat License.
@@ -24,7 +24,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 THE SOFTWARE.
 */
 
-  internal // / <summary>Not documented yet.</summary>
+  /**
+   * Not documented yet.
+   */
   enum DocumentMode {
     NoQuirksMode,
     LimitedQuirksMode,

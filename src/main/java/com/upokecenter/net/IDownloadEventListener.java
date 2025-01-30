@@ -1,4 +1,4 @@
-package com.upokecenter.util;
+package com.upokecenter.net;
 /*
 
 Licensed under the Expat License.
@@ -33,11 +33,11 @@ THE SOFTWARE.
      * Not documented yet.
      * @param url The parameter {@code url} is a text string.
      */
-    void OnConnected (String url);
+    void OnConnected(String url);
 
     /**
      * Not documented yet.
      * @param url The parameter {@code url} is a text string.
      */
-    void OnConnecting (String url);
+    void OnConnecting(String url);
   }

@@ -1,4 +1,4 @@
-package com.upokecenter.util;
+package com.upokecenter.html;
 
   final class HtmlEntities {
     private static final String[] ValueEntities = new
@@ -413,7 +413,7 @@ package com.upokecenter.util;
       "in;", "it;", "lE;", "le;", "lg;", "ll;", "lt;", "mp;", "mu;",
       "ne;", "ni;", "not", "nu;", "oS;", "or;", "pi;", "pm;", "pr;",
       "reg", "rx;", "sc;", "shy", "uml", "wp;", "wr;", "xi;", "yen",
-      "GT", "LT", "gt", "lt"
+      "GT", "LT", "gt", "lt",
     };
 
     private static int[] valueEntityValues = new int[] {
@@ -645,21 +645,22 @@ package com.upokecenter.util;
         return valueEntityValues;
       }
 
-    public static int GetHtmlEntity(String value) {
-      if (value.length() < 2 || value.length() > HtmlEntities.Entities[0].length) {
+    public static int GetHtmlEntity(String strValue) {
+      String[] ents = HtmlEntities.Entities;
+      if (strValue.length() < 2 || strValue.length() > ents[0].length) {
         return Integer.MAX_VALUE;
       }
-      value += ";";
-      int len = value.length();
-      for (int i = 0; i < HtmlEntities.Entities.length; ++i) {
-        String e = HtmlEntities.Entities[i];
+      strValue += ";";
+      int len = strValue.length();
+      for (int i = 0; i < ents.length; ++i) {
+        String e = ents[i];
         if (e.length() < len) {
           break;
         }
         if (e.length() != len) {
           continue;
         }
-        if (e.equals(value)) {
+        if (e.equals(strValue)) {
           return valueEntityValues[i];
         }
       }
@@ -670,10 +671,11 @@ package com.upokecenter.util;
       if (index > -1) {
         throw new IllegalArgumentException("index more than -1 (" + index + ")");
       }
-      index = Math.abs (index + 1) * 2;
+      int[] edoubles = HtmlEntities.EntityDoubles;
+      index = Math.abs(index + 1) * 2;
       return new int[] {
-        HtmlEntities.EntityDoubles[index],
-        HtmlEntities.EntityDoubles[index + 1],
+        edoubles[index],
+        edoubles[index + 1],
       };
     }
 

@@ -1,9 +1,9 @@
-package com.upokecenter.util;
+package com.upokecenter.html.data;
 
 import java.util.*;
 
-using Com.Upokecenter.Html;
-using Com.Upokecenter.util;
+import com.upokecenter.html.*;
+import com.upokecenter.util.*;
 import com.upokecenter.util.*;
 
   /**
@@ -13,18 +13,18 @@ import com.upokecenter.util.*;
   final class ExclusiveCanonicalXML {
     private static final class AttrComparer implements Comparator<IAttr> {
       public int compare(IAttr arg0, IAttr arg1) {
-        String namespace1 = ((arg0.getPrefix()) == null || (arg0.getPrefix()).length() == 0) ?
-          "" : arg0.getNamespaceURI();
-        String namespace2 = ((arg1.getPrefix()) == null || (arg1.getPrefix()).length() == 0) ?
-          "" : arg1.getNamespaceURI();
-        // compare _namespace URIs (attributes without a valuePrefix
-        // are considered to have no _namespace URI)
-        int cmp = com.upokecenter.util.DataUtilities.CodePointCompare (namespace1, namespace2);
+        String namespace1 = ((arg0.GetPrefix()) == null || (arg0.GetPrefix()).length() == 0) ?
+          "" : arg0.GetNamespaceURI();
+        String namespace2 = ((arg1.GetPrefix()) == null || (arg1.GetPrefix()).length() == 0) ?
+          "" : arg1.GetNamespaceURI();
+        // compare namespaceValue URIs (attributes without a valuePrefix
+        // are considered to have no namespaceValue URI)
+        int cmp = com.upokecenter.util.DataUtilities.CodePointCompare(namespace1, namespace2);
         if (cmp == 0) {
           // then compare their local names
           cmp = com.upokecenter.util.DataUtilities.CodePointCompare(
-              arg0.getLocalName(),
-              arg1.getLocalName());
+              arg0.GetLocalName(),
+              arg1.GetLocalName());
         }
         return cmp;
       }
@@ -50,30 +50,30 @@ import com.upokecenter.util.*;
         }
       }
 
-      public String getLocalName() {
+      public String GetLocalName() {
         return this.valueLocalName;
       }
 
-      public String getName() {
+      public String GetName() {
         return this.valueName;
       }
 
-      public String getNamespaceURI() {
+      public String GetNamespaceURI() {
         return "http://www.w3.org/2000/xmlns/";
       }
 
-      public String getPrefix() {
+      public String GetPrefix() {
         return this.valuePrefix;
       }
 
-      public String getValue() {
+      public String GetValue() {
         return this.value;
       }
     }
 
     private static final class NamespaceAttrComparer implements Comparator<IAttr> {
       public int compare(IAttr arg0, IAttr arg1) {
-        return com.upokecenter.util.DataUtilities.CodePointCompare (arg0.getName(), arg1.getName());
+        return com.upokecenter.util.DataUtilities.CodePointCompare(arg0.GetName(), arg1.GetName());
       }
     }
 
@@ -87,7 +87,7 @@ import com.upokecenter.util.*;
       INode node,
       boolean includeRoot,
       Map<String, String> prefixList) {
-      return Canonicalize (node, includeRoot, prefixList, false);
+      return Canonicalize(node, includeRoot, prefixList, false);
     }
 
     public static String Canonicalize(
@@ -104,27 +104,32 @@ import com.upokecenter.util.*;
       prefixList = (prefixList == null) ? ((new HashMap<String, String>())) : prefixList;
       for (Object valuePrefix : prefixList.keySet()) {
         String nsvalue = prefixList.get(valuePrefix);
-        CheckNamespacePrefix (valuePrefix, nsvalue);
+        CheckNamespacePrefix(valuePrefix, nsvalue);
       }
       HashMap<String, String> item = new HashMap<String, String>();
       stack.add(item);
       if (node instanceof IDocument) {
         boolean beforeElement = true;
-        for (Object child : node.getChildNodes()) {
+        for (INode child : node.GetChildNodes()) {
           if (child instanceof IElement) {
             beforeElement = false;
-            Canonicalize (child, builder, stack, prefixList, true,
-  withComments);
-          } else if (withComments || child.getNodeType() !=
+            Canonicalize(
+              child,
+              builder,
+              stack,
+              prefixList,
+              true,
+              withComments);
+          } else if (withComments || child.GetNodeType() !=
             NodeType.COMMENT_NODE) {
-            CanonicalizeOutsideElement (child, builder, beforeElement);
+            CanonicalizeOutsideElement(child, builder, beforeElement);
           }
         }
       } else if (includeRoot) {
-        Canonicalize (node, builder, stack, prefixList, true, withComments);
+        Canonicalize(node, builder, stack, prefixList, true, withComments);
       } else {
-        for (Object child : node.getChildNodes()) {
-          Canonicalize (child, builder, stack, prefixList, true, withComments);
+        for (INode child : node.GetChildNodes()) {
+          Canonicalize(child, builder, stack, prefixList, true, withComments);
         }
       }
       return builder.toString();
@@ -137,61 +142,61 @@ import com.upokecenter.util.*;
       Map<String, String> prefixList,
       boolean addPrefixes,
       boolean withComments) {
-      int nodeType = node.getNodeType();
+      int nodeType = node.GetNodeType();
       if (nodeType == NodeType.COMMENT_NODE) {
         if (withComments) {
-          builder.append ("<!--");
-          builder.append (((IComment)node).getData());
-          builder.append ("-->");
+          builder.append("<!--");
+          builder.append(((IComment)node).GetData());
+          builder.append("-->");
         }
       } else if (nodeType == NodeType.PROCESSING_INSTRUCTION_NODE) {
-        builder.append ("<?");
-        builder.append (((IProcessingInstruction)node).getTarget());
-        String Data = ((IProcessingInstruction)node).getData();
+        builder.append("<?");
+        builder.append(((IProcessingInstruction)node).GetTarget());
+        String Data = ((IProcessingInstruction)node).GetData();
         if (Data.length() > 0) {
-          builder.append (' ');
-          builder.append (Data);
+          builder.append(' ');
+          builder.append(Data);
         }
-        builder.append ("?>");
+        builder.append("?>");
       } else if (nodeType == NodeType.ELEMENT_NODE) {
         IElement e = (IElement)node;
         Map<String, String>
         valueNsRendered = namespaceStack.get(namespaceStack.size() - 1);
         boolean copied = false;
-        builder.append ('<');
-        if (e.getPrefix() != null && e.getPrefix().length > 0) {
-          builder.append (e.getPrefix());
-          builder.append (':');
+        builder.append('<');
+        if (e.GetPrefix() != null && e.GetPrefix().length > 0) {
+          builder.append(e.GetPrefix());
+          builder.append(':');
         }
-        builder.append (e.getLocalName());
+        builder.append(e.GetLocalName());
         ArrayList<IAttr> attrs = new ArrayList<IAttr>();
         HashSet<String> declaredNames = null;
         if (addPrefixes && prefixList.size() > 0) {
           declaredNames = new HashSet<String>();
         }
-        for (Object attr : e.getAttributes()) {
-          String valueName = attr.getName();
+        for (IAttr attr : e.GetAttributes()) {
+          String valueName = attr.GetName();
           String nsvalue = null;
           if ("xmlns".equals(valueName)) {
             attrs.add(attr); // add default namespace
             if (declaredNames != null) {
-              declaredNames.Add ("");
+              declaredNames.add("");
             }
-            nsvalue = attr.getValue();
-            CheckNamespacePrefix ("", nsvalue);
+            nsvalue = attr.GetValue();
+            CheckNamespacePrefix("", nsvalue);
           } else if (valueName.startsWith("xmlns:") && valueName.length() > 6) {
             attrs.add(attr); // add valuePrefix namespace
             if (declaredNames != null) {
-              declaredNames.Add (attr.getLocalName());
+              declaredNames.add(attr.GetLocalName());
             }
-            nsvalue = attr.getValue();
-            CheckNamespacePrefix (attr.getLocalName(), nsvalue);
+            nsvalue = attr.GetValue();
+            CheckNamespacePrefix(attr.GetLocalName(), nsvalue);
           }
         }
         if (declaredNames != null) {
           // add declared prefixes to list
           for (Object valuePrefix : prefixList.keySet()) {
-            if (valuePrefix == null || declaredNames.Contains (valuePrefix)) {
+            if (valuePrefix == null || declaredNames.Contains(valuePrefix)) {
               continue;
             }
             String value = prefixList.get(valuePrefix);
@@ -199,38 +204,38 @@ import com.upokecenter.util.*;
             attrs.add(new NamespaceAttr(valuePrefix, value));
           }
         }
-        attrs.Sort (ValueAttrNamespaceComparer);
-        for (Object attr : attrs) {
-          String valuePrefix = attr.getLocalName();
-          if (attr.getPrefix().length == 0) {
+        java.util.Collections.sort(attrs, ValueAttrNamespaceComparer);
+        for (IAttr attr : attrs) {
+          String valuePrefix = attr.GetLocalName();
+          if (attr.GetPrefix().length == 0) {
             valuePrefix = "";
           }
-          String value = attr.getValue();
+          String value = attr.GetValue();
           boolean isEmpty = ((valuePrefix) == null || (valuePrefix).length() == 0);
           boolean isEmptyDefault = isEmpty && ((value) == null || (value).length() == 0);
           boolean renderNamespace = false;
           if (isEmptyDefault) {
             // condition used for Canonical XML
             // renderNamespace=(
-            // (e.getParentNode() is IElement) &&
+            // (e.getParentNode() instanceof IElement) &&
             //
-            // !((((IElement)e.getParentNode()).getAttribute("xmlns"
-            //))==null || (((IElement)e.getParentNode()).getAttribute("xmlns"
+            // !((((IElement)e.getParentNode()).GetAttribute("xmlns"
+            //))==null || (((IElement)e.getParentNode()).GetAttribute("xmlns"
             //)).length() == 0)
             //);
 
             // changed condition for Exclusive XML Canonicalization
-            renderNamespace = (IsVisiblyUtilized (e, "") ||
-                prefixList.containsKey ("")) &&
-              valueNsRendered.containsKey ("");
-            } else {
+            renderNamespace = (IsVisiblyUtilized(e, "") ||
+              prefixList.containsKey("")) &&
+              valueNsRendered.containsKey("");
+          } else {
             String renderedValue = valueNsRendered.get(valuePrefix);
             renderNamespace = renderedValue == null || !renderedValue.equals(
-              value);
+                value);
             // added condition for Exclusive XML Canonicalization
             renderNamespace = renderNamespace && (
-                IsVisiblyUtilized (e, valuePrefix) ||
-                prefixList.containsKey (valuePrefix));
+                IsVisiblyUtilized(e, valuePrefix) ||
+                prefixList.containsKey(valuePrefix));
           }
           if (renderNamespace) {
             RenderAttribute(
@@ -240,7 +245,7 @@ import com.upokecenter.util.*;
               value);
             if (!copied) {
               copied = true;
-              valueNsRendered = new HashMap<String, String> (
+              valueNsRendered = new HashMap<String, String>(
                 valueNsRendered);
             }
             valueNsRendered.put(valuePrefix, value);
@@ -249,50 +254,56 @@ import com.upokecenter.util.*;
         namespaceStack.add(valueNsRendered);
         attrs.clear();
         // All other attributes
-        for (Object attr : e.getAttributes()) {
-          String valueName = attr.getName();
-          if (! ("xmlns".equals(valueName) ||
-              (valueName.startsWith("xmlns:") &&
-                valueName.length() > 6))) {
-            // non-_namespace node
+        for (IAttr attr : e.GetAttributes()) {
+          String valueName = attr.GetName();
+          if (!("xmlns".equals(valueName) ||
+            (valueName.startsWith("xmlns:") &&
+
+            valueName.length() > 6))) {
+            // nonnamespaceValue node
             attrs.add(attr);
           }
         }
-        attrs.Sort (ValueAttrComparer);
-        for (Object attr : attrs) {
+        java.util.Collections.sort(attrs, ValueAttrComparer);
+        for (IAttr attr : attrs) {
           RenderAttribute(
             builder,
-            attr.getPrefix(),
-            attr.getLocalName(),
-            attr.getValue());
+            attr.GetPrefix(),
+            attr.GetLocalName(),
+            attr.GetValue());
         }
-        builder.append ('>');
-        for (Object child : node.getChildNodes()) {
-          Canonicalize (child, builder, namespaceStack, prefixList, false,
+        builder.append('>');
+        for (INode child : node.GetChildNodes()) {
+          Canonicalize(
+            child,
+            builder,
+            namespaceStack,
+            prefixList,
+            false,
             withComments);
         }
         namespaceStack.remove(namespaceStack.size() - 1);
-        builder.append ("</");
-        if (e.getPrefix() != null && e.getPrefix().length > 0) {
-          builder.append (e.getPrefix());
-          builder.append (':');
+        builder.append("</");
+        if (e.GetPrefix() != null && e.GetPrefix().length > 0) {
+          builder.append(e.GetPrefix());
+          builder.append(':');
         }
-        builder.append (e.getLocalName());
-        builder.append ('>');
+        builder.append(e.GetLocalName());
+        builder.append('>');
       } else if (nodeType == NodeType.TEXT_NODE) {
-        String comment = ((IText)node).getData();
+        String comment = ((IText)node).GetData();
         for (int i = 0; i < comment.length(); ++i) {
           char c = comment.charAt(i);
           if (c == 0x0d) {
-            builder.append ("&#xD;");
+            builder.append("&#xD;");
           } else if (c == '>') {
-            builder.append ("&gt;");
+            builder.append("&gt;");
           } else if (c == '<') {
-            builder.append ("&lt;");
+            builder.append("&lt;");
           } else if (c == '&') {
-            builder.append ("&amp;");
+            builder.append("&amp;");
           } else {
-            builder.append (c);
+            builder.append(c);
           }
         }
       }
@@ -302,31 +313,31 @@ import com.upokecenter.util.*;
       INode node,
       StringBuilder builder,
       boolean beforeDocument) {
-      int nodeType = node.getNodeType();
+      int nodeType = node.GetNodeType();
       if (nodeType == NodeType.COMMENT_NODE) {
         if (!beforeDocument) {
-          builder.append ('\n');
+          builder.append('\n');
         }
-        builder.append ("<!--");
-        builder.append (((IComment)node).getData());
-        builder.append ("-->");
+        builder.append("<!--");
+        builder.append(((IComment)node).GetData());
+        builder.append("-->");
         if (beforeDocument) {
-          builder.append ('\n');
+          builder.append('\n');
         }
       } else if (nodeType == NodeType.PROCESSING_INSTRUCTION_NODE) {
         if (!beforeDocument) {
-          builder.append ('\n');
+          builder.append('\n');
         }
-        builder.append ("<?");
-        builder.append (((IProcessingInstruction)node).getTarget());
-        String Data = ((IProcessingInstruction)node).getData();
+        builder.append("<?");
+        builder.append(((IProcessingInstruction)node).GetTarget());
+        String Data = ((IProcessingInstruction)node).GetData();
         if (Data.length() > 0) {
-          builder.append (' ');
-          builder.append (Data);
+          builder.append(' ');
+          builder.append(Data);
         }
-        builder.append ("?>");
+        builder.append("?>");
         if (beforeDocument) {
-          builder.append ('\n');
+          builder.append('\n');
         }
       }
     }
@@ -334,28 +345,28 @@ import com.upokecenter.util.*;
     private static void CheckNamespacePrefix(String valuePrefix,
       String nsvalue) {
       if (valuePrefix.equals("xmlns")) {
-        throw new IllegalArgumentException("'xmlns' _namespace declared");
+        throw new IllegalArgumentException("'xmlns' namespaceValue declared");
       }
       if (valuePrefix.equals("xml") &&
         !"http://www.w3.org/XML/1998/namespace"
-        .equals (nsvalue)) {
+        .equals(nsvalue)) {
         throw new IllegalArgumentException("'xml' bound to wrong namespace" +
-"\u0020valueName");
+          "\u0020valueName");
       }
       if (!"xml".equals(valuePrefix) &&
         "http://www.w3.org/XML/1998/namespace"
-        .equals (nsvalue)) {
+        .equals(nsvalue)) {
         throw new IllegalArgumentException("'xml' bound to wrong namespace" +
-"\u0020valueName");
+          "\u0020valueName");
       }
       if ("http://www.w3.org/2000/xmlns/".equals(nsvalue)) {
         throw new IllegalArgumentException("'valuePrefix' bound to xmlns namespace" +
-"\u0020valueName");
+          "\u0020valueName");
       }
       if (!((nsvalue) == null || (nsvalue).length() == 0)) {
-        if (!URIUtility.HasSchemeForURI (nsvalue)) {
+        if (!URIUtility.HasSchemeForURI(nsvalue)) {
           throw new IllegalArgumentException(nsvalue + " is not a valid namespace" +
-"\u0020URI.");
+            "\u0020URI.");
         }
       } else if (!"".equals(valuePrefix)) {
         throw new IllegalArgumentException("can't undeclare a valuePrefix");
@@ -363,14 +374,14 @@ import com.upokecenter.util.*;
     }
 
     private static boolean IsVisiblyUtilized(IElement element, String s) {
-      String valuePrefix = element.getPrefix();
+      String valuePrefix = element.GetPrefix();
       valuePrefix = (valuePrefix == null) ? ("") : valuePrefix;
       if (s.equals(valuePrefix)) {
         return true;
       }
       if (s.length() > 0) {
-        for (Object attr : element.getAttributes()) {
-          valuePrefix = attr.getPrefix();
+        for (IAttr attr : element.GetAttributes()) {
+          valuePrefix = attr.GetPrefix();
           if (valuePrefix == null) {
             continue;
           }
@@ -387,32 +398,32 @@ import com.upokecenter.util.*;
       String valuePrefix,
       String valueName,
       String value) {
-      builder.append (' ');
+      builder.append(' ');
       if (!((valuePrefix) == null || (valuePrefix).length() == 0)) {
-        builder.append (valuePrefix);
-        builder.append (":");
+        builder.append(valuePrefix);
+        builder.append(":");
       }
-      builder.append (valueName);
-      builder.append ("=\"");
+      builder.append(valueName);
+      builder.append("=\"");
       for (int i = 0; i < value.length(); ++i) {
         char c = value.charAt(i);
         if (c == 0x0d) {
-          builder.append ("&#xD;");
+          builder.append("&#xD;");
         } else if (c == 0x09) {
-          builder.append ("&#x9;");
+          builder.append("&#x9;");
         } else if (c == 0x0a) {
-          builder.append ("&#xA;");
+          builder.append("&#xA;");
         } else if (c == '"') {
-          builder.append ("&#x22;");
+          builder.append("&#x22;");
         } else if (c == '<') {
-          builder.append ("&lt;");
+          builder.append("&lt;");
         } else if (c == '&') {
-          builder.append ("&amp;");
+          builder.append("&amp;");
         } else {
-          builder.append (c);
+          builder.append(c);
         }
       }
-      builder.append ('"');
+      builder.append('"');
     }
 
     private ExclusiveCanonicalXML() {

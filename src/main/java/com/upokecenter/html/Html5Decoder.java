@@ -1,4 +1,4 @@
-package com.upokecenter.util;
+package com.upokecenter.html;
 /*
 
 Licensed under the Expat License.
@@ -47,7 +47,7 @@ import com.upokecenter.text.*;
       }
 
       while (true) {
-        int c = this.valueDecoder.ReadChar (byteReader);
+        int c = this.valueDecoder.ReadChar(byteReader);
         // System.out.println("c=" + ((char)c) + ",cc=" + cc);
         if (!this.valueHavebom && !this.valueHavecr && c >= 0x20 && c <= 0x7e) {
           return c;
@@ -74,7 +74,7 @@ import com.upokecenter.text.*;
         }
         if (c < 0x09 || (c >= 0x0e && c <= 0x1f) || (c >= 0x7f && c <= 0x9f) ||
           (c & 0xfffe) == 0xfffe || c > 0x10ffff || c == 0x0b || (c >= 0xfdd0 &&
-            c <= 0xfdef)) {
+          c <= 0xfdef)) {
           // control character or noncharacter
           this.valueIserror = true;
         }
@@ -111,7 +111,7 @@ import com.upokecenter.text.*;
       }
       int count = 0;
       while (length > 0) {
-        int c = this.valueDecoder.ReadChar (stream);
+        int c = this.valueDecoder.ReadChar(stream);
         // System.out.println("read c=" + ((char)c) + ",cc=" + cc);
         if (!this.valueHavebom && !this.valueHavecr && c >= 0x20 && c <= 0x7e) {
           buffer[offset] = c;
@@ -142,7 +142,7 @@ import com.upokecenter.text.*;
         }
         if (c < 0x09 || (c >= 0x0e && c <= 0x1f) || (c >= 0x7f && c <= 0x9f) ||
           (c & 0xfffe) == 0xfffe || c > 0x10ffff || c == 0x0b || (c >= 0xfdd0 &&
-            c <= 0xfdef)) {
+          c <= 0xfdef)) {
           // control character or noncharacter
           this.valueIserror = true;
         }

@@ -1,4 +1,4 @@
-package com.upokecenter.util;
+package com.upokecenter.html;
 /*
 
 Licensed under the Expat License.
@@ -35,15 +35,15 @@ import java.util.*;
      * @param name An attribute name.
      * @return The return value is not documented yet.
      */
-    String GetAttribute (String name);
+    String GetAttribute(String name);
 
     /**
-     * Gets an attribute of this element, with the given _namespace name and local
-     * name. @param _namespace the attribute's _namespace name. @param name the
-     * attribute's local name.
+     * Gets an attribute of this element, with the specified namespaceValue name
+     * and local name. @param namespaceValue the attribute's namespaceValue name.
+     * @param name the attribute's local name.
      * @return The return value is not documented yet.
      */
-    String GetAttributeNS (String _namespace, String name);
+    String GetAttributeNS(String namespaceValue, String name);
 
     /**
      * Gets a list of all attributes declared on this element.
@@ -57,7 +57,7 @@ import java.util.*;
      * @param id The parameter {@code id} is a text string.
      * @return The return value is not documented yet.
      */
-    IElement GetElementById (String id);
+    IElement GetElementById(String id);
 
     /**
      * Gets all descendents, both direct and indirect, that have the specified tag
@@ -68,7 +68,7 @@ import java.util.*;
      * @param tagName A tag name.
      * @return The return value is not documented yet.
      */
-    List<IElement> GetElementsByTagName (String tagName);
+    List<IElement> GetElementsByTagName(String tagName);
 
     /**
      * Gets the value of the id attribute on this element.
@@ -83,15 +83,15 @@ import java.util.*;
     String GetInnerHTML();
 
     /**
-     * Gets the element's local name. For elements with no _namespace, this will
-     * equal the element's tag name.
+     * Gets the element's local name. For elements with no namespaceValue, this
+     * will equal the element's tag name.
      * @return The return value is not documented yet.
      */
     String GetLocalName();
 
     /**
-     * Gets the _namespace name of this element. For HTML elements, it will equal
-     * "http://www.w3.org/1999/xhtml".
+     * Gets the namespaceValue name of this element. For HTML elements, it will
+     * equal "http://www.w3.org/1999/xhtml".
      * @return The return value is not documented yet.
      */
     String GetNamespaceURI();

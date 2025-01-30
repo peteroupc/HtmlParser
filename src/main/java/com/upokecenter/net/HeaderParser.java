@@ -1,6 +1,6 @@
-package com.upokecenter.util;
+package com.upokecenter.net;
 
-using Com.Upokecenter.util;
+import com.upokecenter.util.*;
 
 /*
 
@@ -69,12 +69,12 @@ THE SOFTWARE.
       int endIndex = str.length();
       int indexStart = index;
       if (endIndex - index > 12 && (str.charAt(index) == 72) && (str.charAt(index + 1) ==
-          84) && (str.charAt(index + 2) == 84) && (str.charAt(index + 3) == 80) &&
+        84) && (str.charAt(index + 2) == 84) && (str.charAt(index + 3) == 80) &&
         (str.charAt(index + 4) == 47) && (str.charAt(index + 5) >= 48 && str.charAt(index + 5) <=
-          57) && (str.charAt(index + 6) == 46) && (str.charAt(index + 7) >= 48 && str.charAt(index +
+        57) && (str.charAt(index + 6) == 46) && (str.charAt(index + 7) >= 48 && str.charAt(index +
             7) <= 57) && (str.charAt(index + 8) == 32) && ((str.charAt(index + 9) >= 48 &&
-            str.charAt(index + 9) <= 57) && (str.charAt(index + 10) >= 48 && str.charAt(index + 10)
-            <= 57) && (str.charAt(index + 11) >= 48 && str.charAt(index + 11) <= 57)) &&
+        str.charAt(index + 9) <= 57) && (str.charAt(index + 10) >= 48 && str.charAt(index + 10)
+          <= 57) && (str.charAt(index + 11) >= 48 && str.charAt(index + 11) <= 57)) &&
         (str.charAt(index + 12) == 32)) {
         int c1 = (int)(str.charAt(index + 9) - '0');
         int c2 = (int)(str.charAt(index + 10) - '0');
@@ -86,7 +86,7 @@ THE SOFTWARE.
 
     private static int SkipOws(byte[] bytes, int index, int endIndex) {
       while (index < endIndex && (bytes[index] == 0x09 || bytes[index] ==
-          0x20)) {
+        0x20)) {
         ++index;
       }
       return index;
@@ -94,12 +94,12 @@ THE SOFTWARE.
 
     private static int SkipObsFold(byte[] bytes, int index, int endIndex) {
       if (endIndex - index > 1 && (bytes[index] == 0x0d && bytes[index + 1]
-          == 0x0a)) {
+        == 0x0a)) {
         int si = index;
         boolean found = false;
         index += 2;
         while (index < endIndex && (bytes[index] == 0x20 || bytes[index] ==
-            0x09)) {
+          0x09)) {
           found = true;
           ++index;
         }
@@ -110,12 +110,12 @@ THE SOFTWARE.
 
     private static int SkipOwsCommaOws(byte[] bytes, int index, int endIndex) {
       int s = index;
-      s = SkipOws (bytes, s, endIndex);
+      s = SkipOws(bytes, s, endIndex);
       if (s >= endIndex || bytes[s] != ',') {
         { return index;
         }
       }
-      return SkipOws (bytes, s, endIndex);
+      return SkipOws(bytes, s, endIndex);
     }
 
     private static int[] valueIllegalHttpTokenChars = {
@@ -150,7 +150,7 @@ THE SOFTWARE.
       int startIndex = index;
       // NOTE: Assumes lines were already unfolded (each obs-fold is
       // converted to one or more SP)
-      index = SkipOws (bytes, index, endIndex);
+      index = SkipOws(bytes, index, endIndex);
       while (index < endIndex) {
         if (bytes[index] == ',') {
           ++emptyItems;
@@ -158,14 +158,14 @@ THE SOFTWARE.
             return startIndex;
           }
           ++index;
-          index = SkipOws (bytes, index, endIndex);
+          index = SkipOws(bytes, index, endIndex);
         } else {
           emptyItems = 0;
           int si = index;
           while (index < endIndex &&
             (bytes[index] != '=' && bytes[index] != ',' &&
               (((int)bytes[index]) & 0xff) > 0x20)) {
-            if (!IsTokenText (bytes[index])) {
+            if (!IsTokenText(bytes[index])) {
               return startIndex;
             }
             ++index;
@@ -179,12 +179,12 @@ THE SOFTWARE.
               ++index;
               while (index < endIndex && (bytes[index] != '"')) {
                 if (bytes[index] == '\\' && index + 1 < endIndex) {
-                  if (!IsQpText (bytes[index])) {
+                  if (!IsQpText(bytes[index])) {
                     return startIndex;
                   }
                   index += 2;
                 } else {
-                  if (!IsQdText (bytes[index])) {
+                  if (!IsQdText(bytes[index])) {
                     return startIndex;
                   }
                   ++index;
@@ -197,8 +197,8 @@ THE SOFTWARE.
             } else {
               si = index;
               while (index < endIndex && (bytes[index] != ',' &&
-                  (((int)bytes[index]) & 0xff) > 0x20)) {
-                if (!IsTokenText (bytes[index])) {
+                (((int)bytes[index]) & 0xff) > 0x20)) {
+                if (!IsTokenText(bytes[index])) {
                   return startIndex;
                 }
                 ++index;
@@ -211,7 +211,7 @@ THE SOFTWARE.
           if (index == endIndex) {
             return endIndex;
           }
-          si = SkipOwsCommaOws (bytes, index, endIndex);
+          si = SkipOwsCommaOws(bytes, index, endIndex);
           if (si != index) {
             return startIndex;
           }

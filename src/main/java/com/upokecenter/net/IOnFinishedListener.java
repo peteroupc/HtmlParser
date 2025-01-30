@@ -1,4 +1,4 @@
-package com.upokecenter.util;
+package com.upokecenter.net;
 /*
 
 Licensed under the Expat License.
@@ -37,5 +37,5 @@ import java.io.*;
      * If this value is nonnull, an error has occurred and this exception contains
      * further information on the error, and 'value' will be null.
      */
-    void OnFinished (String url, T value, IOException exception);
+    void OnFinished(String url, T value, IOException exception);
   }

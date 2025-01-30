@@ -1,4 +1,4 @@
-package com.upokecenter.util;
+package com.upokecenter.html;
 
 /*
 
@@ -34,7 +34,7 @@ THE SOFTWARE.
     public final StringBuilder getValueText() { return propVarvaluetext; }
 private final StringBuilder propVarvaluetext;
 
-    public String getData() {
+    public String GetData() {
       return this.getValueText().toString();
     }
 
@@ -42,11 +42,11 @@ private final StringBuilder propVarvaluetext;
       return "#valueText";
     }
 
-    @Override public String getTextContent() {
+    @Override public String GetTextContent() {
       return this.getValueText().toString();
     }
 
-    internal override String toDebugString() {
+    @Override String ToDebugString() {
       return "\"" + this.getValueText().toString().replace("\n", "~~~~") + "\"\n";
     }
   }

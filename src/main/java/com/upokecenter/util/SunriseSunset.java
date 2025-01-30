@@ -44,7 +44,7 @@ released to the public domain by Paul Schlyter, December 1992
     // **
     private static double valueINV360 = 1.0 / 360.0;
 
-    private static double __daylen__(
+    private static double Daylen(
       int year,
       int month,
       int day,
@@ -78,19 +78,19 @@ released to the public domain by Paul Schlyter, December 1992
              t; // Diurnal arc
 
       // Compute d of 12h local mean solar time
-      d = Days_since_2000_Jan_0 (year, month, day) + 0.5 - (lon / 360.0);
+      d = Days_since_2000_Jan_0(year, month, day) + 0.5 - (lon / 360.0);
 
       // Compute obliquity of ecliptic (inclination of Earth's-axis)
       double me7 = 3.563e-7;
       obl_ecl = 23.4393 - (me7 * d);
       // Compute Sun's position
-      double[] slon_sr = Sunpos (d);
+      double[] slon_sr = Sunpos(d);
       slon = slon_sr[0];
       sr = slon_sr[1];
       // Compute sine and cosine of Sun's declination
-      sin_sdecl = Math.sin (valueDEGRAD * obl_ecl) * Math.sin (valueDEGRAD *
-          slon);
-      cos_sdecl = Math.sqrt (1.0 - (sin_sdecl * sin_sdecl));
+      sin_sdecl = Math.sin(valueDEGRAD * obl_ecl) * Math.sin(valueDEGRAD *
+        slon);
+      cos_sdecl = Math.sqrt(1.0 - (sin_sdecl * sin_sdecl));
 
       // Compute the Sun's apparent radius, degrees
       sradius = 0.2666 / sr;
@@ -104,21 +104,21 @@ released to the public domain by Paul Schlyter, December 1992
       // the specified altitude altit:
       {
         double cost;
-        cost = Math.sin (valueDEGRAD * altit) - (Math.sin (valueDEGRAD * lat)
-            * sin_sdecl) / (Math.cos (valueDEGRAD * lat) * cos_sdecl);
+        cost = Math.sin(valueDEGRAD * altit) - (Math.sin(valueDEGRAD * lat)
+          * sin_sdecl) / (Math.cos(valueDEGRAD * lat) * cos_sdecl);
         if (cost >= 1.0) {
           t = 0.0; // Sun always below altit
         } else if (cost <= -1.0) {
           t = 24.0; // Sun always above altit
         } else {
           // The diurnal arc, hours
-          t = (2.0 / 15.0) * valueRADEG * Math.acos (cost);
+          t = (2.0 / 15.0) * valueRADEG * Math.acos(cost);
         }
       }
-      return t; // __daylen__
+      return t; // Daylen
     }
 
-    private static int __sunriset__(
+    private static int Sunriset(
       int year,
       int month,
       int day,
@@ -169,18 +169,18 @@ released to the public domain by Paul Schlyter, December 1992
       int rc = 0; // Return cde from function - usually 0
 
       // Compute d of 12h local mean solar time
-      d = Days_since_2000_Jan_0 (year, month, day) + 0.5 - (lon / 360.0);
+      d = Days_since_2000_Jan_0(year, month, day) + 0.5 - (lon / 360.0);
 
       // Compute local sidereal time of this moment
-      sidtime = Revolution (GMST0 (d) + 180.0 + lon);
+      sidtime = Revolution(GMST0(d) + 180.0 + lon);
 
       // Compute Sun's valueRA + Decl at this moment
-      double[] ra_dec_sr = Sun_RA_dec (d);
+      double[] ra_dec_sr = Sun_RA_dec(d);
       sRA = ra_dec_sr[0];
       sdec = ra_dec_sr[1];
       sr = ra_dec_sr[2];
       // Compute time when Sun is at south - in hours UT
-      tsouth = 12.0 - (Rev180 (sidtime - sRA) / 15.0);
+      tsouth = 12.0 - (Rev180(sidtime - sRA) / 15.0);
 
       // Compute the Sun's apparent radius, degrees
       sradius = 0.2666 / sr;
@@ -194,9 +194,9 @@ released to the public domain by Paul Schlyter, December 1992
       // the specified altitude altit:
       {
         double cost;
-        cost = Math.sin (valueDEGRAD * altit) - (Math.sin (valueDEGRAD * lat)
-            * Math.sin (valueDEGRAD * sdec)) / (Math.cos (valueDEGRAD * lat) *
-            Math.cos (valueDEGRAD * sdec));
+        cost = Math.sin(valueDEGRAD * altit) - (Math.sin(valueDEGRAD * lat)
+          * Math.sin(valueDEGRAD * sdec)) / (Math.cos(valueDEGRAD * lat) *
+            Math.cos(valueDEGRAD * sdec));
         if (cost >= 1.0) {
           rc = -1;
           t = 0.0; // Sun always below altit
@@ -204,7 +204,7 @@ released to the public domain by Paul Schlyter, December 1992
           rc = +1;
           t = 12.0;
         } /* Sun always above altit */ else {
-          t = valueRADEG * Math.acos (cost) / 15.0; // The diurnal arc, hours
+          t = valueRADEG * Math.acos(cost) / 15.0; // The diurnal arc, hours
         }
       }
 
@@ -212,28 +212,39 @@ released to the public domain by Paul Schlyter, December 1992
       trise[0] = tsouth - t;
       tset[0] = tsouth + t;
 
-      return rc; // __sunriset__
+      return rc; // Sunriset
     }
 
     // The "workhorse" function for sun rise/set times
     private static long Days_since_2000_Jan_0(long y, long m, long d) {
-      return 367L * (y) - ((7 * ((y) + (((m) + 9) / 12))) / 4) + ((275 * m)
-          / 9) + d - 730530L;
+      return (367L * y) - ((7 * (y + ((m + 9) / 12))) / 4) + ((275 * m) /
+        9) + d - 730530L;
     }
 
     // The "workhorse" function
 
     /**
-     * Gets a value indicating whether it's currently day or night at the given
+     * Gets a value indicating whether it's day or night at the specified time and
      * geographic location.
      * @param lat A geographic latitude, in degrees. South coordinates are
      * negative.
      * @param lon A geographic longitude, in degrees. West coordinates are
      * negative.
+     * @param components A component indicating the time in universal coordinated
+     * time, or UTC. A seven-number array indicating the year, month, day, hour,
+     * minute, second, and milliseconds, in that order.
      * @return A day state value.
+     * @throws NullPointerException The parameter {@code components} is null.
+     * @throws IllegalArgumentException components has length less than 7..
      */
-    public static DayState GetCurrentDayState(double lat, double lon) {
-      int[] components = DateTimeUtility.getCurrentGmtDateComponents();
+    public static DayState GetDayState(double lat, double lon, int[]
+      components) {
+      if (components == null) {
+        throw new NullPointerException("components");
+      }
+      if (components.length < 7) {
+        throw new IllegalArgumentException("components has length less than 7");
+      }
       double[] trise = new double[1];
       double[] tset = new double[1];
       double hours = components[3]; // hour
@@ -241,32 +252,32 @@ released to the public domain by Paul Schlyter, December 1992
       hours += components[5] / 3600.0; // second
       hours += components[6] / 3600000.0; // millisecond
       // Get sunrise times
-      int t = __sunriset__(
-        components[0], // year
-        components[1], // month
-        components[2], // day
-        lon,
-        lat,
-        -35.0 / 60.0,
-        true,
-        trise,
-        tset);
+      int t = Sunriset(
+          components[0], // year
+          components[1], // month
+          components[2], // day
+          lon,
+          lat,
+          -35.0 / 60.0,
+          true,
+          trise,
+          tset);
       if (t > 0) {
         return DayState.Day;
       }
       double[] twirise = new double[1];
       double[] twiset = new double[1];
       // Get civil twilight times
-      int twi = __sunriset__(
-        components[0], // year
-        components[1], // month
-        components[2], // day
-        lon,
-        lat,
-        -6,
-        false,
-        twirise,
-        twiset);
+      int twi = Sunriset(
+          components[0], // year
+          components[1], // month
+          components[2], // day
+          lon,
+          lat,
+          -6,
+          false,
+          twirise,
+          twiset);
       if (twi < 0) {
         return DayState.Night;
       }
@@ -277,8 +288,8 @@ released to the public domain by Paul Schlyter, December 1992
       // This function computes the Sun's position at
       // any instant
       return (hours < trise[0]) ? DayState.NightToDay : ((hours < tset[0]) ?
-          DayState.Day : ((hours < twiset[0]) ? DayState.DayToNight :
-            DayState.Night));
+        DayState.Day : ((hours < twiset[0]) ? DayState.DayToNight :
+        DayState.Night));
     }
     /*
      * This function computes GMST0, the Greenwich Mean Sidereal Time
@@ -309,48 +320,48 @@ released to the public domain by Paul Schlyter, December 1992
       double sidtim0;
       // Sidtime at 0h UT = L (Sun's mean longitude) + 180.0 degr
       // L = valueM + w, as defined in Sunpos().
-      sidtim0 = Revolution ((180.0 + 356.0470 + 282.9404) +
+      sidtim0 = Revolution(180.0 + 356.0470 + 282.9404 +
           (0.9856002585 + 4.70935E-5) * d);
       return sidtim0; // GMST0
     }
 
-    static double Rev180 (double x)
+    static double Rev180(double x)
     // **
     // Reduce angle to within + 180..+180 degrees
     // **
     {
-      return x - (360.0 * Math.floor ((x * valueINV360) + 0.5)); // Revolution
+      return x - (360.0 * Math.floor((x * valueINV360) + 0.5)); // Revolution
     }
 
-    static double Revolution (double x)
+    static double Revolution(double x)
     // **
     // Reduce angle to within 0..360 degrees
     // **
     {
-      return x - (360.0 * Math.floor (x * valueINV360)); // Revolution
+      return x - (360.0 * Math.floor(x * valueINV360)); // Revolution
     }
 
     static double[] Sun_RA_dec(double d) {
       double lon, obl_ecl, x, y, z;
 
       // Compute Sun's ecliptical coordinates
-      double[] lon_r = Sunpos (d);
+      double[] lon_r = Sunpos(d);
       lon = lon_r[0];
       // Compute ecliptic rectangular coordinates (z = 0)
-      x = lon_r[1] * Math.cos (valueDEGRAD * lon);
-      y = lon_r[1] * Math.sin (valueDEGRAD * lon);
+      x = lon_r[1] * Math.cos(valueDEGRAD * lon);
+      y = lon_r[1] * Math.sin(valueDEGRAD * lon);
 
       // Compute obliquity of ecliptic (inclination of Earth's-axis)
       double me7 = 3.563e-7;
       obl_ecl = 23.4393 - (me7 * d);
 
       // Convert to equatorial rectangular coordinates - x is unchanged
-      z = y * Math.sin (valueDEGRAD * obl_ecl);
-      y *= Math.cos (valueDEGRAD * obl_ecl);
+      z = y * Math.sin(valueDEGRAD * obl_ecl);
+      y *= Math.cos(valueDEGRAD * obl_ecl);
 
       // Convert to spherical coordinates
-      double valueRA = valueRADEG * Math.atan2 (y, x);
-      double dec = valueRADEG * Math.atan2 (z, Math.sqrt (x * x + y * y));
+      double valueRA = valueRADEG * Math.atan2(y, x);
+      double dec = valueRADEG * Math.atan2(z, Math.sqrt((x * x) + y * y));
       return new double[] { valueRA, dec, lon_r[1] }; // Sun_RA_dec
     }
 
@@ -368,18 +379,17 @@ released to the public domain by Paul Schlyter, December 1992
              v; // True anomaly
 
       // Compute mean elements
-      valueM = Revolution (356.0470 + (0.9856002585 * d));
+      valueM = Revolution(356.0470 + (0.9856002585 * d));
       w = 282.9404 + (d * 4.70935E-5);
       e = 0.016709 - (d * 1.151E-9);
 
       // Compute true longitude and radius vector
-      valueE = valueM + e * valueRADEG * Math.sin (valueDEGRAD * valueM) *
-(1.0 +
-          e * Math.cos (valueDEGRAD * valueM));
-      x = Math.cos (valueDEGRAD * valueE) - e;
-      y = Math.sqrt (1.0 - (e * e)) * Math.sin (valueDEGRAD * valueE);
-      double r = Math.sqrt (x * x + y * y); // Solar distance
-      v = valueRADEG * Math.atan2 (y, x); // True anomaly
+      valueE = valueM + (e * valueRADEG * Math.sin(valueDEGRAD * valueM) *
+        (1.0 + e * Math.cos(valueDEGRAD * valueM)));
+      x = Math.cos(valueDEGRAD * valueE) - e;
+      y = Math.sqrt(1.0 - (e * e)) * Math.sin(valueDEGRAD * valueE);
+      double r = Math.sqrt((x * x) + (y * y)); // Solar distance
+      v = valueRADEG * Math.atan2(y, x); // True anomaly
       double lon = v + w; // True solar longitude
       if (lon >= 360.0) {
         lon -= 360.0; // Make it 0..360 degrees

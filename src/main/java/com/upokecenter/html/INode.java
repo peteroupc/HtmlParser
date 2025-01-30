@@ -1,4 +1,4 @@
-package com.upokecenter.util;
+package com.upokecenter.html;
 /*
 
 Licensed under the Expat License.
@@ -85,11 +85,11 @@ import java.util.*;
      * Not documented yet.
      * @param node The parameter {@code node} is a.getUpokecenter().getHtml().INode object.
      */
-    void AppendChild (INode node);
+    void AppendChild(INode node);
 
     /**
      * Not documented yet.
      * @param node The parameter {@code node} is a.getUpokecenter().getHtml().INode object.
      */
-    void RemoveChild (INode node);
+    void RemoveChild(INode node);
   }

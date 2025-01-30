@@ -1,28 +1,29 @@
-package com.upokecenter.util;
+package com.upokecenter.html.data;
 
 import java.util.*;
 
+import com.upokecenter.html.*;
 import com.upokecenter.util.*;
-using PeterO.Rdf;
-using com.upokecenter.util;
+import com.upokecenter.util.*;
+import com.upokecenter.rdf.*;
 
   class RDFa1 implements IRDFParser {
-    private static String getTextNodeText(INode node) {
+    private static String GetTextNodeText(INode node) {
       StringBuilder builder = new StringBuilder();
-      for (Object child : node.getChildNodes()) {
-        if (child.getNodeType() == NodeType.TEXT_NODE) {
-          builder.append (((IText)child).getData());
+      for (INode child : node.GetChildNodes()) {
+        if (child.GetNodeType() == NodeType.TEXT_NODE) {
+          builder.append(((IText)child).GetData());
         } else {
-          builder.append (getTextNodeText (child));
+          builder.append(GetTextNodeText(child));
         }
       }
       return builder.toString();
     }
 
-    private static boolean isHtmlElement(IElement element, String name) {
+    private static boolean IsHtmlElement(IElement element, String name) {
       return element != null &&
-        "http://www.w3.org/1999/xhtml".equals (element.getNamespaceURI()) &&
-        name.equals (element.getLocalName());
+        "http://www.w3.org/1999/xhtml".equals(element.GetNamespaceURI()) &&
+        name.equals(element.GetLocalName());
     }
 
     private RDFa.EvalContext context;
@@ -45,17 +46,17 @@ using com.upokecenter.util;
       "license", "meta", "next", "prev",
       "role", "section", "start",
       "stylesheet", "subsection", "top",
-      "up", "p3pv1"
+      "up", "p3pv1",
     });
 
-    private static int getCuriePrefixLength(String s, int offset, int length) {
+    private static int GetCuriePrefixLength(String s, int offset, int length) {
       if (s == null || length == 0) {
         return -1;
       }
       if (s.charAt(offset) == ':') {
         return 0;
       }
-      if (!isNCNameStartChar (s.charAt(offset))) {
+      if (!IsNCNameStartChar(s.charAt(offset))) {
         return -1;
       }
       int index = offset + 1;
@@ -74,7 +75,7 @@ using com.upokecenter.util;
         }
         if (c == ':') {
           return index - offset;
-        } else if (!isNCNameChar (c)) {
+        } else if (!IsNCNameChar(c)) {
           return -1;
         }
         ++index;
@@ -82,16 +83,16 @@ using com.upokecenter.util;
       return -1;
     }
 
-    private static boolean hasNonTextChildNodes(INode node) {
-      for (Object child : node.getChildNodes()) {
-        if (child.getNodeType() != NodeType.TEXT_NODE) {
+    private static boolean HasNonTextChildNodes(INode node) {
+      for (INode child : node.GetChildNodes()) {
+        if (child.GetNodeType() != NodeType.TEXT_NODE) {
           return true;
         }
       }
       return false;
     }
 
-    private static boolean isNCNameChar(int c) {
+    private static boolean IsNCNameChar(int c) {
       return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
         c == '_' || c == '.' || c == '-' || (c >= '0' && c <= '9') ||
         c == 0xb7 || (c >= 0xc0 && c <= 0xd6) ||
@@ -103,7 +104,7 @@ using com.upokecenter.util;
         (c >= 0xfdf0 && c <= 0xfffd) || (c >= 0x10000 && c <= 0xeffff);
     }
 
-    private static boolean isNCNameStartChar(int c) {
+    private static boolean IsNCNameStartChar(int c) {
       return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
         c == '_' || (c >= 0xc0 && c <= 0xd6) ||
         (c >= 0xd8 && c <= 0xf6) || (c >= 0xf8 && c <= 0x2ff) ||
@@ -114,7 +115,7 @@ using com.upokecenter.util;
         (c >= 0x10000 && c <= 0xeffff);
     }
 
-    private static boolean isValidCurieReference(
+    private static boolean IsValidCurieReference(
       String s,
       int offset,
       int length) {
@@ -125,11 +126,11 @@ using com.upokecenter.util;
         return true;
       }
       int[]
-      indexes = URIUtility.SplitIRI(
-        s,
-        offset,
-        length,
-        URIUtility.ParseMode.IRIStrict);
+      indexes = com.upokecenter.util.URIUtility.SplitIRI(
+          s,
+          offset,
+          length,
+          com.upokecenter.util.URIUtility.ParseMode.getIRIStrict());
       if (indexes == null) {
         return false;
       }
@@ -151,12 +152,12 @@ using com.upokecenter.util;
     public RDFa1(IDocument document) {
       this.document = document;
       this.context = new RDFa.EvalContext();
-      this.context.setValueBaseURI(document.getBaseURI());
+      this.context.setValueBaseURI(document.GetBaseURI());
       this.context.setValueNamespaces(new HashMap<String, String>());
-      if (!URIUtility.HasScheme (this.context.getValueBaseURI())) {
+      if (!URIUtility.HasScheme(this.context.getValueBaseURI())) {
         throw new IllegalArgumentException("baseURI: " + this.context.getValueBaseURI());
       }
-      this.context.setValueParentSubject(RDFTerm.fromIRI(
+      this.context.setValueParentSubject(RDFTerm.FromIRI(
           this.context.getValueBaseURI()));
       this.context.setValueParentObject(null);
       this.context.setValueIriMap(new HashMap<String, String>());
@@ -164,12 +165,12 @@ using com.upokecenter.util;
       this.context.setValueIncompleteTriples(new ArrayList<RDFa.IncompleteTriple>());
       this.context.setValueLanguage(null);
       this.outputGraph = new HashSet<RDFTriple>();
-      if (isHtmlElement (document.getDocumentElement(), "html")) {
+      if (IsHtmlElement(document.GetDocumentElement(), "Html")) {
         this.xhtml = true;
       }
     }
 
-    private RDFTerm generateBlankNode() {
+    private RDFTerm GenerateBlankNode() {
       // Use "b:" as the prefix; according to the CURIE syntax,
       // "b:" can never begin a valid CURIE reference (in RDFa 1.0,
       // the reference has the broader production irelative-refValue),
@@ -177,14 +178,14 @@ using com.upokecenter.util;
       // be used to guarantee that generated blank nodes will never
       // conflict with those stated explicitly
       String blankNodeString = "b:" + (
-        this.blankNode).toString();
+          this.blankNode).toString();
       ++this.blankNode;
-      RDFTerm term = RDFTerm.fromBlankNode (blankNodeString);
+      RDFTerm term = RDFTerm.FromBlankNode(blankNodeString);
       this.bnodeLabels.put(blankNodeString, term);
       return term;
     }
 
-    private String getCurie(
+    private String GetCurie(
       String attribute,
       int offset,
       int length,
@@ -194,7 +195,7 @@ using com.upokecenter.util;
       }
       int refIndex = offset;
       int refLength = length;
-      int prefix = getCuriePrefixLength (attribute, refIndex, refLength);
+      int prefix = GetCuriePrefixLength(attribute, refIndex, refLength);
       String prefixIri = null;
       if (prefix >= 0) {
         String prefixName = com.upokecenter.util.DataUtilities.ToLowerCaseAscii(
@@ -204,9 +205,9 @@ using com.upokecenter.util;
         refIndex += prefix + 1;
         refLength -= prefix + 1;
         prefixIri = prefixMapping.get(prefixName);
-        prefixIri = (prefix
-            == 0) ? RDFA_DEFAULT_PREFIX : prefixMapping.get(prefixName);
-        if (prefixIri == null || "_" .equals (prefixName)) {
+        prefixIri =
+          (prefix == 0) ? RDFA_DEFAULT_PREFIX : prefixMapping.get(prefixName);
+        if (prefixIri == null || "_".equals(prefixName)) {
           return null;
         }
       } else
@@ -214,36 +215,36 @@ using com.upokecenter.util;
       {
         return null;
       }
-      if (!isValidCurieReference (attribute, refIndex, refLength)) {
+      if (!IsValidCurieReference(attribute, refIndex, refLength)) {
         return null;
       }
       if (prefix >= 0) {
         return
-          this.relativeResolve(
+          this.RelativeResolve(
             prefixIri + attribute.substring(
               refIndex, (
               refIndex)+((refIndex + refLength) - refIndex)))
-          .getValue();
-        } else {
+          .GetValue();
+      } else {
         return null;
       }
     }
 
-    private String getCurie(
+    private String GetCurie(
       String attribute,
       Map<String, String> prefixMapping) {
       return (attribute == null) ? null :
-        this.getCurie (attribute, 0, attribute.length(), prefixMapping);
+        this.GetCurie(attribute, 0, attribute.length(), prefixMapping);
     }
 
-    private RDFTerm getCurieOrBnode(
+    private RDFTerm GetCurieOrBnode(
       String attribute,
       int offset,
       int length,
       Map<String, String> prefixMapping) {
       int refIndex = offset;
       int refLength = length;
-      int prefix = getCuriePrefixLength (attribute, refIndex, refLength);
+      int prefix = GetCuriePrefixLength(attribute, refIndex, refLength);
       String prefixIri = null;
       String prefixName = null;
       if (prefix >= 0) {
@@ -256,8 +257,7 @@ using com.upokecenter.util;
         refLength -= prefix + 1;
         prefixIri = (prefix == 0) ? RDFA_DEFAULT_PREFIX :
           prefixMapping.get(prefixName);
-        if (prefixIri == null &&
-          !blank.equals (prefixName)) {
+        if (prefixIri == null && !blank.equals(prefixName)) {
           return null;
         }
       } else
@@ -265,21 +265,20 @@ using com.upokecenter.util;
       {
         return null;
       }
-      if (!isValidCurieReference (attribute, refIndex, refLength)) {
+      if (!IsValidCurieReference(attribute, refIndex, refLength)) {
         return null;
       }
       if (prefix >= 0) {
-        if ("_".equals (prefixName)) {
+        if ("_".equals(prefixName)) {
           if (refLength == 0) {
             // use an empty blank node: the CURIE syntax
             // allows an empty reference;
             // see the comment
-            // in generateBlankNode for why "b:" appears
+            // in GenerateBlankNode for why "b:" appears
             // at the beginning
-            return this.getNamedBlankNode ("b:empty");
+            return this.GetdBlankNode("b:empty");
           }
-          return
-            this.getNamedBlankNode(
+          return this.GetdBlankNode(
               attribute.substring(
                 refIndex, (
                 refIndex)+((refIndex + refLength) - refIndex)));
@@ -291,7 +290,7 @@ using com.upokecenter.util;
           throw new IllegalStateException(attribute);
         }
         return
-          this.relativeResolve(
+          this.RelativeResolve(
             prefixIri + attribute.substring(
               refIndex, (
               refIndex)+((refIndex + refLength) - refIndex)));
@@ -300,22 +299,22 @@ using com.upokecenter.util;
       }
     }
 
-    private RDFTerm getNamedBlankNode(String str) {
-      RDFTerm term = RDFTerm.fromBlankNode (str);
+    private RDFTerm GetdBlankNode(String str) {
+      RDFTerm term = RDFTerm.FromBlankNode(str);
       this.bnodeLabels.put(str, term);
       return term;
     }
 
-    private String getRelTermOrCurie(
+    private String GetRelTermOrCurie(
       String attribute,
       Map<String, String> prefixMapping) {
-      return relterms.contains(com.upokecenter.util.DataUtilities.ToLowerCaseAscii (attribute)) ?
+      return relterms.contains(com.upokecenter.util.DataUtilities.ToLowerCaseAscii(attribute)) ?
         ("http://www.w3.org/1999/xhtml/vocab#" +
-          com.upokecenter.util.DataUtilities.ToLowerCaseAscii (attribute)) :
-        this.getCurie (attribute, prefixMapping);
+          com.upokecenter.util.DataUtilities.ToLowerCaseAscii(attribute)) :
+        this.GetCurie(attribute, prefixMapping);
     }
 
-    private RDFTerm getSafeCurieOrCurieOrIri(
+    private RDFTerm GetSafeCurieOrCurieOrIri(
       String attribute,
       Map<String, String> prefixMapping) {
       if (attribute == null) {
@@ -324,109 +323,109 @@ using com.upokecenter.util;
       int lastIndex = attribute.length() - 1;
       if (attribute.length() >= 2 && attribute.charAt(0) == '[' && attribute.charAt(lastIndex)
         == ']') {
-        RDFTerm curie = this.getCurieOrBnode(
-          attribute,
-          1,
-          attribute.length() - 2,
-          prefixMapping);
+        RDFTerm curie = this.GetCurieOrBnode(
+            attribute,
+            1,
+            attribute.length() - 2,
+            prefixMapping);
         return curie;
       } else {
-        RDFTerm curie = this.getCurieOrBnode(
-          attribute,
-          0,
-          attribute.length(),
-          prefixMapping);
+        RDFTerm curie = this.GetCurieOrBnode(
+            attribute,
+            0,
+            attribute.length(),
+            prefixMapping);
         if (curie == null) {
           // evaluate as IRI
-          return this.relativeResolve (attribute);
+          return this.RelativeResolve(attribute);
         }
         return curie;
       }
     }
 
-    private void miniRdfXml(IElement node, RDFa.EvalContext evalContext) {
-      this.miniRdfXml (node, evalContext, null);
+    private void MiniRdfXml(IElement node, RDFa.EvalContext evalContext) {
+      this.MiniRdfXml(node, evalContext, null);
     }
 
     // Processes a subset of RDF/XML metadata
     // Doesn't implement RDF/XML completely
-    private void miniRdfXml(
+    private void MiniRdfXml(
       IElement node,
       RDFa.EvalContext evalContext,
       RDFTerm subject) {
       String language = evalContext.getValueLanguage();
-      for (Object child : node.getChildNodes()) {
+      for (INode child : node.GetChildNodes()) {
         IElement childElement = (child instanceof IElement) ?
           ((IElement)child) : null;
         if (childElement == null) {
           continue;
         }
-        language = (node.getAttribute ("xml:lang") != null) ?
-          node.getAttribute ("xml:lang") : evalContext.getValueLanguage();
-        if (childElement.getLocalName().equals ("Description") &&
-          RDF_NAMESPACE.equals (childElement.getNamespaceURI())) {
-          RDFTerm about = this.relativeResolve (childElement.getAttributeNS
-(RDF_NAMESPACE, "about"
-));
+        language = (node.GetAttribute("xml:lang") != null) ?
+          node.GetAttribute("xml:lang") : evalContext.getValueLanguage();
+        if (childElement.GetLocalName().equals("Description") &&
+          RDF_NAMESPACE.equals(childElement.GetNamespaceURI())) {
+          RDFTerm about = this.RelativeResolve(childElement.GetAttributeNS(
+            RDF_NAMESPACE,
+            "about"));
           // System.out.println("about=%s.charAt(%s)"
-          // ,about,childElement.getAttribute("about"));
+          // ,about,childElement.GetAttribute("about"));
           if (about == null) {
             about = subject;
             if (about == null) {
               continue;
             }
           }
-          for (Object child2 : child.getChildNodes()) {
+          for (INode child2 : child.GetChildNodes()) {
             IElement childElement2 = (child2 instanceof IElement) ? ((IElement)child2) :
               null;
             if (childElement2 == null) {
               continue;
             }
-            this.miniRdfXmlChild (childElement2, about, language);
+            this.MiniRdfXmlChild(childElement2, about, language);
           }
-        } else if (RDF_NAMESPACE.equals (childElement.getNamespaceURI())) {
+        } else if (RDF_NAMESPACE.equals(childElement.GetNamespaceURI())) {
           throw new UnsupportedOperationException();
         }
       }
     }
 
-    private void miniRdfXmlChild(
+    private void MiniRdfXmlChild(
       IElement node,
       RDFTerm subject,
       String language) {
-      String nsname = node.getNamespaceURI();
-      if (node.getAttribute ("xml:lang") != null) {
-        language = node.getAttribute ("xml:lang");
+      String nsname = node.GetNamespaceURI();
+      if (node.GetAttribute("xml:lang") != null) {
+        language = node.GetAttribute("xml:lang");
       }
-      String localname = node.getLocalName();
-      RDFTerm predicate = this.relativeResolve (nsname + localname);
-      if (!hasNonTextChildNodes (node)) {
-        String content = getTextNodeText (node);
+      String localname = node.GetLocalName();
+      RDFTerm predicate = this.RelativeResolve(nsname + localname);
+      if (!HasNonTextChildNodes(node)) {
+        String content = GetTextNodeText(node);
         RDFTerm literal;
         literal = (!((language) == null || (language).length() == 0)) ?
-          RDFTerm.fromLangString (content, language) :
-          RDFTerm.fromTypedString (content);
-        this.outputGraph.Add (new RDFTriple(subject, predicate, literal));
+          RDFTerm.FromLangString(content, language) :
+          RDFTerm.FromTypedString(content);
+        this.outputGraph.add(new RDFTriple(subject, predicate, literal));
       } else {
-        String parseType = node.getAttributeNS (RDF_NAMESPACE, "parseType");
-        if ("Literal".equals (parseType)) {
+        String parseType = node.GetAttributeNS(RDF_NAMESPACE, "parseType");
+        if ("Literal".equals(parseType)) {
           throw new UnsupportedOperationException();
         }
-        RDFTerm blank = this.generateBlankNode();
+        RDFTerm blank = this.GenerateBlankNode();
         this.context.setValueLanguage(language);
-        this.miniRdfXml (node, this.context, blank);
-        this.outputGraph.Add (new RDFTriple(subject, predicate, blank));
+        this.MiniRdfXml(node, this.context, blank);
+        this.outputGraph.add(new RDFTriple(subject, predicate, blank));
       }
     }
 
     public Set<RDFTriple> Parse() {
-      this.process (this.document.getDocumentElement(), true);
-      RDFInternal.replaceBlankNodes (this.outputGraph, this.bnodeLabels);
+      this.Process(this.document.GetDocumentElement(), true);
+      RDFInternal.ReplaceBlankNodes(this.outputGraph, this.bnodeLabels);
       return this.outputGraph;
     }
 
-    private void process(IElement node, boolean root) {
-      List<RDFa.IncompleteTriple> incompleteTriplesLocal = new
+    private void Process(IElement node, boolean root) {
+      List < RDFa.IncompleteTriple > incompleteTriplesLocal = new
       ArrayList<RDFa.IncompleteTriple>();
       String localLanguage = this.context.getValueLanguage();
       RDFTerm newSubject = null;
@@ -434,84 +433,84 @@ using com.upokecenter.util;
       boolean skipElement = false;
       RDFTerm currentObject = null;
       Map<String, String> namespacesLocal =
-        new HashMap<String, String> (this.context.getValueNamespaces());
+        new HashMap<String, String>(this.context.getValueNamespaces());
       Map<String, String> iriMapLocal =
-        new HashMap<String, String> (this.context.getValueIriMap());
+        new HashMap<String, String>(this.context.getValueIriMap());
       String attr = null;
       if (!this.xhtml) {
-        attr = node.getAttribute ("xml:base");
+        attr = node.GetAttribute("xml:base");
         if (attr != null) {
-          this.context.setValueBaseURI(URIUtility.RelativeResolve(
-            attr,
-            this.context.getValueBaseURI()));
+          this.context.setValueBaseURI(com.upokecenter.util.URIUtility.RelativeResolve(
+              attr,
+              this.context.getValueBaseURI()));
         }
       }
       // Support XML namespaces
-      for (Object attrib : node.getAttributes()) {
-        String name = com.upokecenter.util.DataUtilities.ToLowerCaseAscii (attrib.getName());
+      for (IAttr attrib : node.GetAttributes()) {
+        String name = com.upokecenter.util.DataUtilities.ToLowerCaseAscii(attrib.GetName());
         // System.out.println(attrib);
-        if (name.equals ("xmlns")) {
-          // System.out.println("xmlns %s",attrib.getValue());
-          iriMapLocal.put("", attrib.getValue());
-          namespacesLocal.put("", attrib.getValue());
+        if (name.equals("xmlns")) {
+          // System.out.println("xmlns %s",attrib.GetValue());
+          iriMapLocal.put("", attrib.GetValue());
+          namespacesLocal.put("", attrib.GetValue());
         } else if (name.startsWith("xmlns:") &&
           name.length() > 6) {
           String prefix = name.substring(6);
-          // System.out.println("xmlns %s %s",prefix,attrib.getValue());
-          if (!"_".equals (prefix)) {
-            iriMapLocal.put(prefix, attrib.getValue());
+          // System.out.println("xmlns %s %s",prefix,attrib.GetValue());
+          if (!"_".equals(prefix)) {
+            iriMapLocal.put(prefix, attrib.GetValue());
           }
-          namespacesLocal.put(prefix, attrib.getValue());
+          namespacesLocal.put(prefix, attrib.GetValue());
         }
       }
-      attr = node.getAttribute ("xml:lang");
+      attr = node.GetAttribute("xml:lang");
       if (attr != null) {
         localLanguage = attr;
       }
       // Support RDF/XML metadata
-      if (node.getLocalName().equals ("RDF") &&
-        RDF_NAMESPACE.equals (node.getNamespaceURI())) {
-        this.miniRdfXml (node, this.context);
+      if (node.GetLocalName().equals("RDF") &&
+        RDF_NAMESPACE.equals(node.GetNamespaceURI())) {
+        this.MiniRdfXml(node, this.context);
         return;
       }
-      String rel = node.getAttribute ("rel");
-      String rev = node.getAttribute ("rev");
-      String property = node.getAttribute ("property");
-      String content = node.getAttribute ("content");
-      String datatype = node.getAttribute ("datatype");
+      String rel = node.GetAttribute("rel");
+      String rev = node.GetAttribute("rev");
+      String property = node.GetAttribute("property");
+      String content = node.GetAttribute("content");
+      String datatype = node.GetAttribute("datatype");
       if (rel == null && rev == null) {
         // Step 4
-        RDFTerm resource = this.getSafeCurieOrCurieOrIri(
-            node.getAttribute ("about"),
+        RDFTerm resource = this.GetSafeCurieOrCurieOrIri(
+            node.GetAttribute("about"),
             iriMapLocal);
         if (resource == null) {
-          resource = this.getSafeCurieOrCurieOrIri(
-              node.getAttribute ("resource"),
+          resource = this.GetSafeCurieOrCurieOrIri(
+              node.GetAttribute("resource"),
               iriMapLocal);
         }
-        resource = (resource == null) ? (this.relativeResolve (node.getAttribute
-("href"))) : resource;
-        resource = (resource == null) ? (this.relativeResolve (node.getAttribute ("src"))) : resource;
-        if (resource == null || resource.getKind() != RDFTerm.IRI) {
-          String rdfTypeof = this.getCurie(
-              node.getAttribute ("typeof"),
+        resource = (resource == null) ? (this.RelativeResolve(node.GetAttribute(
+          "href"))) : resource;
+        resource = (resource == null) ? (this.RelativeResolve(node.GetAttribute("src"))) : resource;
+        if (resource == null || resource.GetKind() != RDFTerm.IRI) {
+          String rdfTypeof = this.GetCurie(
+              node.GetAttribute("typeof"),
               iriMapLocal);
-          if (isHtmlElement (node, "head") || isHtmlElement (node, "body")) {
-            resource = this.getSafeCurieOrCurieOrIri ("",
-  iriMapLocal);
+          if (IsHtmlElement(node, "head") || IsHtmlElement(node, "body")) {
+            resource = this.GetSafeCurieOrCurieOrIri("",
+                iriMapLocal);
           }
           if (resource == null && !this.xhtml && root) {
-            resource = this.getSafeCurieOrCurieOrIri ("",
-  iriMapLocal);
+            resource = this.GetSafeCurieOrCurieOrIri("",
+                iriMapLocal);
           }
           if (resource == null && rdfTypeof != null) {
-            resource = this.generateBlankNode();
+            resource = this.GenerateBlankNode();
           }
           if (resource == null) {
             if (this.context.getValueParentObject() != null) {
               resource = this.context.getValueParentObject();
             }
-            if (node.getAttribute ("property") == null) {
+            if (node.GetAttribute("property") == null) {
               skipElement = true;
             }
           }
@@ -521,24 +520,24 @@ using com.upokecenter.util;
         }
       } else {
         // Step 5
-        RDFTerm resource = this.getSafeCurieOrCurieOrIri(
-            node.getAttribute ("about"),
+        RDFTerm resource = this.GetSafeCurieOrCurieOrIri(
+            node.GetAttribute("about"),
             iriMapLocal);
-        resource = (resource == null) ? (this.relativeResolve (node.getAttribute ("src"))) : resource;
-        if (resource == null || resource.getKind() != RDFTerm.IRI) {
-          String rdfTypeof = this.getCurie(
-              node.getAttribute ("typeof"),
+        resource = (resource == null) ? (this.RelativeResolve(node.GetAttribute("src"))) : resource;
+        if (resource == null || resource.GetKind() != RDFTerm.IRI) {
+          String rdfTypeof = this.GetCurie(
+              node.GetAttribute("typeof"),
               iriMapLocal);
-          if (isHtmlElement (node, "head") || isHtmlElement (node, "body")) {
-            resource = this.getSafeCurieOrCurieOrIri ("",
-  iriMapLocal);
+          if (IsHtmlElement(node, "head") || IsHtmlElement(node, "body")) {
+            resource = this.GetSafeCurieOrCurieOrIri("",
+                iriMapLocal);
           }
           if (resource == null && !this.xhtml && root) {
-            resource = this.getSafeCurieOrCurieOrIri ("",
-  iriMapLocal);
+            resource = this.GetSafeCurieOrCurieOrIri("",
+                iriMapLocal);
           }
           if (resource == null && rdfTypeof != null) {
-            resource = this.generateBlankNode();
+            resource = this.GenerateBlankNode();
           }
           if (resource == null) {
             if (this.context.getValueParentObject() != null) {
@@ -549,96 +548,96 @@ using com.upokecenter.util;
         } else {
           newSubject = resource;
         }
-        resource = this.getSafeCurieOrCurieOrIri(
-            node.getAttribute ("resource"),
+        resource = this.GetSafeCurieOrCurieOrIri(
+            node.GetAttribute("resource"),
             iriMapLocal);
-        resource = (resource == null) ? (this.relativeResolve (node.getAttribute
-("href"))) : resource;
+        resource = (resource == null) ? (this.RelativeResolve(node.GetAttribute(
+          "href"))) : resource;
         currentObject = resource;
       }
       // Step 6
       if (newSubject != null) {
-        String[] types = StringUtility.SplitAtSpTabCrLf (node.getAttribute(
-              "typeof"));
-        for (Object type : types) {
-          String iri = this.getCurie (type, iriMapLocal);
+        String[] types = StringUtility.SplitAtSpTabCrLf(node.GetAttribute(
+          "typeof"));
+        for (String type : types) {
+          String iri = this.GetCurie(type, iriMapLocal);
           if (iri != null) {
-            this.outputGraph.Add (new RDFTriple(
-                newSubject,
-                RDFTerm.A,
-                RDFTerm.fromIRI (iri)));
+            this.outputGraph.add(new RDFTriple(
+              newSubject,
+              RDFTerm.A,
+              RDFTerm.FromIRI(iri)));
           }
         }
       }
       // Step 7
       if (currentObject != null) {
-        String[] types = StringUtility.SplitAtSpTabCrLf (rel);
-        for (Object type : types) {
-          String iri = this.getRelTermOrCurie(
-            type,
-            iriMapLocal);
+        String[] types = StringUtility.SplitAtSpTabCrLf(rel);
+        for (String type : types) {
+          String iri = this.GetRelTermOrCurie(
+              type,
+              iriMapLocal);
 
           if (iri != null) {
-            this.outputGraph.Add (new RDFTriple(
-                newSubject,
-                RDFTerm.fromIRI (iri),
-                currentObject));
+            this.outputGraph.add(new RDFTriple(
+              newSubject,
+              RDFTerm.FromIRI(iri),
+              currentObject));
           }
         }
-        types = StringUtility.SplitAtSpTabCrLf (rev);
-        for (Object type : types) {
-          String iri = this.getRelTermOrCurie(
-            type,
-            iriMapLocal);
+        types = StringUtility.SplitAtSpTabCrLf(rev);
+        for (String type : types) {
+          String iri = this.GetRelTermOrCurie(
+              type,
+              iriMapLocal);
           if (iri != null) {
-            this.outputGraph.Add (new RDFTriple(
-                currentObject,
-                RDFTerm.fromIRI (iri),
-                newSubject));
+            this.outputGraph.add(new RDFTriple(
+              currentObject,
+              RDFTerm.FromIRI(iri),
+              newSubject));
           }
         }
       } else {
         // Step 8
-        String[] types = StringUtility.SplitAtSpTabCrLf (rel);
+        String[] types = StringUtility.SplitAtSpTabCrLf(rel);
         boolean hasPredicates = false;
         // Defines predicates
-        for (Object type : types) {
-          String iri = this.getRelTermOrCurie(
-            type,
-            iriMapLocal);
+        for (String type : types) {
+          String iri = this.GetRelTermOrCurie(
+              type,
+              iriMapLocal);
           if (iri != null) {
             if (!hasPredicates) {
               hasPredicates = true;
-              currentObject = this.generateBlankNode();
+              currentObject = this.GenerateBlankNode();
             }
             RDFa.IncompleteTriple inc = new RDFa.IncompleteTriple();
-            inc.setValuePredicate(RDFTerm.fromIRI (iri));
+            inc.setValuePredicate(RDFTerm.FromIRI(iri));
             inc.setValueDirection(RDFa.ChainingDirection.Forward);
             incompleteTriplesLocal.add(inc);
           }
         }
-        types = StringUtility.SplitAtSpTabCrLf (rev);
-        for (Object type : types) {
-          String iri = this.getRelTermOrCurie(
-            type,
-            iriMapLocal);
+        types = StringUtility.SplitAtSpTabCrLf(rev);
+        for (String type : types) {
+          String iri = this.GetRelTermOrCurie(
+              type,
+              iriMapLocal);
           if (iri != null) {
             if (!hasPredicates) {
               hasPredicates = true;
-              currentObject = this.generateBlankNode();
+              currentObject = this.GenerateBlankNode();
             }
             RDFa.IncompleteTriple inc = new RDFa.IncompleteTriple();
-            inc.setValuePredicate(RDFTerm.fromIRI (iri));
+            inc.setValuePredicate(RDFTerm.FromIRI(iri));
             inc.setValueDirection(RDFa.ChainingDirection.Reverse);
             incompleteTriplesLocal.add(inc);
           }
         }
       }
       // Step 9
-      String[] preds = StringUtility.SplitAtSpTabCrLf (property);
-      String datatypeValue = this.getCurie(
-        datatype,
-        iriMapLocal);
+      String[] preds = StringUtility.SplitAtSpTabCrLf(property);
+      String datatypeValue = this.GetCurie(
+          datatype,
+          iriMapLocal);
       if (datatype != null && datatypeValue == null) {
         datatypeValue = "";
       }
@@ -646,59 +645,60 @@ using com.upokecenter.util;
       // datatype, property, localDefaultVocab);
       // System.out.println("datatypeValue=[%s]",datatypeValue);
       RDFTerm currentProperty = null;
-      for (Object pred : preds) {
-        String iri = this.getCurie(
-          pred,
-          iriMapLocal);
+      for (String pred : preds) {
+        String iri = this.GetCurie(
+            pred,
+            iriMapLocal);
         if (iri != null) {
           // System.out.println("iri=[%s]",iri);
           currentProperty = null;
           if (datatypeValue != null && datatypeValue.length() > 0 &&
-            !datatypeValue.equals (RDF_XMLLITERAL)) {
+            !datatypeValue.equals(RDF_XMLLITERAL)) {
             String literal = content;
-            literal = (literal == null) ? (getTextNodeText (node)) : literal;
-            currentProperty = RDFTerm.fromTypedString (literal, datatypeValue);
-          } else if (node.getAttribute ("content") != null ||
-            !hasNonTextChildNodes (node) ||
+            literal = (literal == null) ? (GetTextNodeText(node)) : literal;
+            currentProperty = RDFTerm.FromTypedString(literal, datatypeValue);
+          } else if (node.GetAttribute("content") != null ||
+            !HasNonTextChildNodes(node) ||
             (datatypeValue != null && datatypeValue.length() == 0)) {
-            String literal = node.getAttribute ("content");
-            literal = (literal == null) ? (getTextNodeText (node)) : literal;
+            String literal = node.GetAttribute("content");
+            literal = (literal == null) ? (GetTextNodeText(node)) : literal;
             currentProperty = (!((localLanguage) == null || (localLanguage).length() == 0)) ?
-              RDFTerm.fromLangString (literal, localLanguage) :
-              RDFTerm.fromTypedString (literal);
-            } else if (hasNonTextChildNodes (node) &&
-            (datatypeValue == null || datatypeValue.equals (RDF_XMLLITERAL))) {
+              RDFTerm.FromLangString(literal, localLanguage) :
+              RDFTerm.FromTypedString(literal);
+          } else if (HasNonTextChildNodes(node) && (datatypeValue == null ||
+            datatypeValue.equals(RDF_XMLLITERAL))) {
             // XML literal
             recurse = false;
             datatypeValue = (datatypeValue == null) ? (RDF_XMLLITERAL) : datatypeValue;
             try {
-              String literal = ExclusiveCanonicalXML.canonicalize(
-                node,
-                false,
-                namespacesLocal);
-              currentProperty = RDFTerm.fromTypedString (literal,
-  datatypeValue);
+              String literal = ExclusiveCanonicalXML.Canonicalize(
+                  node,
+                  false,
+                  namespacesLocal);
+              currentProperty = RDFTerm.FromTypedString(literal,
+                  datatypeValue);
             } catch (IllegalArgumentException ex) {
               // failure to canonicalize
             }
           }
 
-          this.outputGraph.Add (new RDFTriple(
-              newSubject,
-              RDFTerm.fromIRI (iri),
-              currentProperty));
+          this.outputGraph.add(new RDFTriple(
+            newSubject,
+            RDFTerm.FromIRI(iri),
+            currentProperty));
         }
       }
       // Step 10
       if (!skipElement && newSubject != null) {
-        for (Object triple : this.context.getValueIncompleteTriples()) {
+        List<IncompleteTriple> triples = this.context.getValueIncompleteTriples();
+        for (RDFTriple triple : triples) {
           if (triple.getValueDirection() == RDFa.ChainingDirection.Forward) {
-            this.outputGraph.Add (new RDFTriple(
+            this.outputGraph.add(new RDFTriple(
               this.context.getValueParentSubject(),
               triple.getValuePredicate(),
               newSubject));
           } else {
-            this.outputGraph.Add (new RDFTriple(
+            this.outputGraph.add(new RDFTriple(
               newSubject,
               triple.getValuePredicate(),
               this.context.getValueParentSubject()));
@@ -707,7 +707,8 @@ using com.upokecenter.util;
       }
       // Step 13
       if (recurse) {
-        for (Object childNode : node.getChildNodes()) {
+        List<IElement> childNodes = node.GetChildNodes();
+        for (IElement childNode : childNodes) {
           IElement childElement;
           RDFa.EvalContext oldContext = this.context;
           if (childNode instanceof IElement) {
@@ -716,12 +717,12 @@ using com.upokecenter.util;
             // skipElement, context.defaultVocab,
             // localDefaultVocab);
             if (skipElement) {
-              RDFa.EvalContext ec = oldContext.copy();
+              RDFa.EvalContext ec = oldContext.Copy();
               ec.setValueLanguage(localLanguage);
               ec.setValueIriMap(iriMapLocal);
               ec.setValueNamespaces(namespacesLocal);
               this.context = ec;
-              this.process (childElement, false);
+              this.Process(childElement, false);
             } else {
               RDFa.EvalContext ec = new RDFa.EvalContext();
               ec.setValueBaseURI(oldContext.getValueBaseURI());
@@ -731,11 +732,11 @@ using com.upokecenter.util;
               ec.setValueParentSubject((newSubject == null) ?
                 oldContext.getValueParentSubject() : newSubject);
               ec.setValueParentObject((currentObject == null) ? ((newSubject
-                    == null) ? oldContext.getValueParentSubject() : newSubject) :
+                == null) ? oldContext.getValueParentSubject() : newSubject) :
                 currentObject);
               ec.setValueLanguage(localLanguage);
               this.context = ec;
-              this.process (childElement, false);
+              this.Process(childElement, false);
             }
           }
           this.context = oldContext;
@@ -743,13 +744,13 @@ using com.upokecenter.util;
       }
     }
 
-    private RDFTerm relativeResolve(String iri) {
+    private RDFTerm RelativeResolve(String iri) {
       if (iri == null) {
         return null;
       }
-      return (URIUtility.SplitIRI (iri) == null) ? null :
-        RDFTerm.fromIRI(
-          URIUtility.RelativeResolve(
+      return (com.upokecenter.util.URIUtility.SplitIRI(iri) == null) ? null :
+        RDFTerm.FromIRI(
+          com.upokecenter.util.URIUtility.RelativeResolve(
             iri,
             this.context.getValueBaseURI()));
     }

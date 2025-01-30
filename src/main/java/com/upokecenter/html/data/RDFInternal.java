@@ -1,8 +1,8 @@
-package com.upokecenter.util;
+package com.upokecenter.html.data;
 
 import java.util.*;
 
-using PeterO.Rdf;
+import com.upokecenter.rdf.*;
 
   final class RDFInternal {
     /**
@@ -12,7 +12,7 @@ using PeterO.Rdf;
      * @param bnodeLabels A mapping of blank node names already allocated. This
      * method will modify this object as needed to allocate new blank nodes.
      */
-    static void replaceBlankNodes(
+    static void ReplaceBlankNodes(
       Set<RDFTriple> triples,
       Map<String, RDFTerm> bnodeLabels) {
       if (bnodeLabels.size() == 0) {
@@ -22,17 +22,19 @@ using PeterO.Rdf;
       HashMap<String, RDFTerm>();
       List<RDFTriple[]> changedTriples = new ArrayList<RDFTriple[]>();
       int[] nodeindex = new int[] { 0 };
-      for (Object triple : triples) {
+      for (RDFTriple triple : triples) {
         boolean changed = false;
-        RDFTerm subj = triple.getSubject();
-        if (subj.getKind() == RDFTerm.BLANK) {
-          String oldname = subj.getValue();
-          String newname = suggestBlankNodeName (oldname, nodeindex,
-  bnodeLabels);
-          if (!newname.equals (oldname)) {
+        RDFTerm subj = triple.GetSubject();
+        if (subj.GetKind() == RDFTerm.BLANK) {
+          String oldname = subj.GetValue();
+          String newname = SuggestBlankNodeName(
+              oldname,
+              nodeindex,
+              bnodeLabels);
+          if (!newname.equals(oldname)) {
             RDFTerm newNode = newBlankNodes.get(oldname);
             if (newNode == null) {
-              newNode = RDFTerm.fromBlankNode (newname);
+              newNode = RDFTerm.FromBlankNode(newname);
               bnodeLabels.put(newname, newNode);
               newBlankNodes.put(oldname, newNode);
             }
@@ -40,15 +42,17 @@ using PeterO.Rdf;
             changed = true;
           }
         }
-        RDFTerm obj = triple.getObject();
-        if (obj.getKind() == RDFTerm.BLANK) {
-          String oldname = obj.getValue();
-          String newname = suggestBlankNodeName (oldname, nodeindex,
-  bnodeLabels);
-          if (!newname.equals (oldname)) {
+        RDFTerm obj = triple.GetObject();
+        if (obj.GetKind() == RDFTerm.BLANK) {
+          String oldname = obj.GetValue();
+          String newname = SuggestBlankNodeName(
+              oldname,
+              nodeindex,
+              bnodeLabels);
+          if (!newname.equals(oldname)) {
             RDFTerm newNode = newBlankNodes.get(oldname);
             if (newNode == null) {
-              newNode = RDFTerm.fromBlankNode (newname);
+              newNode = RDFTerm.FromBlankNode(newname);
               bnodeLabels.put(newname, newNode);
               newBlankNodes.put(oldname, newNode);
             }
@@ -59,18 +63,18 @@ using PeterO.Rdf;
         if (changed) {
           RDFTriple[] newTriple = new RDFTriple[] {
             triple,
-            new RDFTriple(subj, triple.getPredicate(), obj)
+            new RDFTriple(subj, triple.GetPredicate(), obj),
           };
           changedTriples.add(newTriple);
         }
       }
-      for (Object triple : changedTriples) {
-        triples.Remove (triple.get(0));
-        triples.Add (triple.get(1));
+      for (RDFTriple[] triple : changedTriples) {
+        triples.remove(triple.get(0));
+        triples.add(triple.get(1));
       }
     }
 
-    private static String suggestBlankNodeName(
+    private static String SuggestBlankNodeName(
       String node,
       int[] nodeindex,
       Map<String, RDFTerm> bnodeLabels) {
@@ -79,12 +83,12 @@ using PeterO.Rdf;
       // under N-Triples
       for (int i = 0; i < node.length(); ++i) {
         int c = node.charAt(i);
-        if (i == 0 && ! ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))) {
+        if (i == 0 && !((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))) {
           validnode = false;
           break;
         }
-        if (i >= 0 && ! ((c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
-            (c >= 'a' && c <= 'z'))) {
+        if (i >= 0 && !((c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
+          (c >= 'a' && c <= 'z'))) {
           validnode = false;
           break;
         }
@@ -96,7 +100,7 @@ using PeterO.Rdf;
         // Generate a new blank node label,
         // and ensure it's unique
         node = "b" + (nodeindex[0]).toString();
-        if (!bnodeLabels.containsKey (node)) {
+        if (!bnodeLabels.containsKey(node)) {
           return node;
         }
         ++nodeindex[0];

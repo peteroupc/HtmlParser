@@ -29,8 +29,15 @@ import com.upokecenter.text.*;
       AuthorityFirstSlash,
       AuthoritySecondSlash,
       AuthorityIgnoreSlashes,
-      Authority, Query, Fragment, Host, FileHost,
-      RelativePathStart, RelativePath, HostName, Port,
+      Authority,
+      Query,
+      Fragment,
+      Host,
+      FileHost,
+      RelativePathStart,
+      RelativePath,
+      HostName,
+      Port,
     }
 
     private static String hex = "0123456789ABCDEF";
@@ -42,15 +49,15 @@ import com.upokecenter.text.*;
       for (int i = 0; i < bytes.length; ++i) {
         int c = bytes[i] & 0xff;
         if (c == 0x20) {
-          builder.append ((char)0x2b);
+          builder.append((char)0x2b);
         } else if (c == 0x2a || c == 0x2d || c == 0x2e ||
           (c >= 0x30 && c <= 0x39) || (c >= 0x41 && c <= 0x5a) ||
           (c >= 0x5f) || (c >= 0x61 && c <= 0x7a)) {
-          builder.append ((char)c);
+          builder.append((char)c);
         } else {
-          builder.append ('%');
-          builder.append (hex.charAt((c >> 4) & 0x0f));
-          builder.append (hex.charAt(c & 0x0f));
+          builder.append('%');
+          builder.append(hex.charAt((c >> 4) & 0x0f));
+          builder.append(hex.charAt(c & 0x0f));
         }
       }
     }
@@ -81,7 +88,7 @@ import com.upokecenter.text.*;
               (stringValue.charAt(index + 1) & 0xfc00) == 0xdc00) {
               // Get the Unicode code point for the surrogate pair
               c = 0x10000 + ((c & 0x3ff) << 10) + (stringValue.charAt(index + 1) &
-                  0x3ff);
+                0x3ff);
               ++index;
             } else if ((c & 0xf800) == 0xd800) {
               // illegal surrogate
@@ -100,17 +107,17 @@ import com.upokecenter.text.*;
             int length = 0;
             while (length < 4) {
               if (c >= 'A' && c <= 'F') {
-                value = value * 16 + (c - 'A') + 10;
+                value = (value * 16) + (c - 'A') + 10;
                 ++index;
                 ++length;
                 c = (index >= ending) ? -1 : stringValue.charAt(index);
               } else if (c >= 'a' && c <= 'f') {
-                value = value * 16 + (c - 'a') + 10;
+                value = (value * 16) + (c - 'a') + 10;
                 ++index;
                 ++length;
                 c = (index >= ending) ? -1 : stringValue.charAt(index);
               } else if (c >= '0' && c <= '9') {
-                value = value * 16 + (c - '0');
+                value = (value * 16) + (c - '0');
                 ++index;
                 ++length;
                 c = (index >= ending) ? -1 : stringValue.charAt(index);
@@ -145,7 +152,7 @@ import com.upokecenter.text.*;
             while (index < ending) {
               int value = 0;
               while (c >= '0' && c <= '9') {
-                value = value * 10 + (c - '0');
+                value = (value * 10) + (c - '0');
                 if (value > 255) {
                   return null;
                 }
@@ -182,7 +189,7 @@ import com.upokecenter.text.*;
       }
       try {
         // System.out.println("was: %s",stringValue);
-        stringValue = PercentDecode (stringValue, "utf-8");
+        stringValue = PercentDecode(stringValue, "utf-8");
         // System.out.println("now: %s",stringValue);
       } catch (IOException ex) {
         return null;
@@ -196,7 +203,7 @@ import com.upokecenter.text.*;
 
     private static boolean IsHexDigit(int c) {
       return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' &&
-          c <= '9');
+        c <= '9');
     }
 
     private static boolean IsUrlCodePoint(int c) {
@@ -205,14 +212,16 @@ import com.upokecenter.text.*;
       }
       if (c < 0x80) {
         return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >=
-            '0' && c <= '9') || ((c & 0x7F) == c && "!$&'()*+,-./:;=?@_~"
+          '0' && c <= '9') || ((c & 0x7F) == c && "!$&'()*+,-./:;=?@_~"
             .indexOf((char)c) >= 0);
       } else if ((c & 0xfffe) == 0xfffe) {
         return false;
-      } else return ((c >= 0xa0 && c <= 0xd7ff) || (c >= 0xe000 && c <=
-              0xfdcf) ||
-            (c >= 0xfdf0 && c <= 0xffef) || (c >= 0x10000 && c <= 0x10fffd)) ?
-          true : false;
+      } else {
+        return ((c >= 0xa0 && c <= 0xd7ff) || (c >= 0xe000 && c <= 0xfdcf) ||
+          (c >=
+            0xfdf0 && c <= 0xffef) || (c >= 0x10000 && c <= 0x10fffd)) ? true :
+          false;
+      }
     }
 
     /**
@@ -221,7 +230,7 @@ import com.upokecenter.text.*;
      * @return An URL object.
      */
     public static URL Parse(String s) {
-      return Parse (s, null, null, false);
+      return Parse(s, null, null, false);
     }
 
     /**
@@ -232,7 +241,7 @@ import com.upokecenter.text.*;
      * @return An URL object.
      */
     public static URL Parse(String s, URL baseurl) {
-      return Parse (s, baseurl, null, false);
+      return Parse(s, baseurl, null, false);
     }
 
     /**
@@ -244,7 +253,7 @@ import com.upokecenter.text.*;
      * @return An URL object.
      */
     public static URL Parse(String s, URL baseurl, String encoding) {
-      return Parse (s, baseurl, encoding, false);
+      return Parse(s, baseurl, encoding, false);
     }
 
     /**
@@ -273,7 +282,7 @@ import com.upokecenter.text.*;
       ICharacterEncoder encoder = null;
       ParseState state = ParseState.SchemeStart;
       if (encoding != null) {
-        encoder = Encodings.GetEncoding (encoding).GetEncoder();
+        encoder = Encodings.GetEncoding(encoding).GetEncoder();
       }
       if (s.indexOf("http://") == 0) {
         state = ParseState.AuthorityIgnoreSlashes;
@@ -336,23 +345,23 @@ import com.upokecenter.text.*;
           case SchemeStart:
             if (c >= 'A' && c <= 'Z') {
               if (c + 0x20 <= 0xffff) {
-                { buffer.append ((char)(c + 0x20));
+                { buffer.append((char)(c + 0x20));
                 }
               } else if (c + 0x20 <= 0x10ffff) {
-                buffer.append ((char)((((c + 0x20 - 0x10000) >> 10) &
-0x3ff) | 0xd800));
-                buffer.append ((char)(((c + 0x20 - 0x10000) & 0x3ff) |
-0xdc00));
+                buffer.append((char)((((c + 0x20 - 0x10000) >> 10) &
+                  0x3ff) | 0xd800));
+                buffer.append((char)(((c + 0x20 - 0x10000) & 0x3ff) |
+                  0xdc00));
               }
               state = ParseState.Scheme;
             } else if (c >= 'a' && c <= 'z') {
               if (c <= 0xffff) {
-                { buffer.append ((char)c);
+                { buffer.append((char)c);
                 }
               } else if (c <= 0x10ffff) {
-                buffer.append ((char)((((c - 0x10000) >> 10) & 0x3ff) |
-0xd800));
-                buffer.append ((char)(((c - 0x10000) & 0x3ff) | 0xdc00));
+                buffer.append((char)((((c - 0x10000) >> 10) & 0x3ff) |
+                  0xd800));
+                buffer.append((char)(((c - 0x10000) & 0x3ff) | 0xdc00));
               }
               state = ParseState.Scheme;
             } else {
@@ -363,23 +372,23 @@ import com.upokecenter.text.*;
           case Scheme:
             if (c >= 'A' && c <= 'Z') {
               if (c + 0x20 <= 0xffff) {
-                { buffer.append ((char)(c + 0x20));
+                { buffer.append((char)(c + 0x20));
                 }
               } else if (c + 0x20 <= 0x10ffff) {
-                buffer.append ((char)((((c + 0x20 - 0x10000) >> 10) &
-0x3ff) | 0xd800));
-                buffer.append ((char)(((c + 0x20 - 0x10000) & 0x3ff) |
-0xdc00));
+                buffer.append((char)((((c + 0x20 - 0x10000) >> 10) &
+                  0x3ff) | 0xd800));
+                buffer.append((char)(((c + 0x20 - 0x10000) & 0x3ff) |
+                  0xdc00));
               }
             } else if ((c >= 'a' && c <= 'z') || c == '.' || c == '-' || c ==
               '+') {
               if (c <= 0xffff) {
-                { buffer.append ((char)c);
+                { buffer.append((char)c);
                 }
               } else if (c <= 0x10ffff) {
-                buffer.append ((char)((((c - 0x10000) >> 10) & 0x3ff) |
-0xd800));
-                buffer.append ((char)(((c - 0x10000) & 0x3ff) | 0xdc00));
+                buffer.append((char)((((c - 0x10000) >> 10) & 0x3ff) |
+                  0xd800));
+                buffer.append((char)(((c - 0x10000) & 0x3ff) | 0xdc00));
               }
             } else if (c == ':') {
               url.scheme = buffer.toString();
@@ -421,25 +430,26 @@ import com.upokecenter.text.*;
               state = ParseState.Fragment;
               break;
             }
-            if (c >= 0 && (!IsUrlCodePoint (c) && c != '%') || (c == '%' &&
-                (index + 2 > ending || !IsHexDigit (s.charAt(index)) ||
-                  !IsHexDigit (s.charAt(index + 1))))) {
+            if (c >= 0 && (!IsUrlCodePoint(c) && c != '%') || (c == '%' &&
+              (index + 2 > ending || !IsHexDigit(s.charAt(index)) ||
+
+              !IsHexDigit(s.charAt(index + 1))))) {
               error = true;
             }
             if (c >= 0 && c != 0x09 && c != 0x0a && c != 0x0d) {
               if (c < 0x20 || c == 0x7f) {
-                PercentEncode (schemeData, c);
+                PercentEncode(schemeData, c);
               } else if (c < 0x7f) {
                 if (c <= 0xffff) {
-                  { schemeData.append ((char)c);
+                  { schemeData.append((char)c);
                   }
                 } else if (c <= 0x10ffff) {
-                  schemeData.append ((char)((((c - 0x10000) >> 10) & 0x3ff)|
-0xd800));
-                  schemeData.append ((char)(((c - 0x10000) & 0x3ff) | 0xdc00));
+                  schemeData.append((char)((((c - 0x10000) >> 10) & 0x3ff) |
+                    0xd800));
+                  schemeData.append((char)(((c - 0x10000) & 0x3ff) | 0xdc00));
                 }
               } else {
-                PercentEncodeUtf8 (schemeData, c);
+                PercentEncodeUtf8(schemeData, c);
               }
             }
             break;
@@ -448,11 +458,11 @@ import com.upokecenter.text.*;
               return null;
             }
             // System.out.println("no scheme: [%s] [%s]",s,baseurl);
-            if (! (baseurl.scheme.equals("http") ||
-                baseurl.scheme.equals(
-                  "https") || baseurl.scheme.equals("ftp") || baseurl.scheme.equals(
-                    "gopher") || baseurl.scheme.equals("ws") || baseurl.scheme.equals("wss") ||
-                baseurl.scheme.equals("file"))) {
+            if (!(baseurl.scheme.equals("http") ||
+              baseurl.scheme.equals(
+                "https") || baseurl.scheme.equals("ftp") || baseurl.scheme.equals(
+                "gopher") || baseurl.scheme.equals("ws") || baseurl.scheme.equals("wss") ||
+              baseurl.scheme.equals("file"))) {
               return null;
             }
             state = ParseState.Relative;
@@ -479,7 +489,7 @@ import com.upokecenter.text.*;
             if (c < 0) {
               url.host = baseurl.host;
               url.port = baseurl.port;
-              path = PathList (baseurl.path);
+              path = PathList(baseurl.path);
               url.query = baseurl.query;
             } else if (c == '/' || c == '\\') {
               if (c == '\\') {
@@ -489,20 +499,20 @@ import com.upokecenter.text.*;
             } else if (c == '?') {
               url.host = baseurl.host;
               url.port = baseurl.port;
-              path = PathList (baseurl.path);
+              path = PathList(baseurl.path);
               query = new StringBuilder();
               state = ParseState.Query;
             } else if (c == '#') {
               url.host = baseurl.host;
               url.port = baseurl.port;
-              path = PathList (baseurl.path);
+              path = PathList(baseurl.path);
               url.query = baseurl.query;
               fragment = new StringBuilder();
               state = ParseState.Fragment;
             } else {
               url.host = baseurl.host;
               url.port = baseurl.port;
-              path = PathList (baseurl.path);
+              path = PathList(baseurl.path);
               if (path.size() > 0) { // Pop path
                 path.remove(path.size() - 1);
               }
@@ -518,7 +528,7 @@ import com.upokecenter.text.*;
               }
               state = "file".equals(url.scheme) ?
                 ParseState.FileHost : ParseState.AuthorityIgnoreSlashes;
-              } else {
+            } else {
               if (baseurl != null) {
                 url.host = baseurl.host;
                 url.port = baseurl.port;
@@ -560,12 +570,12 @@ import com.upokecenter.text.*;
               if (atflag) {
                 StringBuilder result = (password == null) ? username : password;
                 error = true;
-                result.append ("%40");
+                result.append("%40");
               }
               atflag = true;
               String bstr = buffer.toString();
               for (int i = 0; i < bstr.length(); ++i) {
-                int cp = com.upokecenter.util.DataUtilities.CodePointAt (bstr, i);
+                int cp = com.upokecenter.util.DataUtilities.CodePointAt(bstr, i);
                 if (cp >= 0x10000) {
                   ++i;
                 }
@@ -573,9 +583,10 @@ import com.upokecenter.text.*;
                   error = true;
                   continue;
                 }
-                if ((!IsUrlCodePoint (c) && c != '%') || (cp == '%' &&
-                    (i + 3 > bstr.length() || !IsHexDigit (bstr.charAt(index + 1)) ||
-                      !IsHexDigit (bstr.charAt(index + 2))))) {
+                if ((!IsUrlCodePoint(c) && c != '%') || (cp == '%' && (i + 3 >
+                  bstr.length() || !IsHexDigit(bstr.charAt(index + 1)) ||
+
+                  !IsHexDigit(bstr.charAt(index + 2))))) {
                   error = true;
                 }
                 if (cp == ':' && password == null) {
@@ -584,16 +595,16 @@ import com.upokecenter.text.*;
                 }
                 StringBuilder result = (password == null) ? username : password;
                 if (cp <= 0x20 || cp >= 0x7F || ((cp & 0x7F) == cp && "#<>?`\""
-                    .indexOf((char)cp) >= 0)) {
-                  PercentEncodeUtf8 (result, cp);
+                  .indexOf((char)cp) >= 0)) {
+                  PercentEncodeUtf8(result, cp);
                 } else {
                   if (cp <= 0xffff) {
-                    { result.append ((char)cp);
+                    { result.append((char)cp);
                     }
                   } else if (cp <= 0x10ffff) {
-                    result.append ((char)((((cp - 0x10000) >> 10) & 0x3ff)|
-0xd800));
-                    result.append ((char)(((cp - 0x10000) & 0x3ff) | 0xdc00));
+                    result.append((char)((((cp - 0x10000) >> 10) & 0x3ff) |
+                      0xd800));
+                    result.append((char)(((cp - 0x10000) & 0x3ff) | 0xdc00));
                   }
                 }
               }
@@ -603,18 +614,18 @@ import com.upokecenter.text.*;
               buffer.delete(0, buffer.length());
               hostStart = index;
             } else if (c < 0 || ((c & 0x7F) == c && "/\\?#".indexOf((char)c) >=
-                0)) {
+              0)) {
               buffer.delete(0, buffer.length());
               state = ParseState.Host;
               index = hostStart;
             } else {
               if (c <= 0xffff) {
-                { buffer.append ((char)c);
+                { buffer.append((char)c);
                 }
               } else if (c <= 0x10ffff) {
-                buffer.append ((char)((((c - 0x10000) >> 10) & 0x3ff) |
-0xd800));
-                buffer.append ((char)(((c - 0x10000) & 0x3ff) | 0xdc00));
+                buffer.append((char)((((c - 0x10000) >> 10) & 0x3ff) |
+                  0xd800));
+                buffer.append((char)(((c - 0x10000) & 0x3ff) | 0xdc00));
               }
             }
             break;
@@ -626,12 +637,12 @@ import com.upokecenter.text.*;
                 int c2 = buffer.charAt(1);
                 if (
                   (c2 == '|' || c2 == ':') && ((c1 >= 'A' && c1 <= 'Z') ||
-                (c1 >= 'a' && c1 <= 'z'))) {
+                  (c1 >= 'a' && c1 <= 'z'))) {
                   state = ParseState.RelativePath;
                   break;
                 }
               }
-              String host = HostParse (buffer.toString());
+              String host = HostParse(buffer.toString());
               if (host == null) {
                 throw new IllegalArgumentException();
               }
@@ -642,19 +653,19 @@ import com.upokecenter.text.*;
               error = true;
             } else {
               if (c <= 0xffff) {
-                { buffer.append ((char)c);
+                { buffer.append((char)c);
                 }
               } else if (c <= 0x10ffff) {
-                buffer.append ((char)((((c - 0x10000) >> 10) & 0x3ff) |
-0xd800));
-                buffer.append ((char)(((c - 0x10000) & 0x3ff) | 0xdc00));
+                buffer.append((char)((((c - 0x10000) >> 10) & 0x3ff) |
+                  0xd800));
+                buffer.append((char)(((c - 0x10000) & 0x3ff) | 0xdc00));
               }
             }
             break;
           case Host:
           case HostName:
             if (c == ':' && !bracketflag) {
-              String host = HostParse (buffer.toString());
+              String host = HostParse(buffer.toString());
               if (host == null) {
                 return null;
               }
@@ -662,8 +673,8 @@ import com.upokecenter.text.*;
               buffer.delete(0, buffer.length());
               state = ParseState.Port;
             } else if (c < 0 || ((c & 0x7F) == c && "/\\?#".indexOf((char)c) >=
-                0)) {
-              String host = HostParse (buffer.toString());
+              0)) {
+              String host = HostParse(buffer.toString());
               if (host == null) {
                 return null;
               }
@@ -680,12 +691,12 @@ import com.upokecenter.text.*;
                 bracketflag = false;
               }
               if (c <= 0xffff) {
-                { buffer.append ((char)c);
+                { buffer.append((char)c);
                 }
               } else if (c <= 0x10ffff) {
-                buffer.append ((char)((((c - 0x10000) >> 10) & 0x3ff) |
-0xd800));
-                buffer.append ((char)(((c - 0x10000) & 0x3ff) | 0xdc00));
+                buffer.append((char)((((c - 0x10000) >> 10) & 0x3ff) |
+                  0xd800));
+                buffer.append((char)(((c - 0x10000) & 0x3ff) | 0xdc00));
               }
             }
             break;
@@ -698,16 +709,16 @@ import com.upokecenter.text.*;
               }
               if (portstate == 2) {
                 if (c <= 0xffff) {
-                  { buffer.append ((char)c);
+                  { buffer.append((char)c);
                   }
                 } else if (c <= 0x10ffff) {
-                  buffer.append ((char)((((c - 0x10000) >> 10) & 0x3ff) |
-0xd800));
-                  buffer.append ((char)(((c - 0x10000) & 0x3ff) | 0xdc00));
+                  buffer.append((char)((((c - 0x10000) >> 10) & 0x3ff) |
+                    0xd800));
+                  buffer.append((char)(((c - 0x10000) & 0x3ff) | 0xdc00));
                 }
               }
             } else if (c < 0 || ((c & 0x7F) == c && "/\\?#".indexOf((char)c) >=
-                0)) {
+              0)) {
               String bufport = "";
               if (portstate == 1) {
                 bufport = "0";
@@ -716,20 +727,20 @@ import com.upokecenter.text.*;
               }
               // System.out.println("port: [%s]",buffer.toString());
               if ((url.scheme.equals("http") ||
-                  url.scheme.equals("ws")) &&
+                url.scheme.equals("ws")) &&
                 bufport.equals("80")) {
                 bufport = "";
               }
               if ((url.scheme.equals("https") ||
-                  url.scheme.equals("wss")) &&
+                url.scheme.equals("wss")) &&
                 bufport.equals("443")) {
                 bufport = "";
               }
-              if ((url.scheme.equals("gopher")) &&
+              if (url.scheme.equals("gopher") &&
                 bufport.equals("70")) {
                 bufport = "";
               }
-              if ((url.scheme.equals("ftp")) &&
+              if (url.scheme.equals("ftp") &&
                 bufport.equals("21")) {
                 bufport = "";
               }
@@ -754,29 +765,29 @@ import com.upokecenter.text.*;
                 // this case
                 String bstr = buffer.toString();
                 for (int i = 0; i < bstr.length(); ++i) {
-                  int ch = com.upokecenter.util.DataUtilities.CodePointAt (bstr, i);
+                  int ch = com.upokecenter.util.DataUtilities.CodePointAt(bstr, i);
                   if (ch >= 0x10000) {
                     ++i;
                   }
                   if (ch < 0x21 || ch > 0x7e || ch == 0x22 || ch == 0x23 ||
                     ch == 0x3c || ch == 0x3e || ch == 0x60) {
-                    PercentEncodeUtf8 (query, ch);
+                    PercentEncodeUtf8(query, ch);
                   } else {
-                    { query.append ((char)ch);
+                    { query.append((char)ch);
                     }
                   }
                 }
               } else {
                 byte[] bytes =
                   Encodings.EncodeToBytes(
-                    Encodings.StringToInput (buffer.toString()),
+                    Encodings.StringToInput(buffer.toString()),
                     encoder);
                 for (Object ch : bytes) {
                   if (ch < 0x21 || ch > 0x7e || ch == 0x22 || ch == 0x23 ||
                     ch == 0x3c || ch == 0x3e || ch == 0x60) {
-                    PercentEncode (query, ch);
+                    PercentEncode(query, ch);
                   } else {
-                    { query.append ((char)ch);
+                    { query.append((char)ch);
                     }
                   }
                 }
@@ -789,18 +800,19 @@ import com.upokecenter.text.*;
             } else if (c == 0x09 || c == 0x0a || c == 0x0d) {
               error = true;
             } else {
-              if ((!IsUrlCodePoint (c) && c != '%') || (c == '%' &&
-                  (index + 2 > ending || !IsHexDigit (s.charAt(index)) ||
-                    !IsHexDigit (s.charAt(index + 1))))) {
+              if ((!IsUrlCodePoint(c) && c != '%') || (c == '%' && (index + 2 >
+                ending || !IsHexDigit(s.charAt(index)) ||
+
+                !IsHexDigit(s.charAt(index + 1))))) {
                 error = true;
               }
               if (c <= 0xffff) {
-                { buffer.append ((char)c);
+                { buffer.append((char)c);
                 }
               } else if (c <= 0x10ffff) {
-                buffer.append ((char)((((c - 0x10000) >> 10) & 0x3ff) |
-0xd800));
-                buffer.append ((char)(((c - 0x10000) & 0x3ff) | 0xdc00));
+                buffer.append((char)((((c - 0x10000) >> 10) & 0x3ff) |
+                  0xd800));
+                buffer.append((char)(((c - 0x10000) & 0x3ff) | 0xdc00));
               }
             }
             break;
@@ -832,12 +844,12 @@ import com.upokecenter.text.*;
                 }
               } else {
                 if ("file".equals(url.scheme) &&
-                path.size() == 0 && buffer.length() == 2) {
+                  path.size() == 0 && buffer.length() == 2) {
                   int c1 = buffer.charAt(0);
                   int c2 = buffer.charAt(1);
                   if (
                     (c2 == '|' || c2 == ':') && ((c1 >= 'A' && c1 <= 'Z') ||
-                (c1 >= 'a' && c1 <= 'z'))) {
+                    (c1 >= 'a' && c1 <= 'z'))) {
                     buffer.charAt(1) = ':';
                   }
                 }
@@ -855,26 +867,27 @@ import com.upokecenter.text.*;
             } else if (c == '%' && index + 2 <= ending && s.charAt(index) == '2' &&
               (s.charAt(index + 1) == 'e' || s.charAt(index + 1) == 'E')) {
               index += 2;
-              buffer.append ((char)'.');
+              buffer.append((char)'.');
             } else if (c == 0x09 || c == 0x0a || c == 0x0d) {
               error = true;
             } else {
-              if ((!IsUrlCodePoint (c) && c != '%') || (c == '%' &&
-                  (index + 2 > ending || !IsHexDigit (s.charAt(index)) ||
-                    !IsHexDigit (s.charAt(index + 1))))) {
+              if ((!IsUrlCodePoint(c) && c != '%') || (c == '%' && (index + 2 >
+                ending || !IsHexDigit(s.charAt(index)) ||
+
+                !IsHexDigit(s.charAt(index + 1))))) {
                 error = true;
               }
               if (c <= 0x20 || c >= 0x7F || ((c & 0x7F) == c && "#<>?`\""
-                  .indexOf((char)c) >= 0)) {
-                PercentEncodeUtf8 (buffer, c);
+                .indexOf((char)c) >= 0)) {
+                PercentEncodeUtf8(buffer, c);
               } else {
                 if (c <= 0xffff) {
-                  { buffer.append ((char)c);
+                  { buffer.append((char)c);
                   }
                 } else if (c <= 0x10ffff) {
-                  buffer.append ((char)((((c - 0x10000) >> 10) & 0x3ff) |
-0xd800));
-                  buffer.append ((char)(((c - 0x10000) & 0x3ff) | 0xdc00));
+                  buffer.append((char)((((c - 0x10000) >> 10) & 0x3ff) |
+                    0xd800));
+                  buffer.append((char)(((c - 0x10000) & 0x3ff) | 0xdc00));
                 }
               }
             }
@@ -886,28 +899,30 @@ import com.upokecenter.text.*;
             if (c == 0x09 || c == 0x0a || c == 0x0d) {
               error = true;
             } else {
-              if ((!IsUrlCodePoint (c) && c != '%') || (c == '%' &&
-                  (index + 2 > ending || !IsHexDigit (s.charAt(index)) ||
-                    !IsHexDigit (s.charAt(index + 1))))) {
+              if ((!IsUrlCodePoint(c) && c != '%') || (c == '%' && (index + 2 >
+                ending || !IsHexDigit(s.charAt(index)) ||
+
+                !IsHexDigit(s.charAt(index + 1))))) {
                 error = true;
               }
               if (c < 0x20 || c == 0x7f) {
-                PercentEncode (fragment, c);
+                PercentEncode(fragment, c);
               } else if (c < 0x7f) {
                 if (c <= 0xffff) {
-                  { fragment.append ((char)c);
+                  { fragment.append((char)c);
                   }
                 } else if (c <= 0x10ffff) {
-                  fragment.append ((char)((((c - 0x10000) >> 10) & 0x3ff) |
-0xd800));
-                  fragment.append ((char)(((c - 0x10000) & 0x3ff) | 0xdc00));
+                  fragment.append((char)((((c - 0x10000) >> 10) & 0x3ff) |
+                    0xd800));
+                  fragment.append((char)(((c - 0x10000) & 0x3ff) | 0xdc00));
                 }
               } else {
-                PercentEncodeUtf8 (fragment, c);
+                PercentEncodeUtf8(fragment, c);
               }
             }
             break;
-          default: throw new IllegalStateException();
+          default:
+            throw new IllegalStateException();
         }
       }
       if (error && strict) {
@@ -918,11 +933,11 @@ import com.upokecenter.text.*;
       }
       StringBuilder builder = new StringBuilder();
       if (path.size() == 0) {
-        builder.append ('/');
+        builder.append('/');
       } else {
-        for (Object segment : path) {
-          builder.append ('/');
-          builder.append (segment);
+        for (String segment : path) {
+          builder.append('/');
+          builder.append(segment);
         }
       }
       url.path = builder.toString();
@@ -968,7 +983,7 @@ import com.upokecenter.text.*;
           throw new IllegalArgumentException();
         }
       }
-      String[] strings = StringUtility.splitAt (input, delimiter);
+      String[] strings = StringUtility.SplitAt(input, delimiter);
       List<String[]> pairs = new ArrayList<String[]>();
       for (String str : strings) {
         if (str.length() == 0) {
@@ -984,7 +999,7 @@ import com.upokecenter.text.*;
         name = name.replace('+', ' ');
         value = value.replace('+', ' ');
         if (useCharset && "_charset_".equals(name)) {
-          String ch = Encodings.ResolveAlias (value);
+          String ch = Encodings.ResolveAlias(value);
           if (ch != null) {
             useCharset = false;
             encoding = ch;
@@ -994,9 +1009,9 @@ import com.upokecenter.text.*;
         pairs.add(pair);
       }
       try {
-        for (Object pair : pairs) {
-          pair[0] = PercentDecode (pair[0], encoding);
-          pair[1] = PercentDecode (pair[1], encoding);
+        for (String[] pair : pairs) {
+          pair[0] = PercentDecode(pair[0], encoding);
+          pair[1] = PercentDecode(pair[1], encoding);
         }
       } catch (IOException e) {
         throw e;
@@ -1046,7 +1061,7 @@ import com.upokecenter.text.*;
       if (!percent) {
         return str;
       }
-      var enc = Encodings.GetEncoding (encoding);
+      var enc = Encodings.GetEncoding(encoding);
       {
         java.io.ByteArrayOutputStream mos = null;
 try {
@@ -1056,18 +1071,18 @@ mos = new java.io.ByteArrayOutputStream();
           int c = str.charAt(i);
           if (c == '%') {
             if (i + 2 < len) {
-              int a = ToHexNumber (str.charAt(i + 1));
-              int b = ToHexNumber (str.charAt(i + 2));
+              int a = ToHexNumber(str.charAt(i + 1));
+              int b = ToHexNumber(str.charAt(i + 2));
               if (a >= 0 && b >= 0) {
-                mos.write ((byte)((a * 16) + b));
+                mos.write((byte)((a * 16) + b));
                 i += 2;
                 continue;
               }
             }
           }
-          mos.write ((byte)(c & 0xff));
+          mos.write((byte)(c & 0xff));
         }
-        return Encodings.DecodeToString (enc, mos.ToArray());
+        return Encodings.DecodeToString(enc, mos.ToArray());
 }
 finally {
 try { if (mos != null) { mos.close(); } } catch (java.io.IOException ex) {}
@@ -1076,28 +1091,28 @@ try { if (mos != null) { mos.close(); } } catch (java.io.IOException ex) {}
     }
 
     private static void PercentEncode(StringBuilder buffer, int b) {
-      buffer.append ((char)'%');
-      buffer.append (hex.charAt((b >> 4) & 0x0f));
-      buffer.append (hex.charAt(b & 0x0f));
+      buffer.append((char)'%');
+      buffer.append(hex.charAt((b >> 4) & 0x0f));
+      buffer.append(hex.charAt(b & 0x0f));
     }
 
     private static void PercentEncodeUtf8(StringBuilder buffer, int cp) {
       if (cp <= 0x7f) {
-        buffer.append ((char)'%');
-        buffer.append (hex.charAt((cp >> 4) & 0x0f));
-        buffer.append (hex.charAt(cp & 0x0f));
+        buffer.append((char)'%');
+        buffer.append(hex.charAt((cp >> 4) & 0x0f));
+        buffer.append(hex.charAt(cp & 0x0f));
       } else if (cp <= 0x7ff) {
-        PercentEncode (buffer, 0xc0 | ((cp >> 6) & 0x1f));
-        PercentEncode (buffer, 0x80 | (cp & 0x3f));
+        PercentEncode(buffer, 0xc0 | ((cp >> 6) & 0x1f));
+        PercentEncode(buffer, 0x80 | (cp & 0x3f));
       } else if (cp <= 0xffff) {
-        PercentEncode (buffer, 0xe0 | ((cp >> 12) & 0x0f));
-        PercentEncode (buffer, 0x80 | ((cp >> 6) & 0x3f));
-        PercentEncode (buffer, 0x80 | (cp & 0x3f));
+        PercentEncode(buffer, 0xe0 | ((cp >> 12) & 0x0f));
+        PercentEncode(buffer, 0x80 | ((cp >> 6) & 0x3f));
+        PercentEncode(buffer, 0x80 | (cp & 0x3f));
       } else {
-        PercentEncode (buffer, 0xf0 | ((cp >> 18) & 0x07));
-        PercentEncode (buffer, 0x80 | ((cp >> 12) & 0x3f));
-        PercentEncode (buffer, 0x80 | ((cp >> 6) & 0x3f));
-        PercentEncode (buffer, 0x80 | (cp & 0x3f));
+        PercentEncode(buffer, 0xf0 | ((cp >> 18) & 0x07));
+        PercentEncode(buffer, 0x80 | ((cp >> 12) & 0x3f));
+        PercentEncode(buffer, 0x80 | ((cp >> 6) & 0x3f));
+        PercentEncode(buffer, 0x80 | (cp & 0x3f));
       }
     }
 
@@ -1122,7 +1137,7 @@ try { if (mos != null) { mos.close(); } } catch (java.io.IOException ex) {}
      * @throws IllegalArgumentException Code point out of range.
      */
     public static byte[] EncodeToBytesHtml(
-      PeterO.Text.ICharacterInput input,
+      ICharacterInput input,
       ICharacterEncoder encoder) {
       if (encoder == null) {
         throw new NullPointerException("encoder");
@@ -1133,22 +1148,22 @@ try { if (mos != null) { mos.close(); } } catch (java.io.IOException ex) {}
       PeterO.ArrayWriter writer = new PeterO.ArrayWriter();
       while (true) {
         int cp = input.ReadChar();
-        int enc = encoder.Encode (cp, writer);
+        int enc = encoder.Encode(cp, writer);
         if (enc == -2) {
           if (cp < 0 || cp >= 0x110000 || ((cp & 0xf800) == 0xd800)) {
             throw new IllegalArgumentException("code point out of range");
           }
-          writer.write (0x26);
-          writer.write (0x23);
+          writer.write(0x26);
+          writer.write(0x23);
           if (cp == 0) {
-            writer.write (0x30);
+            writer.write(0x30);
           } else {
             while (cp > 0) {
-              writer.write (0x30 + (cp % 10));
+              writer.write(0x30 + (cp % 10));
               cp /= 10;
             }
           }
-          writer.write (0x3b);
+          writer.write(0x3b);
         }
         if (enc == -1) {
           break;
@@ -1162,6 +1177,7 @@ try { if (mos != null) { mos.close(); } } catch (java.io.IOException ex) {}
      * @param pairs Not documented yet.
      * @param delimiter Not documented yet.
      * @param encoding Not documented yet.
+     * @return The return value is not documented yet.
      * @throws NullPointerException The parameter {@code pairs} is null.
      */
     public static String ToQueryString(
@@ -1169,7 +1185,7 @@ try { if (mos != null) { mos.close(); } } catch (java.io.IOException ex) {}
       String delimiter,
       String encoding) {
       encoding = (encoding == null) ? ("utf-8") : encoding;
-      ICharacterEncoding ienc = Encodings.GetEncoding (encoding);
+      ICharacterEncoding ienc = Encodings.GetEncoding(encoding);
       if (ienc == null) {
         throw new IllegalArgumentException("encoding");
       }
@@ -1179,9 +1195,9 @@ try { if (mos != null) { mos.close(); } } catch (java.io.IOException ex) {}
       if (pairs == null) {
         throw new NullPointerException("pairs");
       }
-      for (Object pair : pairs) {
+      for (String[] pair : pairs) {
         if (!first) {
-          builder.append (delimiter == null ? "&" : delimiter);
+          builder.append(delimiter == null ? "&" : delimiter);
         }
         first = false;
         if (pair == null || pair.length < 2) {
@@ -1191,14 +1207,14 @@ try { if (mos != null) { mos.close(); } } catch (java.io.IOException ex) {}
         // added to next version of Encoding library
         AppendOutputBytes(
           builder,
-          EncodeToBytesHtml (Encodings.StringToInput (pair[0]), encoder));
-        builder.append ('=');
+          EncodeToBytesHtml(Encodings.StringToInput(pair[0]), encoder));
+        builder.append('=');
         {
           StringBuilder objectTemp = builder;
           byte[] objectTemp2 = EncodeToBytesHtml(
-              Encodings.StringToInput (pair[1]),
+              Encodings.StringToInput(pair[1]),
               encoder);
-          AppendOutputBytes (objectTemp, objectTemp2);
+          AppendOutputBytes(objectTemp, objectTemp2);
         }
       }
       return builder.toString();
@@ -1234,7 +1250,7 @@ try { if (mos != null) { mos.close(); } } catch (java.io.IOException ex) {}
       if (obj == null) {
         return false;
       }
-      if (this.getClass() != obj.getClass()) {
+      if (!(obj instanceof URL)) {
         return false;
       }
       URL other = (URL)obj;
@@ -1326,8 +1342,8 @@ try { if (mos != null) { mos.close(); } } catch (java.io.IOException ex) {}
      * @return A text string.
      */
     public String GetHost() {
-      return (this.port.length() == 0) ? HostSerialize (this.host) :
-        (HostSerialize (this.host) + ":" + this.port);
+      return (this.port.length() == 0) ?
+        HostSerialize(this.host) : (HostSerialize(this.host) + ":" + this.port);
     }
 
     /**
@@ -1335,7 +1351,7 @@ try { if (mos != null) { mos.close(); } } catch (java.io.IOException ex) {}
      * @return A text string.
      */
     public String GetHostname() {
-      return HostSerialize (this.host);
+      return HostSerialize(this.host);
     }
 
     /**
@@ -1484,8 +1500,8 @@ try { if (mos != null) { mos.close(); } } catch (java.io.IOException ex) {}
      */
     @Override public final String toString() {
       StringBuilder builder = new StringBuilder();
-      builder.append (this.scheme);
-      builder.append (':');
+      builder.append(this.scheme);
+      builder.append(':');
       if (this.scheme.equals("file") ||
         this.scheme.equals("http") ||
         this.scheme.equals("https") ||
@@ -1499,31 +1515,31 @@ try { if (mos != null) { mos.close(); } } catch (java.io.IOException ex) {}
         // (since the protocol can't be changed
         // as this class is immutable, we can
         // do this variation).
-        builder.append ("//");
+        builder.append("//");
         if (this.username.length() != 0 || this.password != null) {
-          builder.append (this.username);
+          builder.append(this.username);
           if (this.password != null) {
-            builder.append (':');
-            builder.append (this.password);
+            builder.append(':');
+            builder.append(this.password);
           }
-          builder.append ('@');
+          builder.append('@');
         }
-        builder.append (HostSerialize (this.host));
+        builder.append(HostSerialize(this.host));
         if (this.port.length() > 0) {
-          builder.append (':');
-          builder.append (this.port);
+          builder.append(':');
+          builder.append(this.port);
         }
-        builder.append (this.path);
+        builder.append(this.path);
       } else {
-        builder.append (this.schemeData);
+        builder.append(this.schemeData);
       }
       if (this.query != null) {
-        builder.append ('?');
-        builder.append (this.query);
+        builder.append('?');
+        builder.append(this.query);
       }
       if (this.fragment != null) {
-        builder.append ('#');
-        builder.append (this.fragment);
+        builder.append('#');
+        builder.append(this.fragment);
       }
       return builder.toString();
     }

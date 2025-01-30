@@ -1,3 +1,10 @@
+package com.upokecenter.io;
+
+import java.util.*;
+
+import com.upokecenter.util.*;
+import com.upokecenter.text.*;
+
 /*
 Written in 2013 by Peter Occil.
 Any copyright to this work is released to the Public Domain.
@@ -5,286 +12,390 @@ In case this is not possible, this work is also
 licensed under the Unlicense: https://unlicense.org/
 
 */
-package com.upokecenter.io;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+  /**
+   * A character input stream where additional inputs can be stacked on.
+   */
+  public final class StackableCharacterInput implements IMarkableCharacterInput {
+    private static class InputAndBuffer implements ICharacterInput {
+      private int[] buffer;
+      private ICharacterInput charInput;
+      private int pos = 0;
 
-/**
- *
- * A character input stream where additional inputs can be stacked on
- * top of it.  It supports advanced marking capabilities.
- *
- * @author Peter
- *
- */
-public final class StackableCharacterInput implements IMarkableCharacterInput {
+      public InputAndBuffer(
+        ICharacterInput charInput,
+        int[] buffer,
+        int offset,
+        int length) {
+        this.charInput = charInput;
+        if (length > 0) {
+          this.buffer = new int[length];
+          System.arraycopy(buffer, offset, this.buffer, 0, length);
+        } else {
+          this.buffer = null;
+        }
+      }
 
-  private static class InputAndBuffer implements ICharacterInput {
+      public int ReadChar() {
+        if (this.charInput != null) {
+          int c = this.charInput.ReadChar();
+          if (c >= 0) {
+            return c;
+          }
+          this.charInput = null;
+        }
+        if (this.buffer != null) {
+          if (this.pos < this.buffer.length) {
+            return this.buffer[this.pos++];
+          }
+          this.buffer = null;
+        }
+        return -1;
+      }
 
-    int[] buffer;
-    ICharacterInput charInput;
-    int pos=0;
-
-    public InputAndBuffer(ICharacterInput charInput, int[] buffer, int offset, int length){
-      this.charInput=charInput;
-      if(length>0){
-        this.buffer=new int[length];
-        System.arraycopy(buffer,offset,this.buffer,0,length);
-      } else {
-        this.buffer=null;
+      public int Read(int[] buf, int offset, int unitCount) {
+        if (buf == null) {
+          throw new NullPointerException("buf");
+        }
+        if (offset < 0) {
+          throw new IllegalArgumentException("offset less than 0(" + offset + ")");
+        }
+        if (unitCount < 0) {
+          throw new IllegalArgumentException("unitCount less than 0(" + unitCount +
+            ")");
+        }
+        if (offset + unitCount > buf.length) {
+          throw new
+          IllegalArgumentException("offset+unitCount more than " +
+            buf.length + " (" + (offset + unitCount) + ")");
+        }
+        if (unitCount == 0) {
+          return 0;
+        }
+        int count = 0;
+        if (this.charInput != null) {
+          int c = this.charInput.Read(buf, offset, unitCount);
+          if (c <= 0) {
+            this.charInput = null;
+          } else {
+            offset += c;
+            unitCount -= c;
+            count += c;
+          }
+        }
+        if (this.buffer != null) {
+          int c = Math.min(unitCount, this.buffer.length - this.pos);
+          if (c > 0) {
+            System.arraycopy(this.buffer, this.pos, buf, offset, c);
+          }
+          this.pos += c;
+          count += c;
+          if (c == 0) {
+            this.buffer = null;
+          }
+        }
+        return count;
       }
     }
 
-    @Override
-    public int read() throws IOException {
-      if(charInput!=null){
-        int c=charInput.read();
-        if(c>=0)return c;
-        charInput=null;
+    private int pos;
+    private int endpos;
+    private boolean haveMark;
+    private int[] buffer;
+    private List<ICharacterInput> stack = new ArrayList<ICharacterInput>();
+
+    /**
+     * Initializes a new instance of the {@link
+     * com.upokecenter.io.StackableCharacterInput} class.
+     * @param source The parameter {@code source} is an ICharacterInput object.
+     */
+    public StackableCharacterInput(ICharacterInput source) {
+      this.stack.add(source);
+    }
+
+    /**
+     * Not documented yet.
+     * @return A 32-bit signed integer.
+     */
+    public int GetMarkPosition() {
+      return this.pos;
+    }
+
+    /**
+     * Not documented yet.
+     * @param count The parameter {@code count} is a 32-bit signed integer.
+     */
+    public void MoveBack(int count) {
+      if (count < 0) {
+        throw new IllegalArgumentException("count(" + count +
+          ") is not greater or equal to 0");
       }
-      if(buffer!=null){
-        if(pos<buffer.length)
-          return buffer[pos++];
-        buffer=null;
+      if (this.haveMark && this.pos >= count) {
+        this.pos -= count;
+        return;
+      }
+      throw new IllegalStateException();
+    }
+
+    /**
+     * Not documented yet.
+     * @param input The parameter {@code input} is a.getText().ICharacterInput object.
+     * @throws NullPointerException The parameter {@code input} is null.
+     */
+    public void PushInput(ICharacterInput input) {
+      if (input == null) {
+        throw new NullPointerException("input");
+      }
+      // Move unread characters in buffer, since this new
+      // input sits on top of the existing input
+      this.stack.add(
+        new InputAndBuffer(
+          input,
+          this.buffer,
+          this.pos,
+          this.endpos - this.pos));
+      this.endpos = this.pos;
+    }
+
+    /**
+     * Not documented yet.
+     * @return A 32-bit signed integer.
+     */
+    public int ReadChar() {
+      if (this.haveMark) {
+        // Read from buffer
+        if (this.pos < this.endpos) {
+          int ch = this.buffer[this.pos++];
+          // System.out.println ("buffer: [" + ch + "],["+(char)ch+"]");
+          return ch;
+        }
+        // System.out.println(this);
+        // End pos is smaller than buffer size, fill
+        // entire buffer if possible
+        if (this.endpos < this.buffer.length) {
+          int count = this.ReadInternal(
+              this.buffer,
+              this.endpos,
+              this.buffer.length - this.endpos);
+          if (count > 0) {
+            this.endpos += count;
+          }
+        }
+        // Try reading from buffer again
+        if (this.pos < this.endpos) {
+          int ch = this.buffer[this.pos++];
+          // System.out.println ("buffer2: [" + ch + "],[" + charch + "]");
+          return ch;
+        }
+        // System.out.println(this);
+        // No room, read next character and put it in buffer
+        int c = this.ReadInternal();
+        if (c < 0) {
+          return c;
+        }
+        if (this.pos >= this.buffer.length) {
+          int[] newBuffer = new int[this.buffer.length * 2];
+          System.arraycopy(this.buffer, 0, newBuffer, 0, this.buffer.length);
+          this.buffer = newBuffer;
+        }
+        // System.out.println(this);
+        this.buffer[this.pos++] = c;
+        ++this.endpos;
+        // System.out.println ("readInt3: [" + c + "],[" + charc + "]");
+        return c;
+      } else {
+        int c = this.ReadInternal();
+        // System.out.println ("readInt3: [" + c + "],[" + charc + "]");
+        return c;
+      }
+    }
+
+    /**
+     * Not documented yet.
+     * @param buf The parameter {@code buf} is a.getInt32()[] object.
+     * @param offset The parameter {@code offset} is a 32-bit signed integer.
+     * @param unitCount The parameter {@code unitCount} is a 32-bit signed integer.
+     * @return A 32-bit signed integer.
+     * @throws NullPointerException The parameter {@code buf} is null.
+     */
+    public int Read(int[] buf, int offset, int unitCount) {
+      if (buf == null) {
+        throw new NullPointerException("buf");
+      }
+      if (offset < 0) {
+        throw new IllegalArgumentException("offset(" + offset +
+          ") is less than 0");
+      }
+      if (offset > buf.length) {
+        throw new IllegalArgumentException("offset(" + offset +
+          ") is more than " + buf.length);
+      }
+      if (unitCount < 0) {
+        throw new IllegalArgumentException("unitCount(" + unitCount +
+          ") is less than 0");
+      }
+      if (unitCount > buf.length) {
+        throw new IllegalArgumentException("unitCount(" + unitCount +
+          ") is more than " + buf.length);
+      }
+      if (buf.length - offset < unitCount) {
+        throw new IllegalArgumentException("buf's length minus " + offset + "(" +
+          (buf.length - offset) + ") is less than " + unitCount);
+      }
+      if (this.haveMark) {
+        if (unitCount == 0) {
+          return 0;
+        }
+        // Read from buffer
+        if (this.pos + unitCount <= this.endpos) {
+          System.arraycopy(this.buffer, this.pos, buf, offset, unitCount);
+          this.pos += unitCount;
+          return unitCount;
+        }
+        // End pos is smaller than buffer size, fill
+        // entire buffer if possible
+        int count = 0;
+        if (this.endpos < this.buffer.length) {
+          count = this.ReadInternal(
+              this.buffer,
+              this.endpos,
+              this.buffer.length - this.endpos);
+          // System.out.println("%s",this);
+          if (count > 0) {
+            this.endpos += count;
+          }
+        }
+        int total = 0;
+        // Try reading from buffer again
+        if (this.pos + unitCount <= this.endpos) {
+          System.arraycopy(this.buffer, this.pos, buf, offset, unitCount);
+          this.pos += unitCount;
+          return unitCount;
+        }
+        // expand the buffer
+        if (this.pos + unitCount > this.buffer.length) {
+          int[] newBuffer = new int[(this.buffer.length * 2) + unitCount];
+          System.arraycopy(this.buffer, 0, newBuffer, 0, this.buffer.length);
+          this.buffer = newBuffer;
+        }
+        count = this.ReadInternal(
+            this.buffer,
+            this.endpos,
+            Math.min(unitCount, this.buffer.length - this.endpos));
+        if (count > 0) {
+          this.endpos += count;
+        }
+        // Try reading from buffer a third time
+        if (this.pos + unitCount <= this.endpos) {
+          System.arraycopy(this.buffer, this.pos, buf, offset, unitCount);
+          this.pos += unitCount;
+          total += unitCount;
+        } else if (this.endpos > this.pos) {
+          System.arraycopy(
+            this.buffer,
+            this.pos,
+            buf,
+            offset,
+            this.endpos - this.pos);
+          total += this.endpos - this.pos;
+          this.pos = this.endpos;
+        }
+        return total;
+      } else {
+        return this.ReadInternal(buf, offset, unitCount);
+      }
+    }
+
+    private int ReadInternal() {
+      if (this.stack.size() == 0) {
+        return -1;
+      }
+      while (this.stack.size() > 0) {
+        int index = this.stack.size() - 1;
+        int c = this.stack.get(index).ReadChar();
+        if (c == -1) {
+          this.stack.remove(index);
+          continue;
+        }
+        return c;
       }
       return -1;
     }
 
-    @Override
-    public int read(int[] buf, int offset, int unitCount)
-        throws IOException {
-      if((buf)==null)throw new NullPointerException("buf");
-      if((offset)<0)throw new IndexOutOfBoundsException("offset not greater or equal to 0 ("+Integer.toString(offset)+")");
-      if((unitCount)<0)throw new IndexOutOfBoundsException("unitCount not greater or equal to 0 ("+Integer.toString(unitCount)+")");
-      if((offset+unitCount)>buf.length)throw new IndexOutOfBoundsException("offset+unitCount not less or equal to "+Integer.toString(buf.length)+" ("+Integer.toString(offset+unitCount)+")");
-      if(unitCount==0)return 0;
-      int count=0;
-      if(charInput!=null){
-        int c=charInput.read(buf,offset,unitCount);
-        if(c<=0){
-          charInput=null;
-        } else {
-          offset+=c;
-          unitCount-=c;
-          count+=c;
+    private int ReadInternal(int[] buf, int offset, int unitCount) {
+      if (this.stack.size() == 0) {
+        return -1;
+      }
+      if (unitCount == 0) {
+        return 0;
+      }
+      int count = 0;
+      while (this.stack.size() > 0 && unitCount > 0) {
+        int index = this.stack.size() - 1;
+        int c = this.stack.get(index).Read(buf, offset, unitCount);
+        if (c <= 0) {
+          this.stack.remove(index);
+          continue;
         }
-      }
-      if(buffer!=null){
-        int c=Math.min(unitCount,this.buffer.length-pos);
-        if(c>0){
-          System.arraycopy(this.buffer,pos,buf,offset,c);
+        count += c;
+        unitCount -= c;
+        if (unitCount == 0) {
+          break;
         }
-        pos+=c;
-        count+=c;
-        if(c==0){
-          buffer=null;
-        }
-      }
-      return (count==0) ? -1 : count;
-    }
-
-  }
-
-  int pos=0;
-  int endpos=0;
-  boolean haveMark=false;
-  int[] buffer=null;
-  List<ICharacterInput> stack=new ArrayList<ICharacterInput>();
-
-  public StackableCharacterInput(ICharacterInput source) {
-    this.stack.add(source);
-  }
-
-  @Override
-  public int getMarkPosition(){
-    return pos;
-  }
-
-  @Override
-  public void moveBack(int count) throws IOException {
-    if((count)<0)throw new IndexOutOfBoundsException("count not greater or equal to 0 ("+Integer.toString(count)+")");
-    if(haveMark && pos>=count){
-      pos-=count;
-      return;
-    }
-    throw new IOException();
-  }
-
-  public void pushInput(ICharacterInput input){
-    if((input)==null)throw new NullPointerException("input");
-    // Move unread characters in buffer, since this new
-    // input sits on top of the existing input
-    stack.add(new InputAndBuffer(input,buffer,pos,endpos-pos));
-    endpos=pos;
-  }
-
-  @Override
-  public int read() throws IOException{
-    if(haveMark){
-      // Read from buffer
-      if(pos<endpos)
-        return buffer[pos++];
-      //DebugUtility.log(this);
-      // End pos is smaller than buffer size, fill
-      // entire buffer if possible
-      if(endpos<buffer.length){
-        int count=readInternal(buffer,endpos,buffer.length-endpos);
-        if(count>0) {
-          endpos+=count;
-        }
-      }
-      // Try reading from buffer again
-      if(pos<endpos)
-        return buffer[pos++];
-      //DebugUtility.log(this);
-      // No room, read next character and put it in buffer
-      int c=readInternal();
-      if(c<0)return c;
-      if(pos>=buffer.length){
-        int[] newBuffer=new int[buffer.length*2];
-        System.arraycopy(buffer,0,newBuffer,0,buffer.length);
-        buffer=newBuffer;
-      }
-      //DebugUtility.log(this);
-      buffer[pos++]=(byte)c;
-      endpos++;
-      return c;
-    } else
-      return readInternal();
-  }
-
-  @Override
-  public int read(int[] buf, int offset, int unitCount) throws IOException {
-    if(haveMark){
-      if((buf)==null)throw new NullPointerException("buf");
-      if((offset)<0)throw new IndexOutOfBoundsException("offset not greater or equal to 0 ("+Integer.toString(offset)+")");
-      if((unitCount)<0)throw new IndexOutOfBoundsException("unitCount not greater or equal to 0 ("+Integer.toString(unitCount)+")");
-      if((offset+unitCount)>buf.length)throw new IndexOutOfBoundsException("offset+unitCount not less or equal to "+Integer.toString(buf.length)+" ("+Integer.toString(offset+unitCount)+")");
-      if(unitCount==0)return 0;
-      // Read from buffer
-      if(pos+unitCount<=endpos){
-        System.arraycopy(buffer,pos,buf,offset,unitCount);
-        pos+=unitCount;
-        return unitCount;
-      }
-      // End pos is smaller than buffer size, fill
-      // entire buffer if possible
-      int count=0;
-      if(endpos<buffer.length){
-        count=readInternal(buffer,endpos,buffer.length-endpos);
-        //DebugUtility.log("%s",this);
-        if(count>0) {
-          endpos+=count;
-        }
-      }
-      int total=0;
-      // Try reading from buffer again
-      if(pos+unitCount<=endpos){
-        System.arraycopy(buffer,pos,buf,offset,unitCount);
-        pos+=unitCount;
-        return unitCount;
-      }
-      // expand the buffer
-      if(pos+unitCount>buffer.length){
-        int[] newBuffer=new int[(buffer.length*2)+unitCount];
-        System.arraycopy(buffer,0,newBuffer,0,buffer.length);
-        buffer=newBuffer;
-      }
-      count=readInternal(buffer, endpos, Math.min(unitCount,buffer.length-endpos));
-      if(count>0) {
-        endpos+=count;
-      }
-      // Try reading from buffer a third time
-      if(pos+unitCount<=endpos){
-        System.arraycopy(buffer,pos,buf,offset,unitCount);
-        pos+=unitCount;
-        total+=unitCount;
-      } else if(endpos>pos){
-        System.arraycopy(buffer,pos,buf,offset,endpos-pos);
-        total+=(endpos-pos);
-        pos=endpos;
-      }
-      return (total==0) ? -1 : total;
-    } else
-      return readInternal(buf, offset, unitCount);
-  }
-
-  private int readInternal() throws IOException {
-    if(this.stack.size()==0)return -1;
-    while(this.stack.size()>0){
-      int index=this.stack.size()-1;
-      int c=this.stack.get(index).read();
-      if(c==-1){
         this.stack.remove(index);
-        continue;
       }
-      return c;
+      return count;
     }
-    return -1;
-  }
 
-  private int readInternal(int[] buf, int offset, int unitCount) throws IOException {
-    if(this.stack.size()==0)return -1;
-    assert ((buf)!=null) : "buf";
-    assert ((offset)>=0) : ("offset not greater or equal to 0 ("+Integer.toString(offset)+")");
-    assert ((unitCount)>=0) : ("unitCount not greater or equal to 0 ("+Integer.toString(unitCount)+")");
-    assert ((offset+unitCount)<=buf.length) : ("offset+unitCount not less or equal to "+Integer.toString(buf.length)+" ("+Integer.toString(offset+unitCount)+")");
-    if(unitCount==0)return 0;
-    int count=0;
-    while(this.stack.size()>0 && unitCount>0){
-      int index=this.stack.size()-1;
-      int c=this.stack.get(index).read(buf,offset,unitCount);
-      if(c<=0){
-        this.stack.remove(index);
-        continue;
+    /**
+     * Not documented yet.
+     * @return A 32-bit signed integer.
+     */
+    public int SetHardMark() {
+      if (this.buffer == null) {
+        this.buffer = new int[16];
+        this.pos = 0;
+        this.endpos = 0;
+        this.haveMark = true;
+      } else if (this.haveMark) {
+        // Already have a mark; shift buffer to the new mark
+        if (this.pos > 0 && this.pos < this.endpos) {
+          System.arraycopy(
+            this.buffer,
+            this.pos,
+            this.buffer,
+            0,
+            this.endpos - this.pos);
+        }
+        this.endpos -= this.pos;
+        this.pos = 0;
+      } else {
+        this.pos = 0;
+        this.endpos = 0;
+        this.haveMark = true;
       }
-      count+=c;
-      unitCount-=c;
-      if(unitCount==0){
-        break;
+      return 0;
+    }
+
+    /**
+     * Not documented yet.
+     * @param pos The parameter {@code pos} is a 32-bit signed integer.
+     */
+    public void SetMarkPosition(int pos) {
+      if (!this.haveMark || pos < 0 || pos > this.endpos) {
+        throw new IllegalStateException();
       }
-      this.stack.remove(index);
+      this.pos = pos;
     }
-    return count;
-  }
 
-  @Override
-  public int setHardMark(){
-    if(buffer==null){
-      buffer=new int[16];
-      pos=0;
-      endpos=0;
-      haveMark=true;
-    } else if(haveMark){
-      // Already have a mark; shift buffer to the new mark
-      if(pos>0 && pos<endpos){
-        System.arraycopy(buffer,pos,buffer,0,endpos-pos);
+    /**
+     * Not documented yet.
+     * @return A 32-bit signed integer.
+     */
+    public int SetSoftMark() {
+      if (!this.haveMark) {
+        this.SetHardMark();
       }
-      endpos-=pos;
-      pos=0;
-    } else {
-      pos=0;
-      endpos=0;
-      haveMark=true;
+      return this.GetMarkPosition();
     }
-    return 0;
   }
-
-  @Override
-  public void setMarkPosition(int pos) throws IOException{
-    if(!haveMark || pos<0 || pos>endpos)
-      throw new IOException();
-    this.pos=pos;
-  }
-
-  @Override
-  public int setSoftMark(){
-    if(!haveMark){
-      setHardMark();
-    }
-    return getMarkPosition();
-  }
-
-}

@@ -1,4 +1,4 @@
-package com.upokecenter.util;
+package com.upokecenter.html;
 /*
 
 Licensed under the Expat License.
@@ -31,15 +31,15 @@ THE SOFTWARE.
  super(NodeType.COMMENT_NODE);
     }
 
-    public String getData() {
+    public String GetData() {
       return this.valueData;
     }
 
-    @Override public String getNodeName() {
+    @Override public String GetNodeName() {
       return "#comment";
     }
 
-    @Override public String getTextContent() {
+    @Override public String GetTextContent() {
       return null;
     }
 
@@ -47,8 +47,8 @@ THE SOFTWARE.
       this.valueData = valueData;
     }
 
-    internal override String toDebugString() {
-      return "<!-- " + this.getData().toString().replace("\n",
-          "~~~~") + " -->\n";
+    @Override String ToDebugString() {
+      return "<!-- " + this.GetData().toString().replace("\n",
+        "~~~~") + " -->\n";
     }
   }

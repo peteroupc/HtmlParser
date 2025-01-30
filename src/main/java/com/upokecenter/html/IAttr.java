@@ -1,4 +1,4 @@
-package com.upokecenter.util;
+package com.upokecenter.html;
 
   /**
    * Represents one of the attributes within an HTML element.
@@ -6,7 +6,7 @@ package com.upokecenter.util;
   public interface IAttr {
     /**
      * Gets the attribute name's local name (the part after the colon, if it's
-     * bound to a _namespace).
+     * bound to a namespaceValue).
      * @return The return value is not documented yet.
      */
     String GetLocalName();
@@ -18,14 +18,14 @@ package com.upokecenter.util;
     String GetName();
 
     /**
-     * Gets the attribute's _namespace URI, if it's bound to a _namespace.
+     * Gets the attribute's namespaceValue URI, if it's bound to a namespaceValue.
      * @return The return value is not documented yet.
      */
     String GetNamespaceURI();
 
     /**
      * Gets the attribute name's prefix (the part before the colon, if it's bound
-     * to a _namespace).
+     * to a namespaceValue).
      * @return The return value is not documented yet.
      */
     String GetPrefix();
