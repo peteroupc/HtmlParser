@@ -17,7 +17,7 @@ import com.upokecenter.rdf.*;
       Reverse,
     }
 
-    class EvalContext {
+    static class EvalContext {
       public final String getValueBaseURI() { return propVarvaluebaseuri; }
 public final void setValueBaseURI(String value) { propVarvaluebaseuri = value; }
 private String propVarvaluebaseuri;
@@ -65,7 +65,7 @@ private String propVardefaultvocab;
         ec.setValueParentObject(this.getValueParentObject());
         ec.setValueLanguage(this.getValueLanguage());
         ec.setDefaultVocab(this.getDefaultVocab());
-        ec.setValueIncompleteTriples(Arrays.asList(this.getValueIncompleteTriples()));
+        ec.setValueIncompleteTriples(new ArrayList<IncompleteTriple>(this.getValueIncompleteTriples()));
         ec.setValueListMap((this.getValueListMap() == null) ? null : new
           HashMap<String, List<RDFTerm>>(this.getValueListMap()));
         ec.setValueNamespaces((this.getValueNamespaces() == null) ? null : new
@@ -76,7 +76,7 @@ private String propVardefaultvocab;
       }
     }
 
-    class IncompleteTriple {
+    static class IncompleteTriple {
       public final List<RDFTerm> getTripleList() { return propVartriplelist; }
 public final void setTripleList(List<RDFTerm> value) { propVartriplelist = value; }
 private List<RDFTerm> propVartriplelist;
@@ -212,7 +212,7 @@ private ChainingDirection propVarvaluedirection;
         return map.get(null);
       }
       key = com.upokecenter.util.DataUtilities.ToLowerCaseAscii(key);
-      for (Object k : map.keySet()) {
+      for (var k : map.keySet()) {
         if (key.equals(com.upokecenter.util.DataUtilities.ToLowerCaseAscii(k))) {
           return map.get(k);
         }
@@ -427,7 +427,7 @@ private ChainingDirection propVarvaluedirection;
       this.context.getValueIriMap().put("dc", "http://purl.org/dc/terms/");
       this.context.getValueIriMap().put("dcterms", "http://purl.org/dc/terms/");
       this.context.getValueIriMap().put("dc11", "http://purl.org/dc/elements/1.1/");
-      this.context.getValueIriMap().put("foaf", "http://xmlns.getCom()/foaf/0.1/");
+      this.context.getValueIriMap().put("foaf", "http://xmlns.com/foaf/0.1/");
       this.context.getValueIriMap().put("gr", "http://purl.org/goodrelations/v1#");
       this.context.getValueIriMap().put(
         "ical",
@@ -460,7 +460,7 @@ private ChainingDirection propVarvaluedirection;
       this.context.getValueIriMap().put(
         "skosxl",
         "http://www.w3.org/2008/05/skos-xl#");
-      this.context.getValueIriMap().put("v", "http://rdf.getData()-vocabulary.org/#");
+      this.context.getValueIriMap().put("v", "http://rdf.data-vocabulary.org/#");
       this.context.getValueIriMap().put("vcard",
         "http://www.w3.org/2006/vcard/ns#");
       this.context.getValueIriMap().put("void", "http://rdfs.org/ns/void#");
@@ -517,9 +517,7 @@ private ChainingDirection propVarvaluedirection;
       // "//" can never begin a valid CURIE reference, so it can
       // be used to guarantee that generated blank nodes will never
       // conflict with those stated explicitly
-      String blankNodeString = "//" +
-        (
-          this.blankNode).toString();
+      String blankNodeString = "//" + RDFa1.IntToString(this.blankNode);
       ++this.blankNode;
       RDFTerm term = RDFTerm.FromBlankNode(blankNodeString);
       this.bnodeLabels.put(blankNodeString, term);
@@ -1162,8 +1160,8 @@ private ChainingDirection propVarvaluedirection;
       }
       // Step 12
       if (!skipElement && newSubject != null) {
-        List<RDFTriple> triples = this.context.getValueIncompleteTriples();
-        for (RDFTriple triple : triples) {
+        List<IncompleteTriple> triples = this.context.getValueIncompleteTriples();
+        for (IncompleteTriple triple : triples) {
           if (triple.getValueDirection() == ChainingDirection.None) {
             List<RDFTerm> TripleList = triple.getTripleList();
             TripleList.add(newSubject);
@@ -1217,7 +1215,7 @@ private ChainingDirection propVarvaluedirection;
         this.context = oldContext;
       }
       // Step 14
-      for (Object iri : listMapLocal.keySet()) {
+      for (var iri : listMapLocal.keySet()) {
         if (!this.context.getValueListMap().containsKey(iri)) {
           List<RDFTerm> TripleList = listMapLocal.get(iri);
           if (TripleList.size() == 0) {

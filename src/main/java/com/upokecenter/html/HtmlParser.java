@@ -42,7 +42,7 @@ private StringBuilder propVarcommentvalue;
         this.setCommentValue(new StringBuilder());
       }
 
-      public void Append(String str) {
+      public void AppendStr(String str) {
         this.getCommentValue().append(str);
       }
 
@@ -61,7 +61,7 @@ private StringBuilder propVarcommentvalue;
       }
     }
 
-    class DocTypeToken implements IToken {
+    static class DocTypeToken implements IToken {
       public final StringBuilder getName() { return propVarname; }
 private final StringBuilder propVarname;
 
@@ -90,7 +90,7 @@ private boolean propVarforcequirks;
       }
     }
 
-    class EndTagToken extends TagToken {
+    static class EndTagToken extends TagToken {
       public EndTagToken(char c) {
  super(c);
       }
@@ -157,7 +157,7 @@ private StartTagToken propVartoken;
       int GetTokenType();
     }
 
-    class StartTagToken extends TagToken {
+    static class StartTagToken extends TagToken {
       public StartTagToken(char c) {
  super(c);
       }
@@ -222,7 +222,7 @@ private boolean propVarvalueselfclosingack;
         return a;
       }
 
-      public void Append(int ch) {
+      public void AppendUChar(int ch) {
         if (ch < 0x10000) {
           this.builder.append((char)ch);
         } else {
@@ -288,7 +288,7 @@ private boolean propVarvalueselfclosingack;
 
       public List<Attr> GetAttributes() {
         if (this.getAttributes() == null) {
-          return new Attr[] { };
+          return new ArrayList<Attr>();
         } else {
           return this.getAttributes();
         }
@@ -517,7 +517,7 @@ private boolean propVarvalueselfclosingack;
       "-//webtechs//dtd mozilla html//",
     };
 
-    private ConditionalBufferInputStream inputStream;
+    private ConditionalBufferReader inputReader;
     private IMarkableCharacterInput charInput = null;
     private EncodingConfidence encoding = null;
 
@@ -579,31 +579,32 @@ private boolean propVarvalueselfclosingack;
       IReader source,
       String address,
       String charset,
-      String contentLanguage) throws java.io.IOException {
+      String contentLanguage) {
       if (source == null) {
         throw new IllegalArgumentException();
       }
       if (address != null && address.length() > 0) {
-        URL url = URL.Parse(address);
-        if (url == null || ((url.GetScheme()) == null || (url.GetScheme()).length() == 0)) {
-          throw new IllegalArgumentException();
-        }
+        /* URL url = URL.Parse(address);
+                if (url == null || ((url.GetScheme()) == null || (url.GetScheme()).length() == 0)) {
+                  throw new IllegalArgumentException();
+                }
+        */
       }
       // TODO: Use a more sophisticated language parser here
       this.contentLanguage = new String[] { contentLanguage };
       this.address = address;
       this.Initialize();
-      this.inputStream = new ConditionalBufferInputStream(source); // TODO: ???
+      this.inputReader = new ConditionalBufferReader(source); // TODO: ???
       this.encoding = new EncodingConfidence(
         charset,
         EncodingConfidence.Certain);
       // TODO: Use the following below
-      // this.encoding = CharsetSniffer.sniffEncoding(this.inputStream,
+      // this.encoding = CharsetSniffer.sniffEncoding(this.inputReader,
       // charset);
-      this.inputStream.Rewind();
+      this.inputReader.Rewind();
       ICharacterEncoding henc = new Html5Encoding(this.encoding);
       this.charInput = new StackableCharacterInput(
-        Encodings.GetDecoderInput(henc, this.inputStream));
+        Encodings.GetDecoderInput(henc, this.inputReader));
     }
 
     private void AddCommentNodeToCurrentNode(int valueToken) {
@@ -1164,7 +1165,6 @@ private boolean propVarvalueselfclosingack;
           this.ApplyThisInsertionMode(valueToken) :
           true;
       }
-      throw new IllegalStateException();
     }
 
     private static final String XhtmlStrict =
@@ -1441,7 +1441,7 @@ private boolean propVarvalueselfclosingack;
                   "utf-16le".equals(charset)) */ this.ChangeEncoding(charset);
                   if (this.encoding.GetConfidence() ==
                     EncodingConfidence.Certain) {
-                    this.inputStream.DisableBuffer();
+                    this.inputReader.DisableBuffer();
                   }
                   return true;
                 }
@@ -1457,7 +1457,7 @@ private boolean propVarvalueselfclosingack;
                       this.ChangeEncoding(charset);
                       if (this.encoding.GetConfidence() ==
                         EncodingConfidence.Certain) {
-                        this.inputStream.DisableBuffer();
+                        this.inputReader.DisableBuffer();
                       }
                       return true;
                     }
@@ -1480,7 +1480,7 @@ private boolean propVarvalueselfclosingack;
                 }
               }
               if (this.encoding.GetConfidence() == EncodingConfidence.Certain) {
-                this.inputStream.DisableBuffer();
+                this.inputReader.DisableBuffer();
               }
               return true;
             } else if ("title".equals(valueName)) {
@@ -2462,7 +2462,11 @@ private boolean propVarvalueselfclosingack;
                   commonAncestor.AppendChild(lastNode);
                 }
                 Element e2 = Element.FromToken(formatting.getToken());
-                for (Object child : Arrays.asList(furthestBlock.GetChildNodes())) {
+                ArrayList<INode> fbch = new ArrayList<INode>();
+                for (INode child : furthestBlock.GetChildNodes()) {
+                  fbch.add(child);
+                }
+                for (INode child : fbch) {
                   furthestBlock.RemoveChild((Node)child);
                   // NOTE: Because 'e' can only be a formatting
                   // element, the foster parenting rule doesn't
@@ -3747,14 +3751,14 @@ private boolean propVarvalueselfclosingack;
       // Reinitialize all parser state
       this.Initialize();
       // Rewind the input stream and set the new encoding
-      this.inputStream.Rewind();
+      this.inputReader.Rewind();
       this.encoding = new EncodingConfidence(
         charset,
         EncodingConfidence.Certain);
       ICharacterEncoding henc = new Html5Encoding(this.encoding);
       // TODO
       // this.charInput = new StackableCharacterInput(
-      // Encodings.GetDecoderInput(henc, this.inputStream));
+      // Encodings.GetDecoderInput(henc, this.inputReader));
     }
 
     private void ClearFormattingToMarker() {
@@ -3958,7 +3962,7 @@ private boolean propVarvalueselfclosingack;
     }
 
     private FormattingElement GetFormattingElement(IElement node) {
-      for (Object fe : this.formattingElements) {
+      for (var fe : this.formattingElements) {
         if (!fe.IsMarker() && node.equals(fe.getElement())) {
           return fe;
         }
@@ -4570,7 +4574,7 @@ private boolean propVarvalueselfclosingack;
         String str = node.ToDebugString();
         String[] strarray = StringUtility.SplitAt(str, "\n");
         int len = strarray.length;
-        if (len > 0 && strarray[len - 1].length == 0) {
+        if (len > 0 && ((strarray[len - 1]) == null || (strarray[len - 1]).length() == 0)) {
           --len; // ignore trailing empty String
         }
         for (int i = 0; i < len; ++i) {
@@ -4766,8 +4770,9 @@ private boolean propVarvalueselfclosingack;
           this.charInput.SetMarkPosition(markStart + 1);
         }
         int count = 0;
-        for (int index = 0; index < HtmlEntities.Entities.length; ++index) {
-          String entity = HtmlEntities.Entities.get(index);
+        for (int index = 0; index < HtmlEntities.GetEntities().length;
+          ++index) {
+          String entity = HtmlEntities.GetEntities()[index];
           if (entity.charAt(0) == c1) {
             if (data == null) {
               // Read the rest of the character reference
@@ -4824,7 +4829,7 @@ private boolean propVarvalueselfclosingack;
                   this.ParseError();
                 }
               }
-              return HtmlEntities.EntityValues.get(index);
+              return HtmlEntities.GetEntityValues()[index];
             }
           }
         }
@@ -4912,7 +4917,7 @@ private boolean propVarvalueselfclosingack;
           EncodingConfidence.Irrelevant);
       }
       this.Parse();
-      return Arrays.asList(valueElement.GetChildNodes());
+      return new ArrayList<INode>(valueElement.GetChildNodes());
     }
 
     public List<INode> ParseFragment(String contextName) {
@@ -4998,13 +5003,13 @@ private boolean propVarvalueselfclosingack;
         }
         if ((valueToken & TOKEN_TYPE_MASK) == TOKEN_DOCTYPE) {
           DocTypeToken tag = (DocTypeToken)this.GetToken(valueToken);
-          String doctypeName = tag.getName();
-          String doctypePublic = tag.getValuePublicID();
-          String doctypeSystem = tag.getValueSystemID();
-          doctypeName = (doctypeName == null) ? "" :
-            doctypeName.toString();
-          doctypePublic = (doctypePublic == null) ? null : doctypePublic.toString();
-          doctypeSystem = (doctypeSystem == null) ? null : doctypeSystem.toString();
+          StringBuilder doctypeNameBuilder = tag.getName();
+          StringBuilder doctypePublicBuilder = tag.getValuePublicID();
+          StringBuilder doctypeSystemBuilder = tag.getValueSystemID();
+          String doctypeName = (doctypeNameBuilder == null) ? "" :
+            doctypeNameBuilder.toString();
+          String doctypePublic = (doctypePublicBuilder == null) ? null : doctypePublicBuilder.toString();
+          String doctypeSystem = (doctypeSystemBuilder == null) ? null : doctypeSystemBuilder.toString();
           ret.add(new String[] {
             "DOCTYPE", doctypeName, doctypePublic, doctypeSystem,
             tag.getForceQuirks() ? "false" : "true",
@@ -5074,9 +5079,9 @@ private boolean propVarvalueselfclosingack;
             if (charref < 0) {
               // more than one character in this reference
               int index = Math.abs(charref + 1);
-              this.tokenQueue.add(HtmlEntities.EntityDoubles.get((index * 2) +
-                1));
-              return HtmlEntities.EntityDoubles.get(index * 2);
+              this.tokenQueue.add(HtmlEntities.GetEntityDoubles()[(index * 2) +
+                1]);
+              return HtmlEntities.GetEntityDoubles()[index * 2];
             }
             return charref;
           }
@@ -5086,9 +5091,9 @@ private boolean propVarvalueselfclosingack;
             if (charref < 0) {
               // more than one character in this reference
               int index = Math.abs(charref + 1);
-              this.tokenQueue.add(HtmlEntities.EntityDoubles.get((index * 2) +
-                1));
-              return HtmlEntities.EntityDoubles.get(index * 2);
+              this.tokenQueue.add(HtmlEntities.GetEntityDoubles()[(index * 2) +
+                1]);
+              return HtmlEntities.GetEntityDoubles()[index * 2];
             }
             return charref;
           }
@@ -5612,7 +5617,7 @@ private boolean propVarvalueselfclosingack;
               this.state = TokenizerState.Data;
               return this.EmitCurrentTag();
             } else if (ch >= 'A' && ch <= 'Z') {
-              this.currentTag.append(ch + 0x20);
+              this.currentTag.AppendUChar(ch + 0x20);
               if (ch + 0x20 <= 0xffff) {
                 this.tempBuilder.append((char)(ch + 0x20));
               } else if (ch + 0x20 <= 0x10ffff) {
@@ -5622,7 +5627,7 @@ private boolean propVarvalueselfclosingack;
                   0x3ff) | 0xdc00));
               }
             } else if (ch >= 'a' && ch <= 'z') {
-              this.currentTag.append(ch);
+              this.currentTag.AppendUChar(ch);
               if (ch <= 0xffff) {
                 this.tempBuilder.append((char)ch);
               } else if (ch <= 0x10ffff) {
@@ -6027,7 +6032,7 @@ private boolean propVarvalueselfclosingack;
               this.state = TokenizerState.CommentEnd;
             } else if (ch == 0) {
               this.ParseError();
-              this.lastComment.append("-\ufffd");
+              this.lastComment.AppendStr("-\ufffd");
               this.state = TokenizerState.Comment;
             } else if (ch < 0) {
               this.ParseError();
@@ -6051,7 +6056,7 @@ private boolean propVarvalueselfclosingack;
               return ret;
             } else if (ch == 0) {
               this.ParseError();
-              this.lastComment.append("--\ufffd");
+              this.lastComment.AppendStr("--\ufffd");
               this.state = TokenizerState.Comment;
             } else if (ch == 0x21) { // --!>
               this.ParseError();
@@ -6083,10 +6088,10 @@ private boolean propVarvalueselfclosingack;
               return ret;
             } else if (ch == 0) {
               this.ParseError();
-              this.lastComment.append("--!\ufffd");
+              this.lastComment.AppendStr("--!\ufffd");
               this.state = TokenizerState.Comment;
             } else if (ch == 0x2d) {
-              this.lastComment.append("--!");
+              this.lastComment.AppendStr("--!");
               this.state = TokenizerState.CommentEndDash;
             } else if (ch < 0) {
               this.ParseError();
@@ -6096,7 +6101,7 @@ private boolean propVarvalueselfclosingack;
               return ret;
             } else {
               this.ParseError();
-              this.lastComment.append("--!");
+              this.lastComment.AppendStr("--!");
               this.lastComment.AppendChar(ch);
               this.state = TokenizerState.Comment;
             }
@@ -6116,10 +6121,10 @@ private boolean propVarvalueselfclosingack;
               int index = Math.abs(ch + 1);
 
               this.currentAttribute.AppendToValue(
-                HtmlEntities.EntityDoubles.get(index
-                  * 2));
+                HtmlEntities.GetEntityDoubles()[index
+                  * 2]);
               this.currentAttribute.AppendToValue(
-                HtmlEntities.EntityDoubles.get((index * 2) + 1));
+                HtmlEntities.GetEntityDoubles()[(index * 2) + 1]);
             } else {
               this.currentAttribute.AppendToValue(ch);
             }
@@ -6144,7 +6149,7 @@ private boolean propVarvalueselfclosingack;
               this.ParseError();
               this.state = TokenizerState.Data;
             } else {
-              this.currentTag.append(ch);
+              this.currentTag.AppendUChar(ch);
             }
             break;
           }
@@ -6699,7 +6704,7 @@ private boolean propVarvalueselfclosingack;
 
     private void RemoveFormattingElement(IElement valueAElement) {
       FormattingElement f = null;
-      for (Object fe : this.formattingElements) {
+      for (var fe : this.formattingElements) {
         if (!fe.IsMarker() && valueAElement.equals(fe.getElement())) {
           f = fe;
           break;
@@ -6816,8 +6821,8 @@ private boolean propVarvalueselfclosingack;
         if (charref < 0) {
           // more than one character in this reference
           int index = Math.abs(charref + 1);
-          this.tokenQueue.add(HtmlEntities.EntityDoubles.get(index * 2));
-          this.tokenQueue.add(HtmlEntities.EntityDoubles.get((index * 2) + 1));
+          this.tokenQueue.add(HtmlEntities.GetEntityDoubles()[index * 2]);
+          this.tokenQueue.add(HtmlEntities.GetEntityDoubles()[(index * 2) + 1]);
         } else if (charref == 0x0a) {
           return; // ignore the valueToken
         } else {
@@ -6832,11 +6837,12 @@ private boolean propVarvalueselfclosingack;
     private void StopParsing() {
       this.done = true;
       if (((this.valueDocument.getDefaultLanguage()) == null || (this.valueDocument.getDefaultLanguage()).length() == 0)) {
-        if (this.contentLanguage.length() == 1) {
+        String[] contLang = this.contentLanguage;
+        if (contLang.length == 1) {
           // set the fallback language if there is
           // only one language defined and no meta valueElement
           // defines the language
-          this.valueDocument.setDefaultLanguage(this.contentLanguage.charAt(0));
+          this.valueDocument.setDefaultLanguage(contLang[0]);
         }
       }
       this.valueDocument.setEncoding(this.encoding.GetEncoding());

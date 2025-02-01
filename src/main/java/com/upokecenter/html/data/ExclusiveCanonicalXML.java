@@ -102,7 +102,7 @@ import com.upokecenter.util.*;
       List<Map<String, String>> stack = new
       ArrayList<Map<String, String>>();
       prefixList = (prefixList == null) ? ((new HashMap<String, String>())) : prefixList;
-      for (Object valuePrefix : prefixList.keySet()) {
+      for (var valuePrefix : prefixList.keySet()) {
         String nsvalue = prefixList.get(valuePrefix);
         CheckNamespacePrefix(valuePrefix, nsvalue);
       }
@@ -164,7 +164,7 @@ import com.upokecenter.util.*;
         valueNsRendered = namespaceStack.get(namespaceStack.size() - 1);
         boolean copied = false;
         builder.append('<');
-        if (e.GetPrefix() != null && e.GetPrefix().length > 0) {
+        if (!((e.GetPrefix()) == null || (e.GetPrefix()).length() == 0)) {
           builder.append(e.GetPrefix());
           builder.append(':');
         }
@@ -195,8 +195,8 @@ import com.upokecenter.util.*;
         }
         if (declaredNames != null) {
           // add declared prefixes to list
-          for (Object valuePrefix : prefixList.keySet()) {
-            if (valuePrefix == null || declaredNames.Contains(valuePrefix)) {
+          for (var valuePrefix : prefixList.keySet()) {
+            if (valuePrefix == null || declaredNames.contains(valuePrefix)) {
               continue;
             }
             String value = prefixList.get(valuePrefix);
@@ -207,7 +207,8 @@ import com.upokecenter.util.*;
         java.util.Collections.sort(attrs, ValueAttrNamespaceComparer);
         for (IAttr attr : attrs) {
           String valuePrefix = attr.GetLocalName();
-          if (attr.GetPrefix().length == 0) {
+          if (attr.GetPrefix() != null &&
+            ((attr.GetPrefix()) == null || (attr.GetPrefix()).length() == 0)) {
             valuePrefix = "";
           }
           String value = attr.GetValue();
@@ -284,7 +285,7 @@ import com.upokecenter.util.*;
         }
         namespaceStack.remove(namespaceStack.size() - 1);
         builder.append("</");
-        if (e.GetPrefix() != null && e.GetPrefix().length > 0) {
+        if (!((e.GetPrefix()) == null || (e.GetPrefix()).length() == 0)) {
           builder.append(e.GetPrefix());
           builder.append(':');
         }

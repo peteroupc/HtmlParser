@@ -27,9 +27,7 @@ public class LowPriorityExecutors {
     private final String namePrefix;
 
     LowPriorityThreadFactory() {
-      SecurityManager s = System.getSecurityManager();
-      group = (s != null)? s.getThreadGroup() :
-        Thread.currentThread().getThreadGroup();
+      group = Thread.currentThread().getThreadGroup();
       namePrefix = "pool-" +
           poolNumber.getAndIncrement() +
           "-thread-";

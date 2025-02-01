@@ -132,13 +132,17 @@ THE SOFTWARE.
       return null;
     }
 
-    public List<IAttr> GetAttributes() {
+    private ArrayList<IAttr> GetAttributesList() {
       ArrayList<IAttr> attrs = new ArrayList<IAttr>();
       List<Attr> thisattrs = this.attributes;
       for (Attr attr : thisattrs) {
         attrs.add(attr);
       }
       return attrs;
+    }
+
+    public List<IAttr> GetAttributes() {
+      return this.GetAttributesList();
     }
 
     public IElement GetElementById(String id) {
@@ -282,7 +286,7 @@ THE SOFTWARE.
         }
       }
       builder.append("<" + extra + this.name.toString() + ">\n");
-      List<IAttr> attribs = this.GetAttributes();
+      ArrayList<IAttr> attribs = this.GetAttributesList();
       java.util.Collections.sort(attribs, new AttributeNameComparator());
       for (IAttr attribute : attribs) {
         // System.out.println("%s %s"
@@ -309,7 +313,7 @@ THE SOFTWARE.
       if (isTemplate) {
         builder.append("\u0020\u0020content\n");
       }
-      for (Object node : this.GetChildNodesInternal()) {
+      for (var node : this.GetChildNodesInternal()) {
         String str = ((Node)node).ToDebugString();
         if (str == null) {
           continue;

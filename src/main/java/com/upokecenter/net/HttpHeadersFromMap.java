@@ -43,18 +43,18 @@ import com.upokecenter.util.*;
       this.valueRequestMethod = valueRequestMethod;
       this.valueList = new ArrayList<String>();
       ArrayList<String> keyset = new ArrayList<String>();
-      for (Object s : this.valueMap.keySet()) {
-        if (((s) == null || (s).length() == 0)) {
+      for (String str : this.valueMap.keySet()) {
+        if (((str) == null || (str).length() == 0)) {
           // Add status line (also has the side
           // effect that it will appear first in the valueList)
-          List<String> v = this.valueMap.get(s);
+          List<String> v = this.valueMap.get(str);
           if (v != null && v.size() > 0) {
             this.valueList.add(v.get(0));
           } else {
             this.valueList.add("HTTP/1.1 200 OK");
           }
         } else {
-          keyset.add(s);
+          keyset.add(str);
         }
       }
       java.util.Collections.sort(keyset);

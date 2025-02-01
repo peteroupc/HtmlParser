@@ -8,6 +8,43 @@ import com.upokecenter.util.*;
 import com.upokecenter.rdf.*;
 
   class RDFa1 implements IRDFParser {
+    public static String IntToString(int value) {
+      String digits = "0123456789";
+      if (value == Integer.MIN_VALUE) {
+        return "-2147483648";
+      }
+      if (value == 0) {
+        return "0";
+      }
+      boolean neg = value < 0;
+      char[] chars = new char[12];
+      int count = 11;
+      if (neg) {
+        value = -value;
+      }
+      while (value > 43698) {
+        int intdivvalue = value / 10;
+        char digit = digits.charAt((int)(value - (intdivvalue * 10)));
+        chars[count--] = digit;
+        value = intdivvalue;
+      }
+      while (value > 9) {
+        int intdivvalue = (value * 26215) >> 18;
+        char digit = digits.charAt((int)(value - (intdivvalue * 10)));
+        chars[count--] = digit;
+        value = intdivvalue;
+      }
+      if (value != 0) {
+        chars[count--] = digits.charAt((int)value);
+      }
+      if (neg) {
+        chars[count] = '-';
+      } else {
+        ++count;
+      }
+      return new String(chars, count, 12 - count);
+    }
+
     private static String GetTextNodeText(INode node) {
       StringBuilder builder = new StringBuilder();
       for (INode child : node.GetChildNodes()) {
@@ -39,15 +76,14 @@ import com.upokecenter.rdf.*;
     private static final String
     RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
 
-    private static List<String> relterms = (new String[] {
+    private static List<String> relterms = Arrays.asList(
       "alternate",
       "appendix", "cite", "bookmark", "chapter", "contents", "copyright",
       "first", "glossary", "help", "icon", "index", "last",
       "license", "meta", "next", "prev",
       "role", "section", "start",
       "stylesheet", "subsection", "top",
-      "up", "p3pv1",
-    });
+      "up", "p3pv1");
 
     private static int GetCuriePrefixLength(String s, int offset, int length) {
       if (s == null || length == 0) {
@@ -130,7 +166,7 @@ import com.upokecenter.rdf.*;
           s,
           offset,
           length,
-          com.upokecenter.util.URIUtility.ParseMode.getIRIStrict());
+          com.upokecenter.util.URIUtility.ParseMode.IRIStrict);
       if (indexes == null) {
         return false;
       }
@@ -177,8 +213,7 @@ import com.upokecenter.rdf.*;
       // so it can
       // be used to guarantee that generated blank nodes will never
       // conflict with those stated explicitly
-      String blankNodeString = "b:" + (
-          this.blankNode).toString();
+      String blankNodeString = "b:" + IntToString(this.blankNode);
       ++this.blankNode;
       RDFTerm term = RDFTerm.FromBlankNode(blankNodeString);
       this.bnodeLabels.put(blankNodeString, term);
@@ -690,8 +725,9 @@ import com.upokecenter.rdf.*;
       }
       // Step 10
       if (!skipElement && newSubject != null) {
-        List<IncompleteTriple> triples = this.context.getValueIncompleteTriples();
-        for (RDFTriple triple : triples) {
+        List < RDFa.IncompleteTriple > triples =
+          this.context.getValueIncompleteTriples();
+        for (RDFa.IncompleteTriple triple : triples) {
           if (triple.getValueDirection() == RDFa.ChainingDirection.Forward) {
             this.outputGraph.add(new RDFTriple(
               this.context.getValueParentSubject(),
@@ -707,8 +743,8 @@ import com.upokecenter.rdf.*;
       }
       // Step 13
       if (recurse) {
-        List<IElement> childNodes = node.GetChildNodes();
-        for (IElement childNode : childNodes) {
+        List<INode> childNodes = node.GetChildNodes();
+        for (INode childNode : childNodes) {
           IElement childElement;
           RDFa.EvalContext oldContext = this.context;
           if (childNode instanceof IElement) {

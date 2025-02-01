@@ -16,7 +16,7 @@ import com.upokecenter.util.*;
    * is disabled, no further bytes are put into the buffer, but any remaining
    * bytes in the buffer will still be used until it's exhausted.
    */
-  public final class ConditionalBufferInputStream implements IByteReader {
+  public final class ConditionalBufferReader implements IByteReader {
     private byte[] buffer = null;
     private int pos = 0;
     private int endpos = 0;
@@ -27,10 +27,10 @@ import com.upokecenter.util.*;
     private IReader reader = null;
 
     /**
-     * Initializes a new instance of the ConditionalBufferInputStream class.
+     * Initializes a new instance of the ConditionalBufferReader class.
      * @param input The parameter {@code input} is an IReader object.
      */
-    public ConditionalBufferInputStream(IReader input) {
+    public ConditionalBufferReader(IReader input) {
       this.reader = input;
       this.buffer = new byte[1024];
     }
@@ -278,7 +278,7 @@ import com.upokecenter.util.*;
         // return;
       }
       if (this.markpos < 0) {
-        throw new IOException();
+        throw new IllegalStateException();
       }
       this.pos = this.posAtMark;
     }
@@ -290,7 +290,7 @@ import com.upokecenter.util.*;
      */
     public void Rewind() {
       if (this.disabled) {
-        throw new IOException();
+        throw new IllegalStateException();
       }
       this.pos = 0;
       this.markpos = -1;

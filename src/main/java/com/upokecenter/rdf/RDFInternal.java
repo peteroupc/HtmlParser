@@ -1,16 +1,25 @@
-package com.upokecenter.html.data;
+package com.upokecenter.rdf;
 
 import java.util.*;
 
-import com.upokecenter.rdf.*;
+import com.upokecenter.util.*;
+/*
+Written in 2013 by Peter Occil.
+Any copyright to this work is released to the Public Domain.
+In case this is not possible, this work is also
+licensed under the Unlicense: https://unlicense.org/
+
+*/
 
   final class RDFInternal {
+private RDFInternal() {
+}
     /**
-     * Replaces certain blank nodes with blank nodes whose names meet the N-Triples
-     * requirements.
-     * @param triples A set of RDF triples.
-     * @param bnodeLabels A mapping of blank node names already allocated. This
-     * method will modify this object as needed to allocate new blank nodes.
+     * Not documented yet.
+     * @param triples The parameter {@code triples} is
+     * a.getCollections().getGeneric().getISet() {PeterO.Rdf.RDFTriple} object.
+     * @param bnodeLabels The parameter {@code bnodeLabels} is
+     * a.getCollections().getGeneric().getMap() {System.String object.
      */
     static void ReplaceBlankNodes(
       Set<RDFTriple> triples,
@@ -32,7 +41,8 @@ import com.upokecenter.rdf.*;
               nodeindex,
               bnodeLabels);
           if (!newname.equals(oldname)) {
-            RDFTerm newNode = newBlankNodes.get(oldname);
+            RDFTerm newNode = newBlankNodes.containsKey(oldname) ?
+              newBlankNodes.get(oldname) : null;
             if (newNode == null) {
               newNode = RDFTerm.FromBlankNode(newname);
               bnodeLabels.put(newname, newNode);
@@ -50,7 +60,8 @@ import com.upokecenter.rdf.*;
               nodeindex,
               bnodeLabels);
           if (!newname.equals(oldname)) {
-            RDFTerm newNode = newBlankNodes.get(oldname);
+            RDFTerm newNode = newBlankNodes.containsKey(oldname) ?
+              newBlankNodes.get(oldname) : null;
             if (newNode == null) {
               newNode = RDFTerm.FromBlankNode(newname);
               bnodeLabels.put(newname, newNode);
@@ -68,48 +79,10 @@ import com.upokecenter.rdf.*;
           changedTriples.add(newTriple);
         }
       }
-      for (RDFTriple[] triple2 : changedTriples) {
-        RDFTriple[] t2 = triple2;
-        triples.remove(t2[0]);
-        triples.add(t2[1]);
+      for (RDFTriple[] triple : changedTriples) {
+        triples.remove(triple[0]);
+        triples.add(triple[1]);
       }
-    }
-
-    public static String IntToString(int value) {
-      String digits = "0123456789";
-      if (value == Integer.MIN_VALUE) {
-        return "-2147483648";
-      }
-      if (value == 0) {
-        return "0";
-      }
-      boolean neg = value < 0;
-      char[] chars = new char[12];
-      int count = 11;
-      if (neg) {
-        value = -value;
-      }
-      while (value > 43698) {
-        int intdivvalue = value / 10;
-        char digit = digits.charAt((int)(value - (intdivvalue * 10)));
-        chars[count--] = digit;
-        value = intdivvalue;
-      }
-      while (value > 9) {
-        int intdivvalue = (value * 26215) >> 18;
-        char digit = digits.charAt((int)(value - (intdivvalue * 10)));
-        chars[count--] = digit;
-        value = intdivvalue;
-      }
-      if (value != 0) {
-        chars[count--] = digits.charAt((int)value);
-      }
-      if (neg) {
-        chars[count] = '-';
-      } else {
-        ++count;
-      }
-      return new String(chars, count, 12 - count);
     }
 
     private static String SuggestBlankNodeName(
@@ -137,14 +110,11 @@ import com.upokecenter.rdf.*;
       while (true) {
         // Generate a new blank node label,
         // and ensure it's unique
-        node = "b" + IntToString(nodeindex[0]);
+        node = "b" + Integer.toString((int)nodeindex[0]);
         if (!bnodeLabels.containsKey(node)) {
           return node;
         }
         ++nodeindex[0];
       }
-    }
-
-    private RDFInternal() {
     }
   }

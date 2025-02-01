@@ -235,7 +235,7 @@ import com.upokecenter.cbor.*;
       for (String element2 : ret) {
         String legacyLabel = ValueLegacyLabelsMap.get(element2);
         if (complexLegacyMap.containsKey(element2)) {
-          for (Object item : complexLegacyMap.get(element2)) {
+          for (var item : complexLegacyMap.get(element2)) {
             retList.add(item);
           }
         } else if (legacyLabel != null) {
@@ -246,9 +246,9 @@ import com.upokecenter.cbor.*;
       }
       if (retList.size() >= 2) {
         HashSet<String> stringSet = new HashSet<String>(retList);
-        retList = Arrays.asList((Collection<String>)stringSet);
+        retList = new ArrayList<String>((Collection<String>)stringSet);
       }
-      return retList.ToArray();
+      return retList.toArray(new String[0]);
     }
 
     private static final String[] DatePatterns = new String[] {
@@ -625,9 +625,9 @@ import com.upokecenter.cbor.*;
       }
       if (retList.size() >= 2) {
         HashSet<String> stringSet = new HashSet<String>(retList);
-        retList = Arrays.asList((Collection<String>)stringSet);
+        retList = new ArrayList<String>((Collection<String>)stringSet);
       }
-      return retList.ToArray();
+      return retList.toArray(new String[0]);
     }
 
     private static String TrimAndCollapseSpaces(String str) {
@@ -699,7 +699,7 @@ import com.upokecenter.cbor.*;
 
     private static List<IElement> GetValueClasses(IElement root) {
       List<IElement> elements = new ArrayList<IElement>();
-      for (Object element : GetChildElements(root)) {
+      for (var element : GetChildElements(root)) {
         GetValueClassInner(element, elements);
       }
       return elements;
@@ -729,7 +729,7 @@ import com.upokecenter.cbor.*;
           return;
         }
       }
-      for (Object element : GetChildElements(root)) {
+      for (var element : GetChildElements(root)) {
         GetValueClassInner(element, elements);
       }
     }
@@ -1143,18 +1143,18 @@ import com.upokecenter.cbor.*;
           hasBookmark = true;
         }
       }
-      return relList.ToArray();
+      return relList.toArray(new String[0]);
     }
 
     private static void PropertyWalk(
       IElement root,
       CBORObject properties,
       CBORObject children) {
-      String[] className = GetClassNames(root);
-      if (className.length() > 0) {
+      String[] classNameArray = GetClassNames(root);
+      if (classNameArray.length > 0) {
         List<String> types = new ArrayList<String>();
         boolean hasProperties = false;
-        for (String cls : className) {
+        for (String cls : classNameArray) {
           if (cls.startsWith("p-") && properties !=
             null) {
             hasProperties = true;
@@ -1174,7 +1174,7 @@ import com.upokecenter.cbor.*;
         if (types.size() == 0 && hasProperties) {
           // has properties and isn't a microformat
           // root
-          for (String cls : className) {
+          for (String cls : classNameArray) {
             if (cls.startsWith("p-")) {
               String value = GetPValue(root);
               if (!StringUtility.IsNullOrSpaces(value)) {
@@ -1252,7 +1252,7 @@ import com.upokecenter.cbor.*;
           }
           obj.Add("properties", subProperties);
           if (hasProperties) {
-            for (String cls : className) {
+            for (String cls : classNameArray) {
               if (cls.startsWith("p-")) { // property
                 CBORObject clone = CopyJson(obj);
                 clone.Add("value", GetPValue(root));
@@ -1296,11 +1296,11 @@ import com.upokecenter.cbor.*;
     private static void RelWalk(
       IElement root,
       CBORObject properties) {
-      String[] className = GetRelNames(root);
-      if (className.length() > 0) {
+      String[] classNameArray = GetRelNames(root);
+      if (classNameArray.length > 0) {
         String href = GetHref(root);
         if (!StringUtility.IsNullOrSpaces(href)) {
-          for (String cls : className) {
+          for (String cls : classNameArray) {
             AccumulateValue(properties, cls, href);
           }
         }

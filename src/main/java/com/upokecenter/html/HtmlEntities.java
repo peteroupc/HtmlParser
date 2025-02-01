@@ -1,7 +1,9 @@
 package com.upokecenter.html;
 
   final class HtmlEntities {
-    private static final String[] ValueEntities = new
+private HtmlEntities() {
+}
+    private static final String[] entities = new
     String[] { "CounterClockwiseContourIntegral;",
       "ClockwiseContourIntegral;", "DoubleLongLeftRightArrow;",
       "NotNestedGreaterGreater;", "DiacriticalDoubleAcute;",
@@ -612,7 +614,7 @@ package com.upokecenter.html;
       8472, 8768, 958, 165, 62, 60, 62, 60,
     };
 
-    private static final int[] ValueEntityDoubles = new int[] {
+    private static final int[] entityDoubles = new int[] {
       10914, 824,
       10878, 824,
       8807, 824, 10704, 824, 10703, 824, 8811, 824, 10877, 824, 10913, 824,
@@ -633,21 +635,22 @@ package com.upokecenter.html;
       8402, 8807, 824, 8806, 824,
     };
 
-    static String[] getEntities() {
-        return ValueEntities;
-      }
+    static String[] GetEntities() {
+      return entities;
+    }
 
-    static int[] getEntityDoubles() {
-        return ValueEntityDoubles;
-      }
+    static int[] GetEntityDoubles() {
+      return entityDoubles;
+    }
 
-    static int[] getEntityValues() {
-        return valueEntityValues;
-      }
+    static int[] GetEntityValues() {
+      return valueEntityValues;
+    }
 
     public static int GetHtmlEntity(String strValue) {
-      String[] ents = HtmlEntities.Entities;
-      if (strValue.length() < 2 || strValue.length() > ents[0].length) {
+      String[] ents = GetEntities();
+      String firstEnt = ents[0];
+      if (strValue.length() < 2 || strValue.length() > firstEnt.length()) {
         return Integer.MAX_VALUE;
       }
       strValue += ";";
@@ -671,14 +674,11 @@ package com.upokecenter.html;
       if (index > -1) {
         throw new IllegalArgumentException("index more than -1 (" + index + ")");
       }
-      int[] edoubles = HtmlEntities.EntityDoubles;
+      int[] edoubles = HtmlEntities.GetEntityDoubles();
       index = Math.abs(index + 1) * 2;
       return new int[] {
         edoubles[index],
         edoubles[index + 1],
       };
-    }
-
-    private HtmlEntities() {
     }
   }

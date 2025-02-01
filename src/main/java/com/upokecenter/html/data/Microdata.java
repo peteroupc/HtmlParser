@@ -94,7 +94,7 @@ private IElement propVarelement;
       }
       CBORObject result = CBORObject.NewMap();
       CBORObject items = CBORObject.NewArray();
-      List<IElement> tagNameEl=document.GetElementsByTagName("*");
+      List<IElement> tagNameEl = document.GetElementsByTagName("*");
       for (IElement node : tagNameEl) {
         if (node.GetAttribute("itemscope") != null &&
           node.GetAttribute("itemprop") == null) {
@@ -137,7 +137,7 @@ private IElement propVarelement;
         Object obj = null;
         if (valueElement.GetAttribute("itemscope") != null) {
           obj = memory.contains(valueElement) ? (Object)"ERROR" :
-            (Object)GetMicrodataObject(valueElement, Arrays.asList(memory));
+            (Object)GetMicrodataObject(valueElement, new ArrayList<IElement>(memory));
         } else {
           obj = GetPropertyValue(valueElement);
         }
