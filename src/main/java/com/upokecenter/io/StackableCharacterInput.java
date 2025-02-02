@@ -106,7 +106,7 @@ licensed under the Unlicense: https://unlicense.org/
 
     /**
      * Initializes a new instance of the {@link
-     * com.upokecenter.io.StackableCharacterInput} class.
+     * com.upokecenter.util.StackableCharacterInput} class.
      * @param source The parameter {@code source} is an ICharacterInput object.
      */
     public StackableCharacterInput(ICharacterInput source) {

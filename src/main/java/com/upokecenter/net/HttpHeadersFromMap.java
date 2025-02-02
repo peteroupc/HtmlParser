@@ -124,7 +124,7 @@ import com.upokecenter.util.*;
 
     public int GetResponseCode() {
       String status = this.GetHeaderField(null);
-      return - 1;
+      return -1;
       // TODO
       // return (status == null) ? (-1) :
       // (HeaderParser.GetResponseCode(status));

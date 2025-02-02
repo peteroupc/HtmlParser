@@ -236,11 +236,8 @@ import com.upokecenter.rdf.*;
         String prefixName = com.upokecenter.util.DataUtilities.ToLowerCaseAscii(
             attribute.substring(
               refIndex, (
-              refIndex)+((refIndex + prefix) - (refIndex))));
-        refIndex += prefix + 1;
-        refLength -= prefix + 1;
-        prefixIri = prefixMapping.get(prefixName);
-        prefixIri =
+              refIndex)+((refIndex + prefix) - (refIndex)))); refIndex += prefix + 1;
+refLength -= prefix + 1; prefixIri = prefixMapping.get(prefixName); prefixIri =
           (prefix == 0) ? RDFA_DEFAULT_PREFIX : prefixMapping.get(prefixName);
         if (prefixIri == null || "_".equals(prefixName)) {
           return null;
@@ -287,11 +284,9 @@ import com.upokecenter.rdf.*;
         prefixName = com.upokecenter.util.DataUtilities.ToLowerCaseAscii(
             attribute.substring(
               refIndex, (
-              refIndex)+((refIndex + prefix) - (refIndex))));
-        refIndex += prefix + 1;
-        refLength -= prefix + 1;
-        prefixIri = (prefix == 0) ? RDFA_DEFAULT_PREFIX :
-          prefixMapping.get(prefixName);
+              refIndex)+((refIndex + prefix) - (refIndex)))); refIndex += prefix + 1;
+refLength -= prefix + 1; prefixIri = (prefix == 0) ? RDFA_DEFAULT_PREFIX :
+prefixMapping.get(prefixName);
         if (prefixIri == null && !blank.equals(prefixName)) {
           return null;
         }
@@ -460,7 +455,7 @@ import com.upokecenter.rdf.*;
     }
 
     private void Process(IElement node, boolean root) {
-      List < RDFa.IncompleteTriple > incompleteTriplesLocal = new
+      List<RDFa.IncompleteTriple> incompleteTriplesLocal = new
       ArrayList<RDFa.IncompleteTriple>();
       String localLanguage = this.context.getValueLanguage();
       RDFTerm newSubject = null;
@@ -725,7 +720,7 @@ import com.upokecenter.rdf.*;
       }
       // Step 10
       if (!skipElement && newSubject != null) {
-        List < RDFa.IncompleteTriple > triples =
+        List<RDFa.IncompleteTriple> triples =
           this.context.getValueIncompleteTriples();
         for (RDFa.IncompleteTriple triple : triples) {
           if (triple.getValueDirection() == RDFa.ChainingDirection.Forward) {

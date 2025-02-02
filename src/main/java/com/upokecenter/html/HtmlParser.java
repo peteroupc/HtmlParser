@@ -588,8 +588,7 @@ private boolean propVarvalueselfclosingack;
                 if (url == null || ((url.GetScheme()) == null || (url.GetScheme()).length() == 0)) {
                   throw new IllegalArgumentException();
                 }
-        */
-      }
+        */ }
       // TODO: Use a more sophisticated language parser here
       this.contentLanguage = new String[] { contentLanguage };
       this.address = address;
@@ -1277,7 +1276,7 @@ private boolean propVarvalueselfclosingack;
                   .equals(
                     com.upokecenter.util.DataUtilities.ToLowerCaseAscii(doctypeSystem)) ||
                   (!hasSystemId && doctypePublicLC.startsWith(
-                  "-//w3c//dtd html 4.01 frameset//")) || (!hasSystemId &&
+                    "-//w3c//dtd html 4.01 frameset//")) || (!hasSystemId &&
                     doctypePublicLC.startsWith(
                       "-//w3c//dtd html 4.01 transitional//"))) {
                   this.valueDocument.SetMode(DocumentMode.QuirksMode);
@@ -2158,7 +2157,7 @@ private boolean propVarvalueselfclosingack;
                 if (!this.GetCurrentNode().GetLocalName().equals(
                   "ruby") &&
                   !this.GetCurrentNode().GetLocalName().equals(
-                  "rtc")) {
+                    "rtc")) {
                   this.ParseError();
                 }
               }
@@ -2682,12 +2681,12 @@ private boolean propVarvalueselfclosingack;
                   token,
                   InsertionMode.InBody);
             } else if (valueName.equals("basefont") ||
-              valueName.equals(
-                "bgsound") ||
-              valueName.equals("link") ||
-              valueName.equals("meta") ||
-              valueName.equals("noframes") ||
-              valueName.equals("style")
+   valueName.equals(
+     "bgsound") ||
+   valueName.equals("link") ||
+   valueName.equals("meta") ||
+   valueName.equals("noframes") ||
+   valueName.equals("style")
 ) {
               return this.ApplyInsertionMode(
                   token,
@@ -3216,13 +3215,13 @@ private boolean propVarvalueselfclosingack;
                 tag,
                 this.AddHtmlElement(tag));
             } else if (valueName.equals("caption") ||
-              valueName.equals(
-                "col") ||
-              valueName.equals("colgroup") ||
-              valueName.equals("tbody") ||
-              valueName.equals("tfoot") ||
-              valueName.equals("thead") ||
-              valueName.equals("tr")) {
+   valueName.equals(
+     "col") ||
+   valueName.equals("colgroup") ||
+   valueName.equals("tbody") ||
+   valueName.equals("tfoot") ||
+   valueName.equals("thead") ||
+   valueName.equals("tr")) {
               if (this.ApplyEndTag("tr", insMode)) {
                 return this.ApplyThisInsertionMode(token);
               }
@@ -3719,8 +3718,7 @@ private boolean propVarvalueselfclosingack;
           }
           return true;
         }
-        default:
-          throw new IllegalStateException();
+        default: throw new IllegalStateException();
       }
     }
 
@@ -3920,19 +3918,19 @@ private boolean propVarvalueselfclosingack;
           break;
         }
         if (HtmlCommon.IsHtmlElement(node, "dd") ||
-          HtmlCommon.IsHtmlElement(node, "dt") ||
-          HtmlCommon.IsHtmlElement(node, "li") ||
-          HtmlCommon.IsHtmlElement(node, "rb") ||
-          HtmlCommon.IsHtmlElement(node, "rtc") ||
-          HtmlCommon.IsHtmlElement(node, "option") ||
-          HtmlCommon.IsHtmlElement(node, "optgroup") ||
-          HtmlCommon.IsHtmlElement(
-            node,
-            "p") ||
-          HtmlCommon.IsHtmlElement(
-            node,
-            "rp") ||
-          HtmlCommon.IsHtmlElement(node, "rt")) {
+                 HtmlCommon.IsHtmlElement(node, "dt") ||
+                 HtmlCommon.IsHtmlElement(node, "li") ||
+                 HtmlCommon.IsHtmlElement(node, "rb") ||
+                 HtmlCommon.IsHtmlElement(node, "rtc") ||
+                 HtmlCommon.IsHtmlElement(node, "option") ||
+                 HtmlCommon.IsHtmlElement(node, "optgroup") ||
+                 HtmlCommon.IsHtmlElement(
+                 node,
+                 "p") ||
+                 HtmlCommon.IsHtmlElement(
+                 node,
+                 "rp") ||
+                 HtmlCommon.IsHtmlElement(node, "rt")) {
           this.PopCurrentNode();
         } else {
           break;
@@ -4115,28 +4113,28 @@ private boolean propVarvalueselfclosingack;
           return true;
         }
         if (HtmlCommon.IsHtmlElement(e, "applet") ||
-          HtmlCommon.IsHtmlElement(e, "caption") ||
-          HtmlCommon.IsHtmlElement(e, "html") ||
-          HtmlCommon.IsHtmlElement(e, "table") ||
-          HtmlCommon.IsHtmlElement(e, "td") ||
-          HtmlCommon.IsHtmlElement(e, "th") ||
-          HtmlCommon.IsHtmlElement(e, "ol") ||
-          HtmlCommon.IsHtmlElement(e, "ul") ||
-          HtmlCommon.IsHtmlElement(e, "marquee") ||
-          HtmlCommon.IsHtmlElement(e, "Object") ||
-          HtmlCommon.IsMathMLElement(e, "mi") ||
-          HtmlCommon.IsMathMLElement(e, "mo") ||
-          HtmlCommon.IsMathMLElement(e, "mn") ||
-          HtmlCommon.IsMathMLElement(e, "ms") ||
-          HtmlCommon.IsMathMLElement(e, "mtext") ||
-          HtmlCommon.IsMathMLElement(e, "annotation-xml") ||
-          HtmlCommon.IsSvgElement(e, "foreignObject") ||
-          HtmlCommon.IsSvgElement(
-            e,
-            "desc") ||
-          HtmlCommon.IsSvgElement(
-            e,
-            "title")
+                 HtmlCommon.IsHtmlElement(e, "caption") ||
+                 HtmlCommon.IsHtmlElement(e, "html") ||
+                 HtmlCommon.IsHtmlElement(e, "table") ||
+                 HtmlCommon.IsHtmlElement(e, "td") ||
+                 HtmlCommon.IsHtmlElement(e, "th") ||
+                 HtmlCommon.IsHtmlElement(e, "ol") ||
+                 HtmlCommon.IsHtmlElement(e, "ul") ||
+                 HtmlCommon.IsHtmlElement(e, "marquee") ||
+                 HtmlCommon.IsHtmlElement(e, "Object") ||
+                 HtmlCommon.IsMathMLElement(e, "mi") ||
+                 HtmlCommon.IsMathMLElement(e, "mo") ||
+                 HtmlCommon.IsMathMLElement(e, "mn") ||
+                 HtmlCommon.IsMathMLElement(e, "ms") ||
+                 HtmlCommon.IsMathMLElement(e, "mtext") ||
+                 HtmlCommon.IsMathMLElement(e, "annotation-xml") ||
+                 HtmlCommon.IsSvgElement(e, "foreignObject") ||
+                 HtmlCommon.IsSvgElement(
+                 e,
+                 "desc") ||
+                 HtmlCommon.IsSvgElement(
+                 e,
+                 "title")
 ) {
           return false;
         }
@@ -4151,26 +4149,26 @@ private boolean propVarvalueselfclosingack;
           return true;
         }
         if (HtmlCommon.IsHtmlElement(e, "applet") ||
-          HtmlCommon.IsHtmlElement(e, "caption") ||
-          HtmlCommon.IsHtmlElement(e, "html") ||
-          HtmlCommon.IsHtmlElement(e, "table") ||
-          HtmlCommon.IsHtmlElement(e, "td") ||
-          HtmlCommon.IsHtmlElement(e, "th") ||
-          HtmlCommon.IsHtmlElement(e, "marquee") ||
-          HtmlCommon.IsHtmlElement(e, "Object") ||
-          HtmlCommon.IsMathMLElement(e, "mi") ||
-          HtmlCommon.IsMathMLElement(e, "mo") ||
-          HtmlCommon.IsMathMLElement(e, "mn") ||
-          HtmlCommon.IsMathMLElement(e, "ms") ||
-          HtmlCommon.IsMathMLElement(e, "mtext") ||
-          HtmlCommon.IsMathMLElement(e, "annotation-xml") ||
-          HtmlCommon.IsSvgElement(e, "foreignObject") ||
-          HtmlCommon.IsSvgElement(
-            e,
-            "desc") ||
-          HtmlCommon.IsSvgElement(
-            e,
-            "title")
+                 HtmlCommon.IsHtmlElement(e, "caption") ||
+                 HtmlCommon.IsHtmlElement(e, "html") ||
+                 HtmlCommon.IsHtmlElement(e, "table") ||
+                 HtmlCommon.IsHtmlElement(e, "td") ||
+                 HtmlCommon.IsHtmlElement(e, "th") ||
+                 HtmlCommon.IsHtmlElement(e, "marquee") ||
+                 HtmlCommon.IsHtmlElement(e, "Object") ||
+                 HtmlCommon.IsMathMLElement(e, "mi") ||
+                 HtmlCommon.IsMathMLElement(e, "mo") ||
+                 HtmlCommon.IsMathMLElement(e, "mn") ||
+                 HtmlCommon.IsMathMLElement(e, "ms") ||
+                 HtmlCommon.IsMathMLElement(e, "mtext") ||
+                 HtmlCommon.IsMathMLElement(e, "annotation-xml") ||
+                 HtmlCommon.IsSvgElement(e, "foreignObject") ||
+                 HtmlCommon.IsSvgElement(
+                 e,
+                 "desc") ||
+                 HtmlCommon.IsSvgElement(
+                 e,
+                 "title")
 ) {
           return false;
         }
@@ -4185,26 +4183,26 @@ private boolean propVarvalueselfclosingack;
           return true;
         }
         if (HtmlCommon.IsHtmlElement(e, "applet") ||
-          HtmlCommon.IsHtmlElement(e, "caption") ||
-          HtmlCommon.IsHtmlElement(e, "html") ||
-          HtmlCommon.IsHtmlElement(e, "table") ||
-          HtmlCommon.IsHtmlElement(e, "td") ||
-          HtmlCommon.IsHtmlElement(e, "th") ||
-          HtmlCommon.IsHtmlElement(e, "marquee") ||
-          HtmlCommon.IsHtmlElement(e, "Object") ||
-          HtmlCommon.IsMathMLElement(e, "mi") ||
-          HtmlCommon.IsMathMLElement(e, "mo") ||
-          HtmlCommon.IsMathMLElement(e, "mn") ||
-          HtmlCommon.IsMathMLElement(e, "ms") ||
-          HtmlCommon.IsMathMLElement(e, "mtext") ||
-          HtmlCommon.IsMathMLElement(e, "annotation-xml") ||
-          HtmlCommon.IsSvgElement(e, "foreignObject") ||
-          HtmlCommon.IsSvgElement(
-            e,
-            "desc") ||
-          HtmlCommon.IsSvgElement(
-            e,
-            "title")
+                 HtmlCommon.IsHtmlElement(e, "caption") ||
+                 HtmlCommon.IsHtmlElement(e, "html") ||
+                 HtmlCommon.IsHtmlElement(e, "table") ||
+                 HtmlCommon.IsHtmlElement(e, "td") ||
+                 HtmlCommon.IsHtmlElement(e, "th") ||
+                 HtmlCommon.IsHtmlElement(e, "marquee") ||
+                 HtmlCommon.IsHtmlElement(e, "Object") ||
+                 HtmlCommon.IsMathMLElement(e, "mi") ||
+                 HtmlCommon.IsMathMLElement(e, "mo") ||
+                 HtmlCommon.IsMathMLElement(e, "mn") ||
+                 HtmlCommon.IsMathMLElement(e, "ms") ||
+                 HtmlCommon.IsMathMLElement(e, "mtext") ||
+                 HtmlCommon.IsMathMLElement(e, "annotation-xml") ||
+                 HtmlCommon.IsSvgElement(e, "foreignObject") ||
+                 HtmlCommon.IsSvgElement(
+                 e,
+                 "desc") ||
+                 HtmlCommon.IsSvgElement(
+                 e,
+                 "title")
 ) {
           return false;
         }
@@ -4454,7 +4452,7 @@ private boolean propVarvalueselfclosingack;
       String valueName = valueElement.GetLocalName();
       return HtmlCommon.SVG_NAMESPACE.equals(valueElement.GetNamespaceURI()) && (
           valueName.equals("foreignObject") || valueName.equals(
-            "desc") ||
+              "desc") ||
           valueName.equals("title"));
     }
 

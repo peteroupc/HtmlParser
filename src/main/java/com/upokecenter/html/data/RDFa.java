@@ -547,11 +547,9 @@ private ChainingDirection propVarvaluedirection;
         String prefixName = com.upokecenter.util.DataUtilities.ToLowerCaseAscii(
             attribute.substring(
               refIndex, (
-              refIndex)+((refIndex + prefix) - (refIndex))));
-        refIndex += prefix + 1;
-        refLength -= prefix + 1;
-        prefixIri = (prefix == 0) ? RDFA_DEFAULT_PREFIX :
-          ValueOrDefault(prefixMapping, prefixName, null);
+              refIndex)+((refIndex + prefix) - (refIndex)))); refIndex += prefix + 1;
+refLength -= prefix + 1; prefixIri = (prefix == 0) ? RDFA_DEFAULT_PREFIX :
+ValueOrDefault(prefixMapping, prefixName, null);
         if (prefixIri == null || "_".equals(prefixName)) {
           return null;
         }
@@ -589,11 +587,9 @@ private ChainingDirection propVarvaluedirection;
         prefixName = com.upokecenter.util.DataUtilities.ToLowerCaseAscii(
             attribute.substring(
               refIndex, (
-              refIndex)+((refIndex + prefix) - (refIndex))));
-        refIndex += prefix + 1;
-        refLength -= prefix + 1;
-        prefixIri = (prefix == 0) ? RDFA_DEFAULT_PREFIX :
-          ValueOrDefault(prefixMapping, prefixName, null);
+              refIndex)+((refIndex + prefix) - (refIndex)))); refIndex += prefix + 1;
+refLength -= prefix + 1; prefixIri = (prefix == 0) ? RDFA_DEFAULT_PREFIX :
+ValueOrDefault(prefixMapping, prefixName, null);
         if (prefixIri == null && !blank.equals(prefixName)) {
           return null;
         }

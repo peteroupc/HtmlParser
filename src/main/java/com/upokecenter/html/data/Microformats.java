@@ -482,16 +482,16 @@ import com.upokecenter.cbor.*;
             MatchDateTimePattern(
               (String)result,
               new String[] { "%Y-%M-%d", "%Y-%D" },
-          new String[] {
-          "%H:%m:%s", "%H:%m",
-          "%H:%m:%s%Z:%z",
-          "%H:%m:%s%Z%z", "%H:%m:%s%G",
-          "%H:%m%Z:%z", "%H:%m%Z%z", "%H:%m%G",
-        },
-        components,
-        true,
-        true,
-        true)) {
+              new String[] {
+                "%H:%m:%s", "%H:%m",
+                "%H:%m:%s%Z:%z",
+                "%H:%m:%s%Z%z", "%H:%m:%s%G",
+                "%H:%m%Z:%z", "%H:%m%Z%z", "%H:%m%G",
+              },
+              components,
+              true,
+              true,
+              true)) {
             // reset the time components
             components[3] = Integer.MIN_VALUE;
             components[4] = Integer.MIN_VALUE;
@@ -817,7 +817,7 @@ import com.upokecenter.cbor.*;
         List<IElement> elements = GetChildElements(root);
         if (elements.size() == 1 &&
           com.upokecenter.util.DataUtilities.ToLowerCaseAscii(elements.get(0).GetLocalName()).equals(
-          "img")) {
+            "img")) {
           // try to get the ALT/TITLE
           // from the image
           String valuePValue = GetPValue(elements.get(0));
