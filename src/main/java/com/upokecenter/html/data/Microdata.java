@@ -83,8 +83,7 @@ private IElement propVarelement;
 
     /**
      * Not documented yet.
-     * @param document The parameter {@code document} is
-     * a.getUpokecenter().getHtml().IDocument object.
+     * @param document A document object.
      * @return The return value is not documented yet.
      * @throws NullPointerException The parameter {@code document} is null.
      */
@@ -99,7 +98,10 @@ private IElement propVarelement;
         if (node.GetAttribute("itemscope") != null &&
           node.GetAttribute("itemprop") == null) {
           List<IElement> memory = new ArrayList<IElement>();
-          items.Add(GetMicrodataObject(node, memory));
+          CBORObject mdobject = GetMicrodataObject(node, memory);
+          if (mdobject != null) {
+            items.Add(mdobject);
+          }
         }
       }
       result.Add("items", items);
@@ -113,6 +115,9 @@ private IElement propVarelement;
         "itemtype"));
       CBORObject result = CBORObject.NewMap();
       memory.add(item);
+      if (itemtypes.length == 0) {
+        return null;
+      }
       if (itemtypes.length > 0) {
         CBORObject array = CBORObject.NewArray();
         for (String itemtype : itemtypes) {
@@ -138,6 +143,7 @@ private IElement propVarelement;
         if (valueElement.GetAttribute("itemscope") != null) {
           obj = memory.contains(valueElement) ? (Object)"ERROR" :
             (Object)GetMicrodataObject(valueElement, new ArrayList<IElement>(memory));
+          obj = (obj == null) ? (((Object)"ERROR")) : obj;
         } else {
           obj = GetPropertyValue(valueElement);
         }

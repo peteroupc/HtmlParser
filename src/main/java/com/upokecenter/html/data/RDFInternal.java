@@ -5,6 +5,22 @@ import java.util.*;
 import com.upokecenter.rdf.*;
 
   final class RDFInternal {
+    private static <TKey, TValue> TValue ValueOrDefault(
+      Map<TKey, TValue> dict,
+      TKey key,
+      TValue defValue) {
+      if (dict == null) {
+        throw new NullPointerException("dict");
+      }
+      return dict.containsKey(key) ? dict.get(key) : defValue;
+    }
+
+    private static <TKey, TValue> TValue ValueOrNull(
+      Map<TKey, TValue> dict,
+      TKey key) {
+      return ValueOrDefault(dict, key, null);
+    }
+
     /**
      * Replaces certain blank nodes with blank nodes whose names meet the N-Triples
      * requirements.
@@ -32,7 +48,7 @@ import com.upokecenter.rdf.*;
               nodeindex,
               bnodeLabels);
           if (!newname.equals(oldname)) {
-            RDFTerm newNode = newBlankNodes.get(oldname);
+            RDFTerm newNode = ValueOrDefault(newBlankNodes, oldname, null);
             if (newNode == null) {
               newNode = RDFTerm.FromBlankNode(newname);
               bnodeLabels.put(newname, newNode);
@@ -50,7 +66,7 @@ import com.upokecenter.rdf.*;
               nodeindex,
               bnodeLabels);
           if (!newname.equals(oldname)) {
-            RDFTerm newNode = newBlankNodes.get(oldname);
+            RDFTerm newNode = ValueOrDefault(newBlankNodes, oldname, null);
             if (newNode == null) {
               newNode = RDFTerm.FromBlankNode(newname);
               bnodeLabels.put(newname, newNode);

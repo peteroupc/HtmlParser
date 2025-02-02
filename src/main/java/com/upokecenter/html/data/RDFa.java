@@ -97,6 +97,16 @@ private ChainingDirection propVarvaluedirection;
       }
     }
 
+    private static <TKey, TValue> TValue ValueOrDefault(
+      Map<TKey, TValue> dict,
+      TKey key,
+      TValue defValue) {
+      if (dict == null) {
+        throw new NullPointerException("dict");
+      }
+      return dict.containsKey(key) ? dict.get(key) : defValue;
+    }
+
     private static final String RDFA_DEFAULT_PREFIX =
       "http://www.w3.org/1999/xhtml/vocab#";
 
@@ -209,7 +219,7 @@ private ChainingDirection propVarvaluedirection;
       Map<String, T> map,
       String key) {
       if (key == null) {
-        return map.get(null);
+        return ValueOrDefault(map, null, null);
       }
       key = com.upokecenter.util.DataUtilities.ToLowerCaseAscii(key);
       for (var k : map.keySet()) {
@@ -540,9 +550,8 @@ private ChainingDirection propVarvaluedirection;
               refIndex)+((refIndex + prefix) - (refIndex))));
         refIndex += prefix + 1;
         refLength -= prefix + 1;
-        prefixIri = prefixMapping.get(prefixName);
-        prefixIri =
-          (prefix == 0) ? RDFA_DEFAULT_PREFIX : prefixMapping.get(prefixName);
+        prefixIri = (prefix == 0) ? RDFA_DEFAULT_PREFIX :
+          ValueOrDefault(prefixMapping, prefixName, null);
         if (prefixIri == null || "_".equals(prefixName)) {
           return null;
         }
@@ -584,7 +593,7 @@ private ChainingDirection propVarvaluedirection;
         refIndex += prefix + 1;
         refLength -= prefix + 1;
         prefixIri = (prefix == 0) ? RDFA_DEFAULT_PREFIX :
-          prefixMapping.get(prefixName);
+          ValueOrDefault(prefixMapping, prefixName, null);
         if (prefixIri == null && !blank.equals(prefixName)) {
           return null;
         }
@@ -676,7 +685,7 @@ private ChainingDirection propVarvaluedirection;
           return this.RelativeResolve(DefaultVocab +
               attribute).GetValue();
         } else if (termMapping.containsKey(attribute)) {
-          return termMapping.get(attribute);
+          return ValueOrDefault(termMapping, attribute, null);
         } else {
           String value = GetueCaseInsensitive(termMapping, attribute);
           return value;
@@ -725,7 +734,7 @@ private ChainingDirection propVarvaluedirection;
         new HashMap<String, String>(this.context.getValueIriMap());
       Map<String, String> namespacesLocal =
         new HashMap<String, String>(this.context.getValueNamespaces());
-      Map<String, List<RDFTerm>> listMapLocal =
+      Map<String, List<RDFTerm>> mapLocalOfLists =
         this.context.getValueListMap();
       Map<String, String> termMapLocal =
         new HashMap<String, String>(this.context.getValueTermMap());
@@ -746,8 +755,8 @@ private ChainingDirection propVarvaluedirection;
         // System.out.println(attrib);
         if (name.equals("xmlns")) {
           // System.out.println("xmlns %s",attrib.GetValue());
-          iriMapLocal.put("", attrib.GetValue());
-          namespacesLocal.put("", attrib.GetValue());
+          iriMapLocal.put("",attrib.GetValue());
+          namespacesLocal.put("",attrib.GetValue());
         } else if (name.startsWith("xmlns:") &&
           name.length() > 6) {
           String prefix = name.substring(6);
@@ -968,12 +977,12 @@ private ChainingDirection propVarvaluedirection;
                 termMapLocal,
                 localDefaultVocab);
             if (iri != null) {
-              if (!listMapLocal.containsKey(iri)) {
+              if (!mapLocalOfLists.containsKey(iri)) {
                 List<RDFTerm> newList = new ArrayList<RDFTerm>();
                 newList.add(currentObject);
-                listMapLocal.put(iri, newList);
+                mapLocalOfLists.put(iri, newList);
               } else {
-                List<RDFTerm> existingList = listMapLocal.get(iri);
+                List<RDFTerm> existingList = mapLocalOfLists.get(iri);
                 existingList.add(currentObject);
               }
             }
@@ -1028,13 +1037,13 @@ private ChainingDirection propVarvaluedirection;
             }
             IncompleteTriple inc = new IncompleteTriple();
             if (inlist) {
-              if (!listMapLocal.containsKey(iri)) {
+              if (!mapLocalOfLists.containsKey(iri)) {
                 List<RDFTerm> newList = new ArrayList<RDFTerm>();
-                listMapLocal.put(iri, newList);
+                mapLocalOfLists.put(iri, newList);
                 // NOTE: Should not be a Copy
                 inc.setTripleList(newList);
               } else {
-                List<RDFTerm> existingList = listMapLocal.get(iri);
+                List<RDFTerm> existingList = mapLocalOfLists.get(iri);
                 inc.setTripleList(existingList);
               }
               inc.setValueDirection(ChainingDirection.None);
@@ -1142,12 +1151,12 @@ private ChainingDirection propVarvaluedirection;
           }
           // System.out.println("curprop: %s",currentProperty);
           if (node.GetAttribute("inlist") != null) {
-            if (!listMapLocal.containsKey(iri)) {
+            if (!mapLocalOfLists.containsKey(iri)) {
               List<RDFTerm> newList = new ArrayList<RDFTerm>();
               newList.add(currentProperty);
-              listMapLocal.put(iri, newList);
+              mapLocalOfLists.put(iri, newList);
             } else {
-              List<RDFTerm> existingList = listMapLocal.get(iri);
+              List<RDFTerm> existingList = mapLocalOfLists.get(iri);
               existingList.add(currentProperty);
             }
           } else {
@@ -1199,7 +1208,7 @@ private ChainingDirection propVarvaluedirection;
             ec.setValueNamespaces(namespacesLocal);
             ec.setValueIriMap(iriMapLocal);
             ec.setValueIncompleteTriples(incompleteTriplesLocal);
-            ec.setValueListMap(listMapLocal);
+            ec.setValueListMap(mapLocalOfLists);
             ec.setValueTermMap(termMapLocal);
             ec.setValueParentSubject((newSubject == null) ?
               oldContext.getValueParentSubject() : newSubject);
@@ -1215,9 +1224,9 @@ private ChainingDirection propVarvaluedirection;
         this.context = oldContext;
       }
       // Step 14
-      for (var iri : listMapLocal.keySet()) {
+      for (var iri : mapLocalOfLists.keySet()) {
         if (!this.context.getValueListMap().containsKey(iri)) {
-          List<RDFTerm> TripleList = listMapLocal.get(iri);
+          List<RDFTerm> TripleList = mapLocalOfLists.get(iri);
           if (TripleList.size() == 0) {
             this.outputGraph.add(new RDFTriple(
               newSubject == null ? newSubject : this.context.getValueParentSubject(),
