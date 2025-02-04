@@ -134,8 +134,11 @@ licensed under the Unlicense: https://unlicense.org/
     private String ReadBlankNodeLabel() {
       StringBuilder ilist = new StringBuilder();
       int startChar = this.input.ReadChar();
+      // NOTE: Blank nodes starting with a digit are now
+      // allowed under N-Triples
       if (!((startChar >= 'A' && startChar <= 'Z') ||
-        (startChar >= 'a' && startChar <= 'z'))) {
+          (startChar >= 'a' && startChar <= 'z') ||
+          (startChar >= '0' && startChar <= '9'))) {
         throw new ParserException();
       }
       if (startChar <= 0xffff) {
@@ -292,12 +295,13 @@ licensed under the Unlicense: https://unlicense.org/
           throw new ParserException();
         }
         String label = this.ReadBlankNodeLabel();
-        RDFTerm term = this.bnodeLabels.get(label);
-        if (term == null) {
-          term = RDFTerm.FromBlankNode(label);
+        if (!this.bnodeLabels.containsKey(label)) {
+          RDFTerm term = RDFTerm.FromBlankNode(label);
           this.bnodeLabels.put(label, term);
+          return term;
+        } else {
+          return this.bnodeLabels.get(label);
         }
-        return term;
       } else {
         throw new ParserException();
       }
@@ -337,7 +341,6 @@ licensed under the Unlicense: https://unlicense.org/
     private RDFTriple ReadTriples() {
       int mark = this.input.SetHardMark();
       int ch = this.input.ReadChar();
-
       this.input.SetMarkPosition(mark);
       RDFTerm subject = this.ReadObject(false);
       if (!this.SkipWhitespace()) {

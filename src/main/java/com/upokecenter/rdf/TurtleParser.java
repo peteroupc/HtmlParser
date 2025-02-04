@@ -793,10 +793,10 @@ private TurtleObject propVarobj;
       } else if (ch == '(') {
         return this.ReadCollection();
       } else if (ch == ':') { // prefixed name with current prefix
-        String scope = this.namespaces.get("");
-        if (scope == null) {
+        if (!this.namespaces.containsKey("")) {
           throw new ParserException();
         }
+        String scope = this.namespaces.get("");
         return TurtleObject.FromTerm(
             RDFTerm.FromIRI(scope + this.ReadOptionalLocalName()));
       } else if (IsNameStartChar(ch)) { // prefix

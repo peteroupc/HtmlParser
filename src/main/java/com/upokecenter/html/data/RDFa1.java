@@ -238,7 +238,7 @@ import com.upokecenter.rdf.*;
               refIndex, (
               refIndex)+((refIndex + prefix) - (refIndex)))); refIndex += prefix + 1;
 refLength -= prefix + 1; prefixIri = prefixMapping.get(prefixName); prefixIri =
-          (prefix == 0) ? RDFA_DEFAULT_PREFIX : prefixMapping.get(prefixName);
+(prefix == 0) ? RDFA_DEFAULT_PREFIX : prefixMapping.get(prefixName);
         if (prefixIri == null || "_".equals(prefixName)) {
           return null;
         }
