@@ -98,9 +98,9 @@ licensed under the Unlicense: https://unlicense.org/
         return false;
       }
       if (this.subject == null) {
-        return other.subject != null;
+        return other.subject == null;
       } else {
-        return !this.subject.equals(other.subject);
+        return this.subject.equals(other.subject);
       }
     }
 

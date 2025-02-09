@@ -22,6 +22,18 @@ import com.upokecenter.text.*;
       public static final int COLLECTION = 1;
       public static final int PROPERTIES = 2;
 
+      @Override public String toString() {
+         switch (this.getKind()) {
+           case SIMPLE:
+              return this.getTerm().toString();
+           case COLLECTION:
+           return "TurtleObject.COLLECTION";
+           case PROPERTIES:
+           return "TurtleObject.PROPERTIES";
+           default: return "";
+         }
+      }
+
       public static TurtleObject FromTerm(RDFTerm term) {
         TurtleObject tobj = new TurtleObject();
         tobj.setTerm(term);
@@ -70,6 +82,9 @@ private RDFTerm propVarpred;
       public final TurtleObject getObj() { return propVarobj; }
 public final void setObj(TurtleObject value) { propVarobj = value; }
 private TurtleObject propVarobj;
+      @Override public String toString() {
+         return "[Pred: "+ this.getPred() + ", Obj: " + this.getObj() + "]";
+      }
     }
 
     private Map<String, RDFTerm> bnodeLabels;
@@ -488,7 +503,7 @@ private TurtleObject propVarobj;
       }
     }
 
-    private TurtleObject ReadBlankNodePropertyList() {
+    private TurtleObject ReadBlankNodePropertyListOrAnon() {
       TurtleObject obj = TurtleObject.NewPropertyList();
       boolean havePredObject = false;
       while (true) {
@@ -523,7 +538,8 @@ private TurtleObject propVarobj;
       if (this.input.ReadChar() != ']') {
         throw new ParserException();
       }
-      return obj;
+      return (!havePredObject) ?
+TurtleObject.FromTerm(this.AllocateBlankNode()) : obj;
     }
 
     private TurtleObject ReadCollection() {
@@ -789,7 +805,7 @@ private TurtleObject propVarobj;
         }
         return TurtleObject.FromTerm(term);
       } else if (ch == '[') {
-        return this.ReadBlankNodePropertyList();
+        return this.ReadBlankNodePropertyListOrAnon();
       } else if (ch == '(') {
         return this.ReadCollection();
       } else if (ch == ':') { // prefixed name with current prefix
@@ -1030,10 +1046,10 @@ private TurtleObject propVarobj;
         this.SkipWhitespace();
         return predicate;
       } else if (ch == ':') { // prefixed name with current prefix
-        String scope = this.namespaces.get("");
-        if (scope == null) {
+        if (!this.namespaces.containsKey("")) {
           throw new ParserException();
         }
+        String scope = this.namespaces.get("");
         predicate = RDFTerm.FromIRI(scope + this.ReadOptionalLocalName());
         this.SkipWhitespace();
         return predicate;

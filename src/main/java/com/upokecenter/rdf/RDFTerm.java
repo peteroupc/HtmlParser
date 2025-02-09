@@ -286,9 +286,9 @@ licensed under the Unlicense: https://unlicense.org/
         return false;
       }
       if (this.value == null) {
-        return other.value != null;
+        return other.value == null;
       } else {
-        return !this.value.equals(other.value);
+        return this.value.equals(other.value);
       }
     }
 

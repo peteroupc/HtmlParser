@@ -233,14 +233,12 @@ licensed under the Unlicense: https://unlicense.org/
       while (true) {
         int c2 = this.input.ReadChar();
         if (c2 >= 'a' && c2 <= 'z') {
-          if (c2 <= 0xffff) {
-            {
               ilist.append((char)c2);
-            }
-          } else if (c2 <= 0x10ffff) {
-            ilist.append((char)((((c2 - 0x10000) >> 10) & 0x3ff) | 0xd800));
-            ilist.append((char)(((c2 - 0x10000) & 0x3ff) | 0xdc00));
-          }
+            haveString = true;
+            hyphen = false;
+        } else if (c2 >= 'A' && c2 <= 'Z') {
+          c2 += 0x20; // convert to lowercase
+          ilist.append((char)c2);
           haveString = true;
           hyphen = false;
         } else if (haveHyphen && (c2 >= '0' && c2 <= '9')) {
@@ -311,7 +309,9 @@ licensed under the Unlicense: https://unlicense.org/
       StringBuilder ilist = new StringBuilder();
       while (true) {
         int c2 = this.input.ReadChar();
-        if (c2 < 0x20 || c2 > 0x7e) {
+        // NOTE: N-Triples Recommendation now allows
+        // non-ASCII
+        if (c2 < 0) {
           throw new ParserException();
         } else if (c2 == '\\') {
           c2 = this.ReadUnicodeEscape(true);
@@ -344,14 +344,18 @@ licensed under the Unlicense: https://unlicense.org/
       this.input.SetMarkPosition(mark);
       RDFTerm subject = this.ReadObject(false);
       if (!this.SkipWhitespace()) {
-        throw new ParserException();
+        // NOTE: In NTriples Recommendation, whitespace
+        // is optional here
+        // throw new ParserException();
       }
       if (this.input.ReadChar() != '<') {
         throw new ParserException();
       }
       RDFTerm predicate = RDFTerm.FromIRI(this.ReadIriReference());
       if (!this.SkipWhitespace()) {
-        throw new ParserException();
+        // NOTE: In NTriples Recommendation, whitespace
+        // is optional here
+        // throw new ParserException();
       }
       RDFTerm obj = this.ReadObject(true);
       this.SkipWhitespace();
@@ -407,6 +411,10 @@ licensed under the Unlicense: https://unlicense.org/
         return '\n';
       } else if (extended && ch == 'r') {
         return '\r';
+      } else if (extended && ch == 'b') {
+        return '\b';
+      } else if (extended && ch == 'f') {
+        return '\f';
       } else if (extended && ch == '\\') {
         return '\\';
       } else if (extended && ch == '"') {
@@ -427,7 +435,18 @@ licensed under the Unlicense: https://unlicense.org/
       this.input.SetSoftMark();
       while (true) {
         int ch = this.input.ReadChar();
-        if (ch != 0x09 && ch != 0x20) {
+        if (ch == '#') {
+          while (true) {
+            ch = this.input.ReadChar();
+            if (ch < 0) {
+              return true;
+            }
+            if (ch == 0x0d || ch == 0x0a) {
+              this.input.MoveBack(1);
+              return true;
+            }
+          }
+        } else if (ch != 0x09 && ch != 0x20) {
           if (ch >= 0) {
             this.input.MoveBack(1);
           }
