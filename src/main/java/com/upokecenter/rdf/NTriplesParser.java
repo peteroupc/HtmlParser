@@ -131,30 +131,56 @@ licensed under the Unlicense: https://unlicense.org/
       }
     }
 
+    private static boolean IsBlankNodeInitial(int ch) {
+       return IsPnCharsBase(ch) || ch == '_' || (ch >= '0' && ch <= '9');
+    }
+
+    private static boolean IsPnCharsU(int ch) {
+       return IsPnCharsBase(ch) || ch == '_' || (ch >= '0' && ch <= '9') ||
+             ch == '-' || ch == 0xb7 || ch == 0x203f || ch == 0x2040 ||
+            (ch >= 0x300 && ch <= 0x36f);
+    }
+
+    private static boolean IsBlankNodeInterior(int ch) {
+       return IsPnCharsBase(ch) || ch == '_' || (ch >= '0' && ch <= '9') ||
+             ch == '.' || ch == '-' || ch == 0xb7 || ch == 0x203f ||
+ch == 0x2040 ||
+(ch >= 0x300 && ch <= 0x36f);
+    }
+
+    private static boolean IsPnCharsBase(int ch) {
+      return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+        (ch >= 0xc0 && ch <= 0xd6) ||
+        (ch >= 0xd8 && ch <= 0xf6) || (ch >= 0xf8 && ch <= 0x2ff) ||
+        (ch >= 0x370 && ch <= 0x37d) ||
+        (ch >= 0x37f && ch <= 0x1fff) || (ch >= 0x200c && ch <= 0x200d) ||
+        (ch >= 0x2070 && ch <= 0x218f) ||
+        (ch >= 0x2c00 && ch <= 0x2fef) || (ch >= 0x3001 && ch <= 0xd7ff) ||
+        (ch >= 0xf900 && ch <= 0xfdcf) || (ch >= 0xfdf0 && ch <= 0xfffd) ||
+        (ch >= 0x10000 && ch <= 0xeffff);
+    }
+
     private String ReadBlankNodeLabel() {
       StringBuilder ilist = new StringBuilder();
       int startChar = this.input.ReadChar();
-      // NOTE: Blank nodes starting with a digit are now
+      // NOTE: Blank nodes starting with a digit and underscore are now
       // allowed under N-Triples
-      if (!((startChar >= 'A' && startChar <= 'Z') ||
-          (startChar >= 'a' && startChar <= 'z') ||
-          (startChar >= '0' && startChar <= '9'))) {
+      if (!IsBlankNodeInitial(startChar)) {
         throw new ParserException();
       }
       if (startChar <= 0xffff) {
-        {
-          ilist.append((char)startChar);
-        }
-      } else if (startChar <= 0x10ffff) {
-        ilist.append((char)((((startChar - 0x10000) >> 10) & 0x3ff) |
-          0xd800));
-        ilist.append((char)(((startChar - 0x10000) & 0x3ff) | 0xdc00));
-      }
+            {
+              ilist.append((char)startChar);
+            }
+          } else if (startChar <= 0x10ffff) {
+            ilist.append((char)((((startChar - 0x10000) >> 10) & 0x3ff) |
+0xd800));
+            ilist.append((char)(((startChar - 0x10000) & 0x3ff) | 0xdc00));
+          }
       this.input.SetSoftMark();
       while (true) {
         int ch = this.input.ReadChar();
-        if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
-          (ch >= '0' && ch <= '9')) {
+        if (IsBlankNodeInterior(ch)) {
           if (ch <= 0xffff) {
             {
               ilist.append((char)ch);
@@ -167,7 +193,11 @@ licensed under the Unlicense: https://unlicense.org/
           if (ch >= 0) {
             this.input.MoveBack(1);
           }
-          return ilist.toString();
+          String retString = ilist.toString();
+          if (retString.charAt(retString.length() - 1) == '.') {
+            throw new ParserException();
+          }
+          return retString;
         }
       }
     }

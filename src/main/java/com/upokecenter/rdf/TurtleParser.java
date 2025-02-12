@@ -83,7 +83,7 @@ private RDFTerm propVarpred;
 public final void setObj(TurtleObject value) { propVarobj = value; }
 private TurtleObject propVarobj;
       @Override public String toString() {
-         return "[Pred: "+ this.getPred() + ", Obj: " + this.getObj() + "]";
+         return "[Pred: " + this.getPred() + ", Obj: " + this.getObj() + "]";
       }
     }
 

@@ -228,7 +228,10 @@ licensed under the Unlicense: https://unlicense.org/
       if (languageTag.length() == 0) {
         throw new IllegalArgumentException("languageTag is empty.");
       }
-      return new RDFTerm(LANGSTRING, languageTag, str);
+      return new RDFTerm(
+        LANGSTRING,
+        com.upokecenter.util.DataUtilities.ToLowerCaseAscii(languageTag),
+      str);
     }
 
     /**
