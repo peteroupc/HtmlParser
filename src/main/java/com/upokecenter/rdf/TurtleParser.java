@@ -222,6 +222,9 @@ private TurtleObject propVarobj;
       RDFTerm pred,
       TurtleObject obj,
       Set<RDFTriple> triples) {
+      if (obj == null) {
+        throw new NullPointerException("obj");
+      }
       if (obj.getKind() == TurtleObject.SIMPLE) {
         EmitRDFTriple(subj, pred, obj.getTerm(), triples);
       } else if (obj.getKind() == TurtleObject.PROPERTIES) {
@@ -555,7 +558,13 @@ TurtleObject.FromTerm(this.AllocateBlankNode()) : obj;
             this.input.MoveBack(1);
           }
           TurtleObject subobj = this.ReadObject(true);
+          if (subobj == null) {
+            throw new ParserException();
+          }
           List<TurtleObject> objects = obj.GetObjects();
+          if (subobj == null) {
+            throw new NullPointerException("subobj");
+          }
           objects.add(subobj);
         }
       }
